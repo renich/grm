@@ -84,7 +84,7 @@ target_link_libraries(grm PRIVATE
 
 
 enable_testing()
-
+if(BUILD_TESTING)
 add_executable(test_json_utils
     tests/test_json_utils.cpp
     src/json_utils.cpp
@@ -140,10 +140,33 @@ add_executable(test_cli_options
 )
 add_test(NAME test_cli_options COMMAND test_cli_options)
 
+add_executable(test_downloader
+    tests/test_downloader.cpp
+    src/downloader.cpp
+)
+add_test(NAME test_downloader COMMAND test_downloader)
+
+add_executable(test_chat_crud
+    tests/test_chat_crud.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_chat_crud PRIVATE ${JSONC_LIBRARIES})
+add_test(NAME test_chat_crud COMMAND test_chat_crud)
+
+add_executable(test_topic_crud
+    tests/test_topic_crud.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_topic_crud PRIVATE ${JSONC_LIBRARIES})
+add_test(NAME test_topic_crud COMMAND test_topic_crud)
+
+add_executable(test_msg_crud
+    tests/test_msg_crud.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_msg_crud PRIVATE ${JSONC_LIBRARIES})
+add_test(NAME test_msg_crud COMMAND test_msg_crud)
+
+endif()
+
 install(TARGETS grm DESTINATION bin)
-
-
-
-
-
-
