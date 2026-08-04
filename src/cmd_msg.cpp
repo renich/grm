@@ -29,6 +29,31 @@ static std::expected<int, std::string> parse_int32(std::string_view str) {
   return val;
 }
 
+static std::string extract_message_text(const JsonValue &m) {
+  auto content = m.get_object("content");
+  if (!content) {
+    return "";
+  }
+
+  auto type_str = content->get_type().value_or("");
+  if (type_str == "messageText") {
+    if (auto text_obj = content->get_object("text")) {
+      return text_obj->get_string("text").value_or("");
+    }
+  } else if (type_str == "messagePhoto" || type_str == "messageDocument" ||
+             type_str == "messageVideo" || type_str == "messageAudio") {
+    if (auto caption_obj = content->get_object("caption")) {
+      std::string cap = caption_obj->get_string("text").value_or("");
+      return cap.empty() ? ("[" + type_str + "]") : cap;
+    }
+    return "[" + type_str + "]";
+  } else if (!type_str.empty()) {
+    return "[" + type_str + "]";
+  }
+
+  return "";
+}
+
 std::expected<int, std::string>
 App::cmd_msg_ls(const std::vector<std::string> &args) {
   if (args.empty()) {
@@ -70,12 +95,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
 
   for (const auto &m : msgs) {
     auto id = m.get_int("id").value_or(0);
-    std::string text;
-    if (auto content = m.get_object("content")) {
-      if (auto text_obj = content->get_object("text")) {
-        text = text_obj->get_string("text").value_or("");
-      }
-    }
+    std::string text = extract_message_text(m);
     if (!text.empty()) {
       std::cout << std::format("[MsgID {}]: {}\n", id, text);
     }
@@ -83,6 +103,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
 
   return 0;
 }
+
 
 std::expected<int, std::string>
 App::cmd_msg_export(const std::vector<std::string> &args) {
@@ -141,11 +162,7 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
     } else if (auto raw_sender = m.get_int("sender_id")) {
       rec.sender = std::to_string(*raw_sender);
     }
-    if (auto content = m.get_object("content")) {
-      if (auto text_obj = content->get_object("text")) {
-        rec.text = text_obj->get_string("text").value_or("");
-      }
-    }
+    rec.text = extract_message_text(m);
     records.push_back(rec);
   }
 
@@ -209,18 +226,14 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
   int match_count = 0;
   for (const auto &m : msgs) {
     auto id = m.get_int("id").value_or(0);
-    std::string text;
-    if (auto content = m.get_object("content")) {
-      if (auto text_obj = content->get_object("text")) {
-        text = text_obj->get_string("text").value_or("");
-      }
-    }
+    std::string text = extract_message_text(m);
 
     if (!text.empty() && std::regex_search(text, search_regex)) {
       std::cout << std::format("[MsgID {}]: {}\n", id, text);
       match_count++;
     }
   }
+
 
   std::cout << std::format("Found {} matching messages.\n", match_count);
   return 0;
