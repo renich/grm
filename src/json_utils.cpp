@@ -149,7 +149,6 @@ std::optional<std::string> JsonValue::as_string() const {
   return std::nullopt;
 }
 
-
 std::optional<JsonValue> JsonValue::get_object(const std::string &key) const {
   if (!is_object())
     return std::nullopt;

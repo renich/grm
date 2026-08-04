@@ -244,6 +244,22 @@ std::expected<void, std::string> App::ensure_authenticated() {
       "Not authenticated. Please run 'grm login' to authenticate first.");
 }
 
+void App::ensure_chat_loaded(int64_t chat_id) {
+  if (!client_) {
+    return;
+  }
+  const std::string chat_req = std::format(R"({{"chat_id": {}}})", chat_id);
+  auto chat_res = client_->send_request("getChat", chat_req, 3.0);
+  if (!chat_res) {
+    auto load_res =
+        client_->send_request("loadChats", R"({"limit": 100})", 5.0);
+    if (!load_res) {
+      grm::log::debug("loadChats: " + load_res.error());
+    }
+    (void)client_->send_request("getChat", chat_req, 3.0);
+  }
+}
+
 std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
   if (options_.version) {
     print_version();

@@ -47,6 +47,8 @@ App::cmd_send_file(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
+  ensure_chat_loaded(chat_id);
+
   auto payload_res = Uploader::build_send_document_payload(
       chat_id, file_path, caption, message_thread_id);
 

@@ -52,6 +52,8 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
+  ensure_chat_loaded(chat_id);
+
   const std::string payload = std::format(
       R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": {}}})",
       chat_id, limit);
@@ -108,6 +110,8 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
   }
+
+  ensure_chat_loaded(chat_id);
 
   const std::string payload = std::format(
       R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": 100}})",
@@ -185,6 +189,8 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
+  ensure_chat_loaded(chat_id);
+
   const std::string payload = std::format(
       R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": 100}})",
       chat_id);
@@ -246,6 +252,8 @@ App::cmd_send(const std::vector<std::string> &args) {
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
   }
+
+  ensure_chat_loaded(chat_id);
 
   const std::string escaped_message = escape_json_string(message_text);
 

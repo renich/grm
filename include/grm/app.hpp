@@ -56,8 +56,10 @@ private:
 
   [[nodiscard]] std::expected<void, std::string> ensure_authenticated();
   [[nodiscard]] std::expected<void, std::string> init_tdlib();
+  void ensure_chat_loaded(int64_t chat_id);
 
   [[nodiscard]] std::string get_auth_state() const;
+
   void update_auth_state(std::string state, bool closed = false);
 
   Config config_;

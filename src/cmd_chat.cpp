@@ -16,8 +16,6 @@ App::cmd_chat_ls([[maybe_unused]] const std::vector<std::string> &args) {
     grm::log::debug("loadChats: " + load_res.error());
   }
 
-
-
   // Request chats list
   auto chats_res = client_->send_request("getChats", R"({"limit": 100})", 10.0);
   if (!chats_res) {

@@ -22,6 +22,8 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
+  ensure_chat_loaded(chat_id);
+
   const std::string payload = std::format(
       R"({{
         "chat_id": {},

@@ -23,6 +23,8 @@ App::cmd_extract_bday(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
+  ensure_chat_loaded(chat_id);
+
   const std::string payload = std::format(
       R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": 100}})",
       chat_id);
