@@ -1,20 +1,15 @@
-=====
-grm.1
-=====
+===
+grm
+===
 
----------------------------------------
-Group & Telegram Manager CLI User Guide
----------------------------------------
+--------------------------------------------
+Group & Telegram Manager CLI (C++23 / TDLib)
+--------------------------------------------
 
 :Author: Rénich Bon Ćirić <renich@evalinux.com>
 :Date: 2026-08-04
 :Manual section: 1
 :Manual group: User Commands
-
-NAME
-====
-
-grm - Group & Telegram Manager CLI (C++23 / TDLib)
 
 SYNOPSIS
 ========
@@ -24,7 +19,7 @@ SYNOPSIS
 DESCRIPTION
 ===========
 
-**grm** is a command-line tool for managing Telegram chats, supergroups, channels, forum topics, messages, and media files. Built with C++23 and TDLib, **grm** provides fast, offline-capable asynchronous operation with POSIX/GNU flag parsing and structured output formatting (tables, Markdown, JSON, CSV).
+**grm** is a high-performance command-line interface for managing Telegram chats, supergroups, channels, forum topics, messages, and media files. Built with modern C++23 and TDLib, **grm** provides fast, offline-capable asynchronous operation with POSIX/GNU flag parsing and structured output formatting (tables, Markdown, JSON, CSV).
 
 GLOBAL OPTIONS
 ==============
