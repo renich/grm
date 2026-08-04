@@ -10,6 +10,10 @@ App::cmd_chat_ls([[maybe_unused]] const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
+  // Pre-load chats from server / database cache
+  (void)client_->send_request("loadChats", R"({"limit": 100})", 5.0);
+
+
   // Request chats list
   auto chats_res = client_->send_request("getChats", R"({"limit": 100})", 10.0);
   if (!chats_res) {
@@ -21,7 +25,8 @@ App::cmd_chat_ls([[maybe_unused]] const std::vector<std::string> &args) {
   std::cout << std::string(60, '-') << "\n";
 
   for (const auto &id_val : chat_ids) {
-    if (auto cid = id_val.get_int("")) {
+    if (auto cid = id_val.as_int64()) {
+
       const std::string chat_req = std::format(R"({{"chat_id": {}}})", *cid);
       auto chat_info = client_->send_request("getChat", chat_req, 3.0);
       if (chat_info) {

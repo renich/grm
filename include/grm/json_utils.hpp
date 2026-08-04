@@ -36,8 +36,12 @@ public:
   [[nodiscard]] std::optional<int64_t> get_int(const std::string &key) const;
   [[nodiscard]] std::optional<bool> get_bool(const std::string &key) const;
 
+  [[nodiscard]] std::optional<int64_t> as_int64() const;
+  [[nodiscard]] std::optional<std::string> as_string() const;
+
   [[nodiscard]] std::optional<JsonValue>
   get_object(const std::string &key) const;
+
   [[nodiscard]] std::vector<JsonValue> get_array(const std::string &key) const;
   [[nodiscard]] std::vector<JsonValue> as_array() const;
 

@@ -1,5 +1,7 @@
 #include "grm/td_client.hpp"
+#include "grm/logger.hpp"
 #include <chrono>
+#include <format>
 #include <iostream>
 #include <json-c/json.h>
 #include <td/telegram/td_json_client.h>
@@ -15,9 +17,20 @@ std::expected<void, std::string> TdClient::start() {
     return {};
   }
 
-  td_execute(R"({"@type": "setLogVerbosityLevel", "new_verbosity_level": 1})");
+  int td_verbosity = 0;
+  if (log::get_verbosity() >= log::VerbosityLevel::Debug) {
+    td_verbosity = 2;
+  } else if (log::get_verbosity() == log::VerbosityLevel::Verbose) {
+    td_verbosity = 1;
+  }
+
+  const std::string set_log_verb = std::format(
+      R"({{"@type": "setLogVerbosityLevel", "new_verbosity_level": {}}})",
+      td_verbosity);
+  td_execute(set_log_verb.c_str());
 
   client_id_ = td_create_client_id();
+
   if (client_id_ < 0) {
     return std::unexpected("Failed to create TDLib client instance");
   }

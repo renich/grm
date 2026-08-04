@@ -135,6 +135,21 @@ std::optional<bool> JsonValue::get_bool(const std::string &key) const {
   return std::nullopt;
 }
 
+std::optional<int64_t> JsonValue::as_int64() const {
+  if (obj_ && json_object_is_type(obj_, json_type_int)) {
+    return json_object_get_int64(obj_);
+  }
+  return std::nullopt;
+}
+
+std::optional<std::string> JsonValue::as_string() const {
+  if (obj_ && json_object_is_type(obj_, json_type_string)) {
+    return std::string(json_object_get_string(obj_));
+  }
+  return std::nullopt;
+}
+
+
 std::optional<JsonValue> JsonValue::get_object(const std::string &key) const {
   if (!is_object())
     return std::nullopt;
