@@ -50,10 +50,13 @@ Subcommands parse GNU options using clean helper loops with ``std::from_chars`` 
   - Option ``-o, --output``: output file path
   - Option ``-n, --limit``: max records (default 1000)
   - Operands: ``chat_id`` (int64)
-- **File Upload**: ``grm send file [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> <file>``
+- **Message & File Dispatch**: ``grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"]``
+  - Option ``-a, --attach``: file attachment path (repeatable)
+  - Option ``-m, --media``: media mode flag
   - Option ``-C, --caption``: caption string
   - Option ``-t, --topic``: topic ID (int64)
-  - Operands: ``chat_id`` (int64), ``file_path`` (path)
+  - Operands: ``chat_id`` (int64), optional ``message`` text
+
 
 
 Logging Utility API

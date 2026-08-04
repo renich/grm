@@ -47,6 +47,21 @@ parse_format(const std::vector<std::string_view> &args) {
   return std::nullopt;
 }
 
+static std::vector<std::string>
+parse_attachments(const std::vector<std::string_view> &args) {
+  std::vector<std::string> attachments;
+  for (size_t i = 0; i < args.size(); ++i) {
+    if ((args[i] == "-a" || args[i] == "--attach" || args[i] == "-A" ||
+         args[i] == "--attachment") &&
+        i + 1 < args.size()) {
+      attachments.emplace_back(args[++i]);
+    } else if (args[i].starts_with("--attach=")) {
+      attachments.emplace_back(args[i].substr(9));
+    }
+  }
+  return attachments;
+}
+
 } // namespace grm::test
 
 int main() {
@@ -70,6 +85,13 @@ int main() {
 
   auto fmt2 = grm::test::parse_format({"--format=json"});
   if (!fmt2.has_value() || *fmt2 != "json") std::abort();
+
+  // Test attachment option parsing
+  auto atts = grm::test::parse_attachments(
+      {"-a", "/tmp/doc1.pdf", "--attach=/tmp/doc2.png"});
+  if (atts.size() != 2 || atts[0] != "/tmp/doc1.pdf" ||
+      atts[1] != "/tmp/doc2.png")
+    std::abort();
 
   std::cout << "test_cli_options passed successfully!\n";
   return 0;

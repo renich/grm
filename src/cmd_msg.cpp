@@ -3,6 +3,8 @@
 #include "grm/formatter.hpp"
 #include "grm/json_utils.hpp"
 #include "grm/logger.hpp"
+#include "grm/uploader.hpp"
+
 
 
 #include <charconv>
@@ -364,27 +366,54 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
 }
 
 std::expected<int, std::string>
-App::cmd_send(const std::vector<std::string> &args) {
-  if (args.size() < 2) {
-    return std::unexpected("Usage: grm send <chat_id> \"<message>\"");
-  }
-
-  auto chat_id_res = parse_int64(args[0]);
-  if (!chat_id_res) {
-    return std::unexpected("Invalid chat_id: " + args[0]);
-  }
-  const int64_t chat_id = *chat_id_res;
-
-  const std::string &message_text = args[1];
+App::cmd_msg_send(const std::vector<std::string> &args) {
+  int64_t chat_id = 0;
+  bool chat_id_set = false;
+  std::string message_text;
+  std::string caption;
+  std::vector<std::filesystem::path> attachments;
+  bool is_media = false;
   int64_t message_thread_id = 0;
 
-  for (size_t i = 2; i < args.size(); ++i) {
-    if (args[i] == "--topic" && i + 1 < args.size()) {
-      if (auto thread_res = parse_int64(args[i + 1])) {
-        message_thread_id = *thread_res;
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
+    if ((arg == "-a" || arg == "--attach" || arg == "-A" || arg == "--attachment") &&
+        i + 1 < args.size()) {
+      attachments.emplace_back(args[++i]);
+    } else if (arg.starts_with("--attach=")) {
+      attachments.emplace_back(arg.substr(9));
+    } else if (arg.starts_with("--attachment=")) {
+      attachments.emplace_back(arg.substr(13));
+    } else if (arg == "-m" || arg == "--media") {
+      is_media = true;
+    } else if ((arg == "-C" || arg == "--caption") && i + 1 < args.size()) {
+      caption = args[++i];
+    } else if (arg.starts_with("--caption=")) {
+      caption = arg.substr(10);
+    } else if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
+      if (auto tid = parse_int64(args[++i])) {
+        message_thread_id = *tid;
       }
-      ++i;
+    } else if (arg.starts_with("--topic=")) {
+      if (auto tid = parse_int64(arg.substr(8))) {
+        message_thread_id = *tid;
+      }
+    } else if (!chat_id_set && parse_int64(arg).has_value()) {
+      chat_id = *parse_int64(arg);
+      chat_id_set = true;
+    } else if (chat_id_set && message_text.empty() && !arg.starts_with("-")) {
+      message_text = arg;
     }
+  }
+
+  if (!chat_id_set) {
+    return std::unexpected(
+        "Usage: grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "
+        "\"<text>\"] [-t|--topic <id>] <chat_id> [\"<message>\"]");
+  }
+
+  if (caption.empty() && !message_text.empty()) {
+    caption = message_text;
   }
 
   if (auto res = ensure_authenticated(); !res) {
@@ -393,29 +422,63 @@ App::cmd_send(const std::vector<std::string> &args) {
 
   ensure_chat_loaded(chat_id);
 
-  const std::string escaped_message = escape_json_string(message_text);
-
-  const std::string payload = std::format(
-      R"({{
-        "chat_id": {},
-        "message_thread_id": {},
-        "input_message_content": {{
-          "@type": "inputMessageText",
-          "text": {{
-            "@type": "formattedText",
-            "text": "{}"
+  if (attachments.empty()) {
+    if (message_text.empty()) {
+      return std::unexpected(
+          "Cannot send message: no text payload or file attachments provided.");
+    }
+    const std::string escaped_message = escape_json_string(message_text);
+    const std::string payload = std::format(
+        R"({{
+          "chat_id": {},
+          "message_thread_id": {},
+          "input_message_content": {{
+            "@type": "inputMessageText",
+            "text": {{
+              "@type": "formattedText",
+              "text": "{}"
+            }}
           }}
-        }}
-      }})",
-      chat_id, message_thread_id, escaped_message);
+        }})",
+        chat_id, message_thread_id, escaped_message);
 
-  auto res = client_->send_request("sendMessage", payload, 10.0);
-  if (!res) {
-    return std::unexpected("Failed to send message: " + res.error());
+    auto res = client_->send_request("sendMessage", payload, 10.0);
+    if (!res) {
+      return std::unexpected("Failed to send message: " + res.error());
+    }
+    grm::log::info("Message sent successfully.");
+    return 0;
   }
 
-  grm::log::info("Message sent successfully.");
+  for (size_t idx = 0; idx < attachments.size(); ++idx) {
+    const auto &file_path = attachments[idx];
+    const std::string file_caption = (idx == 0) ? caption : "";
+
+    std::expected<std::string, std::string> payload_res;
+    if (is_media) {
+      payload_res = Uploader::build_send_media_payload(
+          chat_id, file_path, file_caption, message_thread_id);
+    } else {
+      payload_res = Uploader::build_send_document_payload(
+          chat_id, file_path, file_caption, message_thread_id);
+    }
+
+    if (!payload_res) {
+      return std::unexpected(payload_res.error());
+    }
+
+    grm::log::info(std::format("Uploading {} to chat {}...", file_path.string(),
+                               chat_id));
+    auto res = client_->send_request("sendMessage", *payload_res, 30.0);
+    if (!res) {
+      return std::unexpected("Failed to send file " + file_path.string() +
+                             ": " + res.error());
+    }
+  }
+
+  grm::log::info("Attachment(s) sent successfully.");
   return 0;
 }
+
 
 } // namespace grm

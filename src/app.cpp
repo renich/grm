@@ -31,10 +31,8 @@ Commands:
   grm msg ls [-n|--limit <N>] <chat_id>                            List recent messages from a chat
   grm msg export [-f|--format csv|json] [-o|--output <file>] <chat_id> Export chat history to CSV or JSON file
   grm msg search [-q|--query "<query>"] [-n|--limit <N>] <chat_id> Search chat history using regex filter
-  grm send <chat_id> "<message>"                                   Send a text message to a chat or group
-  grm send file [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> <file> Upload a local file or document to a chat
+  grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<msg>"] Send message/files
   grm topic ls <supergroup_id>                                     List active forum topics in a supergroup
-
 
 )" << '\n';
 }
@@ -70,31 +68,23 @@ Options:
 void App::print_msg_help() {
   std::cout << R"(Usage: grm msg <subcommand> [options] [args]
 
-Inspect and manage chat message history.
+Inspect, export, search, and send chat messages or file attachments.
 
 Subcommands:
   grm msg ls [-n|--limit <N>] <chat_id>                             List recent messages (default limit: 20)
   grm msg export [-f|--format csv|json] [-o|--output <file>] <chat_id> Export chat history to CSV or JSON file
   grm msg search [-q|--query "<query>"] [-n|--limit <N>] <chat_id> Search chat history using regex pattern filter
+  grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"] Send text message or file attachment(s)
 
 Options:
+  -a, --attach <file>                                               Attach local file/document (repeatable)
+  -m, --media                                                       Send attachment(s) as compressed media (photo/video/audio)
+  -C, --caption "<text>"                                            Caption text for attachments
+  -t, --topic <id>                                                  Target specific forum topic thread ID
   -h, --help                                                        Show this help screen
 )" << '\n';
 }
 
-void App::print_send_help() {
-  std::cout << R"(Usage:
-  grm send <chat_id> "<message>"
-  grm send file [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> <file_path>
-
-Send text messages or upload local files/documents to a chat.
-
-Options:
-  -C, --caption "<text>"  Attach text caption to uploaded document
-  -t, --topic <id>        Target a specific forum topic thread ID
-  -h, --help              Show this help screen
-)" << '\n';
-}
 
 void App::print_topic_help() {
   std::cout << R"(Usage: grm topic ls <supergroup_id>
@@ -312,6 +302,10 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
         return cmd_msg_search(
             std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
       }
+      if (sub_args[0] == "send") {
+        return cmd_msg_send(
+            std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+      }
     }
   }
 
@@ -326,17 +320,7 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
           std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
     }
   }
-  if (cmd == "send") {
-    if (is_help_requested(sub_args)) {
-      print_send_help();
-      return 0;
-    }
-    if (!sub_args.empty() && sub_args[0] == "file") {
-      return cmd_send_file(
-          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
-    }
-    return cmd_send(sub_args);
-  }
+
 
   print_usage();
   return std::unexpected("Unknown command: " + cmd);

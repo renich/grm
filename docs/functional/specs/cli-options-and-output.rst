@@ -66,15 +66,11 @@ Message Subcommands:
   - ``-f, --format <fmt>``: Export format (``json`` or ``csv``, default: ``json``).
   - ``-o, --output <file>``: Destination export file path.
   - ``-n, --limit <N>``: Maximum records to export (default: 1000).
-
-Send Subcommands:
-~~~~~~~~~~~~~~~~~
-
-- ``grm send [-t|--topic <id>] <chat_id> "<message>"``
-  - ``-t, --topic <id>``: Direct text message to a specific forum topic thread ID.
-- ``grm send file [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> <file>``
-  - ``-C, --caption "<text>"``: Attach text caption to uploaded document.
-  - ``-t, --topic <id>``: Direct document upload to a specific forum topic thread ID.
+- ``grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"]``
+  - ``-a, --attach <file>``: Attach local file or document (repeatable for multiple files).
+  - ``-m, --media``: Send attached files as media (photo/video/audio) rather than raw document.
+  - ``-C, --caption "<text>"``: Caption text for attachments (or specified as positional message text operand).
+  - ``-t, --topic <id>``: Direct text or file dispatch to a specific forum topic thread ID.
 
 Examples
 --------
@@ -93,10 +89,18 @@ GNU Formatted Export with Explicit Output Path:
 
    grm msg export -f csv -o /tmp/evalinux_history.csv -n 500 -1002289735000
 
+Send Text Message to Chat:
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   grm msg send -1001789902965 "Hola desde grm CLI!"
+
 Upload Document with Caption to Forum Topic:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
-   grm send file -C "Monthly Report" -t 42 -1001789902965 /path/to/report.pdf
+   grm msg send -a /path/to/report.pdf -C "Monthly Report" -t 42 -1001789902965
+
 
