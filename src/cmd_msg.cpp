@@ -332,8 +332,9 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
   ensure_chat_loaded(chat_id);
 
   const std::string payload = std::format(
-      R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": 100}})",
-      chat_id);
+      R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": {}}})",
+      chat_id, search_limit);
+
 
   auto res = client_->send_request("getChatHistory", payload, 10.0);
   if (!res) {
