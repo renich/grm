@@ -6,6 +6,7 @@ grm Technical Architecture
    :maxdepth: 2
 
    specs/tdlib-client-architecture
+   specs/media-and-topics-architecture
 
 Architectural Blueprint
 =======================
@@ -32,5 +33,11 @@ Technical Traceability Matrix
 | ``[TECH-002]``    | ``grm::JsonValue``         | ``[FUNC-003]``,       |
 |                   |                            | ``[FUNC-004]``        |
 +-------------------+----------------------------+-----------------------+
-| ``[TECH-003]``    | ``grm::App`` Controller    | ``[FUNC-005]``        |
+| ``[TECH-003]``    | ``grm::App`` Controller    | ``[FUNC-005]``,       |
+|                   |                            | ``[FUNC-006]``        |
 +-------------------+----------------------------+-----------------------+
+| ``[TECH-004]``    | File Uploader Engine       | ``[FUNC-007]``        |
++-------------------+----------------------------+-----------------------+
+| ``[TECH-005]``    | Forum Topics Engine        | ``[FUNC-008]``        |
++-------------------+----------------------------+-----------------------+
+
