@@ -8,7 +8,7 @@ USER_BIN ?= $(HOME)/bin
 CMAKE := cmake
 BUILD_TYPE ?= Release
 
-.PHONY: all build release clean check format install install-user
+.PHONY: all build release clean check format lint install install-user
 
 all: release
 
@@ -26,8 +26,12 @@ clean:
 format:
 	clang-format -i include/grm/*.hpp src/*.cpp
 
+lint: release
+	clang-tidy -p $(BUILD_DIR) src/*.cpp
+
 check: release
 	ctest --test-dir $(BUILD_DIR) --output-on-failure
+
 
 install: release
 	install -d $(DESTDIR)$(INSTALL_BIN)

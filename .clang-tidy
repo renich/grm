@@ -1,0 +1,18 @@
+---
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  readability-*
+
+WarningsAsErrors: '*'
+
+HeaderFilterRegex: 'include/grm/.*'
+
+FormatStyle: 'file'
+...
