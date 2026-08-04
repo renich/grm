@@ -21,6 +21,8 @@ Usage:
   grm extract bday <chat_id>        Extract registered birthdays from chat history
   grm send <chat_id> "<message>"    Send a message to a chat or group
   grm send file <chat_id> <path>    Upload a local file or document to a chat
+  grm topic ls <supergroup_id>      List active forum topics in a supergroup
+
 
 
 )" << std::endl;
@@ -145,6 +147,10 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
 
   if (cmd == "extract" && !sub_args.empty() && sub_args[0] == "bday") {
     return cmd_extract_bday(
+        std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+  }
+  if (cmd == "topic" && !sub_args.empty() && sub_args[0] == "ls") {
+    return cmd_topic_ls(
         std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
   }
   if (cmd == "send") {

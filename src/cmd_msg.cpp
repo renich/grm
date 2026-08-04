@@ -206,6 +206,17 @@ App::cmd_send(const std::vector<std::string> &args) {
   }
 
   const std::string &message_text = args[1];
+  int64_t message_thread_id = 0;
+
+  for (size_t i = 2; i < args.size(); ++i) {
+    if (args[i] == "--topic" && i + 1 < args.size()) {
+      try {
+        message_thread_id = std::stoll(args[i + 1]);
+      } catch (...) {
+      }
+      ++i;
+    }
+  }
 
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
@@ -214,6 +225,7 @@ App::cmd_send(const std::vector<std::string> &args) {
   const std::string payload = std::format(
       R"({{
         "chat_id": {},
+        "message_thread_id": {},
         "input_message_content": {{
           "@type": "inputMessageText",
           "text": {{
@@ -222,7 +234,7 @@ App::cmd_send(const std::vector<std::string> &args) {
           }}
         }}
       }})",
-      chat_id, message_text);
+      chat_id, message_thread_id, message_text);
 
   auto res = client_->send_request("sendMessage", payload, 10.0);
   if (!res) {

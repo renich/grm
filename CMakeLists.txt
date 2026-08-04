@@ -44,9 +44,11 @@ add_executable(grm
     src/cmd_msg.cpp
     src/cmd_extract.cpp
     src/cmd_file.cpp
+    src/cmd_topic.cpp
     src/exporter.cpp
     src/uploader.cpp
 )
+
 
 
 target_link_libraries(grm PRIVATE
@@ -85,7 +87,16 @@ add_executable(test_file
 target_link_libraries(test_file PRIVATE)
 add_test(NAME test_file COMMAND test_file)
 
+add_executable(test_topic
+    tests/test_topic.cpp
+    src/uploader.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_topic PRIVATE ${JSONC_LIBRARIES})
+add_test(NAME test_topic COMMAND test_topic)
+
 install(TARGETS grm DESTINATION bin)
+
 
 
 

@@ -22,10 +22,17 @@ App::cmd_send_file(const std::vector<std::string> &args) {
 
   const std::filesystem::path file_path = args[1];
   std::string caption;
+  int64_t message_thread_id = 0;
 
   for (size_t i = 2; i < args.size(); ++i) {
     if (args[i] == "--caption" && i + 1 < args.size()) {
       caption = args[i + 1];
+      ++i;
+    } else if (args[i] == "--topic" && i + 1 < args.size()) {
+      try {
+        message_thread_id = std::stoll(args[i + 1]);
+      } catch (...) {
+      }
       ++i;
     }
   }
@@ -34,8 +41,9 @@ App::cmd_send_file(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
-  auto payload_res =
-      Uploader::build_send_document_payload(chat_id, file_path, caption, 0);
+  auto payload_res = Uploader::build_send_document_payload(
+      chat_id, file_path, caption, message_thread_id);
+
   if (!payload_res) {
     return std::unexpected(payload_res.error());
   }
