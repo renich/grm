@@ -5,15 +5,12 @@
 #include <iostream>
 #include <thread>
 
-
 namespace grm {
 
 App::App(Config config, CliOptions options)
     : config_(std::move(config)), options_(std::move(options)) {}
 
-void App::print_version() {
-  std::cout << "grm 1.0.0 (C++23 / TDLib 1.8.66)\n";
-}
+void App::print_version() { std::cout << "grm 1.0.0 (C++23 / TDLib 1.8.66)\n"; }
 
 void App::print_usage() {
   std::cout << R"(
@@ -120,8 +117,6 @@ Options:
 )" << '\n';
 }
 
-
-
 std::string App::get_auth_state() const {
   std::scoped_lock lock(auth_mutex_);
   return auth_state_;
@@ -156,11 +151,14 @@ std::expected<void, std::string> App::init_tdlib() {
                 if (auto code_type_obj = code_info->get_object("type")) {
                   if (auto code_type = code_type_obj->get_type()) {
                     if (*code_type == "authenticationCodeTypeTelegramMessage") {
-                      grm::log::auth("Code sent as an in-app message to your active Telegram client (Chat: Telegram Service Notifications).");
+                      grm::log::auth("Code sent as an in-app message to your "
+                                     "active Telegram client (Chat: Telegram "
+                                     "Service Notifications).");
                     } else if (*code_type == "authenticationCodeTypeSms") {
                       grm::log::auth("Code sent via SMS to your phone number.");
                     } else if (*code_type == "authenticationCodeTypeCall") {
-                      grm::log::auth("Code will be delivered via an automated phone call.");
+                      grm::log::auth("Code will be delivered via an automated "
+                                     "phone call.");
                     } else {
                       grm::log::auth("Code delivery method: " + *code_type);
                     }
@@ -169,7 +167,6 @@ std::expected<void, std::string> App::init_tdlib() {
               }
             }
             update_auth_state(*sttype, *sttype == "authorizationStateClosed");
-
 
             if (*sttype == "authorizationStateWaitTdlibParameters") {
               const auto db_path = options_.use_test_dc
@@ -201,8 +198,7 @@ std::expected<void, std::string> App::init_tdlib() {
                   db_path.string(), config_.api_id, config_.api_hash);
 
               client_->send_async("setTdlibParameters", params);
-            }
- else if (*sttype == "authorizationStateWaitEncryptionKey") {
+            } else if (*sttype == "authorizationStateWaitEncryptionKey") {
               client_->send_async("checkDatabaseEncryptionKey",
                                   R"({"encryption_key": ""})");
             }
@@ -265,7 +261,6 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     print_usage();
     return 0;
   }
-
 
   std::vector<std::string> sub_args(args.begin() + 1, args.end());
 
@@ -338,7 +333,6 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     }
     return cmd_send(sub_args);
   }
-
 
   print_usage();
   return std::unexpected("Unknown command: " + cmd);

@@ -100,7 +100,6 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
     return std::unexpected("Format must be 'csv' or 'json'");
   }
 
-
   std::filesystem::path out_path =
       (args.size() >= 3) ? std::filesystem::path(args[2])
                          : std::filesystem::path(std::format(
@@ -272,6 +271,5 @@ App::cmd_send(const std::vector<std::string> &args) {
   grm::log::info("Message sent successfully.");
   return 0;
 }
-
 
 } // namespace grm

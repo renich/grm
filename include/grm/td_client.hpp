@@ -37,7 +37,6 @@ public:
   void send_async(const std::string &type,
                   std::string_view payload_json = "{}") const;
 
-
   void on_update(UpdateCallback callback);
 
   [[nodiscard]] const Config &config() const noexcept { return config_; }

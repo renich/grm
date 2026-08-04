@@ -69,7 +69,6 @@ JsonValue::parse(std::string_view json_str) {
   const json_tokener_error err = json_tokener_get_error(tok);
   json_tokener_free(tok);
 
-
   if (err != json_tokener_success || !parsed) {
     if (parsed) {
       json_object_put(parsed);

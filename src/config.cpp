@@ -6,8 +6,8 @@
 
 namespace grm {
 
-std::expected<Config, std::string> Config::load(
-    const std::filesystem::path &custom_path) {
+std::expected<Config, std::string>
+Config::load(const std::filesystem::path &custom_path) {
   Config cfg;
 
   const char *home = std::getenv("HOME");
@@ -36,7 +36,6 @@ std::expected<Config, std::string> Config::load(
   } else {
     active_cfg = grm_cfg;
   }
-
 
   if (std::filesystem::exists(active_cfg)) {
     std::ifstream file(active_cfg);

@@ -30,7 +30,8 @@ App::cmd_send_file(const std::vector<std::string> &args) {
     if ((args[i] == "-C" || args[i] == "--caption") && i + 1 < args.size()) {
       caption = args[i + 1];
       ++i;
-    } else if ((args[i] == "-t" || args[i] == "--topic") && i + 1 < args.size()) {
+    } else if ((args[i] == "-t" || args[i] == "--topic") &&
+               i + 1 < args.size()) {
       auto [tptr, tec] = std::from_chars(
           args[i + 1].data(), args[i + 1].data() + args[i + 1].size(),
           message_thread_id);
@@ -41,7 +42,6 @@ App::cmd_send_file(const std::vector<std::string> &args) {
       ++i;
     }
   }
-
 
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
@@ -54,8 +54,8 @@ App::cmd_send_file(const std::vector<std::string> &args) {
     return std::unexpected(payload_res.error());
   }
 
-  grm::log::info(std::format("Uploading {} to chat {}...", file_path.string(),
-                             chat_id));
+  grm::log::info(
+      std::format("Uploading {} to chat {}...", file_path.string(), chat_id));
 
   auto res = client_->send_request("sendMessage", *payload_res, 30.0);
   if (!res) {
@@ -65,6 +65,5 @@ App::cmd_send_file(const std::vector<std::string> &args) {
   grm::log::info("File uploaded and sent successfully.");
   return 0;
 }
-
 
 } // namespace grm

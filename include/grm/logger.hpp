@@ -13,7 +13,6 @@ enum class VerbosityLevel : std::uint8_t {
   Debug = 3
 };
 
-
 void set_verbosity(VerbosityLevel level);
 VerbosityLevel get_verbosity();
 

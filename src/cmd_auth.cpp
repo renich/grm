@@ -106,8 +106,8 @@ std::expected<int, std::string> App::cmd_login() {
 
         const std::string payload = std::format(R"({{"password": "{}"}})",
                                                 escape_json_string(password));
-        auto res = client_->send_request("checkAuthenticationPassword", payload,
-                                         15.0);
+        auto res =
+            client_->send_request("checkAuthenticationPassword", payload, 15.0);
         if (!res) {
           grm::log::error("Invalid password: " + res.error());
           last_state.clear();
