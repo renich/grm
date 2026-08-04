@@ -120,13 +120,13 @@ Usage Examples
    .. code-block:: bash
 
       # Read recent messages from a chat (-n / --limit)
-      grm msg ls -1001789902965 -n 50
+      grm msg ls -n 50 -1001789902965
 
       # Search chat history with regex filter (-q / --query)
-      grm msg search -1001789902965 -q "reunión" -n 100
+      grm msg search -q "reunión" -n 100 -1001789902965
 
       # Export chat history to CSV or JSON (-f / --format, -o / --output)
-      grm msg export -1001789902965 -f csv -o /tmp/history.csv -n 500
+      grm msg export -f csv -o /tmp/history.csv -n 500 -1001789902965
 
 4. File & Document Uploads:
 
@@ -136,16 +136,17 @@ Usage Examples
       grm send -1001789902965 "Hola desde grm CLI!"
 
       # Upload a document with caption (-C / --caption)
-      grm send file -1001789902965 /path/to/report.pdf -C "Monthly Report"
+      grm send file -C "Monthly Report" -1001789902965 /path/to/report.pdf
 
       # Upload a document directly to a forum topic (-t / --topic)
-      grm send file -1001789902965 /path/to/doc.pdf -C "Topic Doc" -t 42
+      grm send file -C "Topic Doc" -t 42 -1001789902965 /path/to/doc.pdf
 
 5. Birthday Data Extraction:
 
    .. code-block:: bash
 
       # Scan history for birthday announcements (-n / --limit)
-      grm extract bday -1001789902965 -n 200
+      grm extract bday -n 200 -1001789902965
+
 
 

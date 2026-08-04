@@ -38,23 +38,23 @@ Subcommand Option Parsers
 
 Subcommands parse GNU options using clean helper loops with ``std::from_chars`` for exception-free numeric parsing:
 
-- **Message Listing**: ``grm msg ls <chat_id> [-n|--limit <N>]``
-  - Positional 0: ``chat_id`` (int64)
+- **Message Listing**: ``grm msg ls [-n|--limit <N>] <chat_id>``
   - Option ``-n, --limit``: limit (int32, default 20)
-- **Message Search**: ``grm msg search <chat_id> [-q|--query "<pattern>"] [-n|--limit <N>]``
-  - Positional 0: ``chat_id`` (int64)
-  - Option ``-q, --query`` or Positional 1: query regex string
+  - Operands: ``chat_id`` (int64)
+- **Message Search**: ``grm msg search [-q|--query "<pattern>"] [-n|--limit <N>] <chat_id>``
+  - Option ``-q, --query``: query regex string
   - Option ``-n, --limit``: limit (int32, default 100)
-- **Message Export**: ``grm msg export <chat_id> [-f|--format csv|json] [-o|--output <file>] [-n|--limit <N>]``
-  - Positional 0: ``chat_id`` (int64)
+  - Operands: ``chat_id`` (int64)
+- **Message Export**: ``grm msg export [-f|--format csv|json] [-o|--output <file>] [-n|--limit <N>] <chat_id>``
   - Option ``-f, --format``: format type (default ``json``)
   - Option ``-o, --output``: output file path
   - Option ``-n, --limit``: max records (default 1000)
-- **File Upload**: ``grm send file <chat_id> <file> [-C|--caption "<text>"] [-t|--topic <id>]``
-  - Positional 0: ``chat_id`` (int64)
-  - Positional 1: ``file_path`` (path)
+  - Operands: ``chat_id`` (int64)
+- **File Upload**: ``grm send file [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> <file>``
   - Option ``-C, --caption``: caption string
   - Option ``-t, --topic``: topic ID (int64)
+  - Operands: ``chat_id`` (int64), ``file_path`` (path)
+
 
 Logging Utility API
 -------------------

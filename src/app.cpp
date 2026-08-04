@@ -26,15 +26,15 @@ Global Options:
   --color <mode>        Color mode: auto, always, never (or --no-color)
 
 Commands:
-  grm login [-p|--phone <num>] [-k|--code <code>] Interactive or non-interactive authentication
-  grm chat ls                                     List active chats (groups, channels, private)
-  grm msg ls <chat_id> [limit]                    List recent messages from a chat
-  grm msg export <chat_id> csv|json               Export chat history to CSV or JSON file
-  grm msg search <chat_id> "<query>"              Search chat history using regex filter
-  grm extract bday <chat_id>                      Extract registered birthdays from chat history
-  grm send <chat_id> "<message>"                  Send a text message to a chat or group
-  grm send file <chat_id> <file> [-C|--caption]   Upload a local file or document to a chat
-  grm topic ls <supergroup_id>                    List active forum topics in a supergroup
+  grm login [-p|--phone <num>] [-k|--code <code>]                  Interactive or non-interactive authentication
+  grm chat ls                                                      List active chats (groups, channels, private)
+  grm msg ls [-n|--limit <N>] <chat_id>                            List recent messages from a chat
+  grm msg export [-f|--format csv|json] [-o|--output <file>] <chat_id> Export chat history to CSV or JSON file
+  grm msg search [-q|--query "<query>"] [-n|--limit <N>] <chat_id> Search chat history using regex filter
+  grm extract bday [-n|--limit <N>] <chat_id>                       Extract registered birthdays from chat history
+  grm send <chat_id> "<message>"                                   Send a text message to a chat or group
+  grm send file [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> <file> Upload a local file or document to a chat
+  grm topic ls <supergroup_id>                                     List active forum topics in a supergroup
 
 )" << '\n';
 }
@@ -52,7 +52,6 @@ Authenticate your Telegram account with TDLib.
 
 Options:
   -p, --phone <number>   Pre-fill phone number in E.164 format (e.g. +12025550123)
-
   -k, --code <code>      Pre-fill authentication code for non-interactive logins
   -h, --help             Show this help screen
 )" << '\n';
@@ -69,24 +68,24 @@ Options:
 }
 
 void App::print_msg_help() {
-  std::cout << R"(Usage: grm msg <subcommand> [args]
+  std::cout << R"(Usage: grm msg <subcommand> [options] [args]
 
 Inspect and manage chat message history.
 
 Subcommands:
-  grm msg ls <chat_id> [limit]             List recent messages (default limit: 20)
-  grm msg export <chat_id> csv|json [path] Export chat history to CSV or JSON file
-  grm msg search <chat_id> "<query>"       Search chat history using regex pattern filter
+  grm msg ls [-n|--limit <N>] <chat_id>                             List recent messages (default limit: 20)
+  grm msg export [-f|--format csv|json] [-o|--output <file>] <chat_id> Export chat history to CSV or JSON file
+  grm msg search [-q|--query "<query>"] [-n|--limit <N>] <chat_id> Search chat history using regex pattern filter
 
 Options:
-  -h, --help                               Show this help screen
+  -h, --help                                                        Show this help screen
 )" << '\n';
 }
 
 void App::print_send_help() {
   std::cout << R"(Usage:
   grm send <chat_id> "<message>"
-  grm send file <chat_id> <file_path> [-C|--caption "<text>"] [-t|--topic <id>]
+  grm send file [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> <file_path>
 
 Send text messages or upload local files/documents to a chat.
 
@@ -108,14 +107,16 @@ Options:
 }
 
 void App::print_extract_help() {
-  std::cout << R"(Usage: grm extract bday <chat_id>
+  std::cout << R"(Usage: grm extract bday [-n|--limit <N>] <chat_id>
 
 Scan chat history with regex pattern matching to extract registered user birthdays.
 
 Options:
+  -n, --limit <N>         Maximum number of history messages to scan (default: 100)
   -h, --help              Show this help screen
 )" << '\n';
 }
+
 
 std::string App::get_auth_state() const {
   std::scoped_lock lock(auth_mutex_);

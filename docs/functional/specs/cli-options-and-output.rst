@@ -57,12 +57,12 @@ Login Command:
 Message Subcommands:
 ~~~~~~~~~~~~~~~~~~~
 
-- ``grm msg ls <chat_id> [-n|--limit <N>]``
+- ``grm msg ls [-n|--limit <N>] <chat_id>``
   - ``-n, --limit <N>``: Limit maximum messages to fetch (default: 20).
-- ``grm msg search <chat_id> [-q|--query "<pattern>"] [-n|--limit <N>]``
+- ``grm msg search [-q|--query "<pattern>"] [-n|--limit <N>] <chat_id>``
   - ``-q, --query "<pattern>"``: Filter messages using regex search pattern.
   - ``-n, --limit <N>``: Scan limit (default: 100).
-- ``grm msg export <chat_id> [-f|--format csv|json] [-o|--output <file>] [-n|--limit <N>]``
+- ``grm msg export [-f|--format csv|json] [-o|--output <file>] [-n|--limit <N>] <chat_id>``
   - ``-f, --format <fmt>``: Export format (``json`` or ``csv``, default: ``json``).
   - ``-o, --output <file>``: Destination export file path.
   - ``-n, --limit <N>``: Maximum records to export (default: 1000).
@@ -70,15 +70,15 @@ Message Subcommands:
 Extract Subcommand:
 ~~~~~~~~~~~~~~~~~~
 
-- ``grm extract bday <chat_id> [-n|--limit <N>]``
+- ``grm extract bday [-n|--limit <N>] <chat_id>``
   - ``-n, --limit <N>``: Maximum messages to scan (default: 100).
 
 Send Subcommands:
 ~~~~~~~~~~~~~~~~~
 
-- ``grm send <chat_id> "<message>" [-t|--topic <id>]``
+- ``grm send [-t|--topic <id>] <chat_id> "<message>"``
   - ``-t, --topic <id>``: Direct text message to a specific forum topic thread ID.
-- ``grm send file <chat_id> <file> [-C|--caption "<text>"] [-t|--topic <id>]``
+- ``grm send file [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> <file>``
   - ``-C, --caption "<text>"``: Attach text caption to uploaded document.
   - ``-t, --topic <id>``: Direct document upload to a specific forum topic thread ID.
 
@@ -90,18 +90,19 @@ GNU Formatted History Listing:
 
 .. code-block:: bash
 
-   grm msg ls -1002289735000 -n 50
+   grm msg ls -n 50 -1002289735000
 
 GNU Formatted Export with Explicit Output Path:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
-   grm msg export -1002289735000 -f csv -o /tmp/evalinux_history.csv -n 500
+   grm msg export -f csv -o /tmp/evalinux_history.csv -n 500 -1002289735000
 
 Upload Document with Caption to Forum Topic:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
-   grm send file -1001789902965 /path/to/report.pdf -C "Monthly Report" -t 42
+   grm send file -C "Monthly Report" -t 42 -1001789902965 /path/to/report.pdf
+
