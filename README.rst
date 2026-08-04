@@ -2,40 +2,41 @@
 grm — Group & Telegram Manager CLI
 ==================================
 
-**grm** is a high-performance, native **C++23** command-line interface for managing Telegram accounts, groups, message history, and data extractions. Powered by Telegram's official C++ engine **TDLib** (``libtdjson``).
+**grm** is a high-performance, native **C++23** command-line interface for managing Telegram accounts, groups, message history, forum topics, file uploads, and data extractions. Powered by Telegram's official engine **TDLib** (``libtdjson``).
 
-Features
---------
+Key Features
+------------
 
-- **TDLib Engine**: Powered by Telegram's official C++ engine (``libtdjson``), providing 100% MTProto coverage.
-- **Zero AccessHash Peer Bugs**: Automatically handles channels and supergroups (``-100...`` IDs) without invalid peer errors.
-- **Interactive Authentication**: Supports phone number authentication, SMS code validation, and 2FA password challenges.
-- **Chat Management**: Lists channels, groups, and direct messages with IDs and titles.
-- **Message Inspection**: Reads message history from any group or channel.
-- **Birthday Data Extraction**: Scans message history with regex pattern matching to extract birthday registrations.
-- **Message Sending**: Sends text messages directly to any chat or group.
+- **TDLib Engine**: Direct C++ integration with ``libtdjson`` for complete MTProto coverage.
+- **Zero AccessHash Peer Bugs**: Automatically resolves supergroup and channel IDs (``-100...``) without invalid peer errors.
+- **Interactive & Pre-filled Auth**: Supports interactive login, pre-filled phone/code options, SMS resend, and 2FA password challenges.
+- **Chat & Forum Topic Management**: List active chats and inspect supergroup forum topics.
+- **Message Operations**: Read, export (CSV/JSON), and regex search message histories.
+- **File & Document Uploads**: Upload files and documents with captions and topic target flags.
+- **Data Extraction**: Scan chat history with regex patterns to extract registered user birthdays.
+- **Strict Quality Suite**: 100% C++23 standards compliance with Clang static analysis and Clang-Tidy linters.
 
-Directory Structure
--------------------
+Directory Layout
+----------------
 
 .. code-block:: text
 
    grm/
-   ├── CMakeLists.txt              # CMake build configuration (C++23)
-   ├── GNUmakefile                 # GNU Makefile build system
+   ├── CMakeLists.txt              # C++23 CMake build configuration
+   ├── GNUmakefile                 # Build, test, lint, and install targets
    ├── README.rst                  # Project documentation
+   ├── docs/                       # Functional, technical specs, and ADRs
    ├── include/
    │   └── grm/
    │       ├── app.hpp             # Main CLI application controller
-   │       ├── config.hpp          # Configuration loader
+   │       ├── config.hpp          # Configuration & CLI option loader
+   │       ├── exporter.hpp        # CSV and JSON chat history exporter
    │       ├── json_utils.hpp      # C++23 RAII JsonValue wrapper for json-c
-   │       └── td_client.hpp       # Asynchronous TDLib client wrapper
-   └── src/
-       ├── main.cpp                # CLI entry point
-       ├── app.cpp                 # Application logic & command handlers
-       ├── config.cpp              # Configuration management
-       ├── json_utils.cpp          # JSON parsing implementation
-       └── td_client.cpp           # TDLib event loop and promise routing
+   │       ├── logger.hpp          # Structured level logger ([INFO], [AUTH], etc.)
+   │       ├── td_client.hpp       # Asynchronous TDLib client wrapper
+   │       └── uploader.hpp        # Document and file payload builder
+   ├── src/                        # Implementation sources
+   └── tests/                      # Unit and integration tests
 
 Prerequisites (Fedora Linux)
 ----------------------------
@@ -46,91 +47,93 @@ Install required build dependencies:
 
    sudo dnf install tdlib-devel json-c-devel cmake ninja-build gcc-c++ clang-tools-extra
 
-Building and Installing
------------------------
+Building & Testing
+------------------
 
 Using the ``GNUmakefile``:
 
 .. code-block:: bash
 
-   # Build release binary (output: build/grm)
+   # Development build (unoptimized, -O0 -g3 debug symbols)
+   make
+
+   # Optimized production build (-O3 -DNDEBUG, stripped)
    make release
 
-   # Install to ~/bin/grm
+   # Run test suite
+   make check
+
+   # Run static analyzer and linters
+   make lint
+   make analyze
+
+   # Install binary to ~/bin/grm
    make install-user
 
-   # Format source files
-   make format
+Command Reference
+-----------------
 
-   # Clean build artifacts
-   make clean
+Global Flags
+~~~~~~~~~~~~
 
-Usage Guide
------------
-
-Global Flags:
-
-- ``-h, --help``: Show help message.
-- ``-V, --version``: Display application version.
+- ``-h, --help``: Display help screen and exit.
+- ``-V, --version``: Display version information and exit.
 - ``-v, --verbose``: Enable verbose TDLib state output.
-- ``-q, --quiet``: Suppress non-essential informational messages.
-- ``-c, --config <path>``: Specify custom config file path.
+- ``-q, --quiet``: Suppress non-essential informational output.
+- ``-c, --config <path>``: Custom configuration file path.
 
-1. Account Authentication
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Usage Examples
+~~~~~~~~~~~~~~
 
-Authenticate interactively or pre-fill your phone number:
+1. Account Authentication:
+   
+   .. code-block:: bash
 
-.. code-block:: bash
+      # Interactive login
+      grm login
 
-   # Interactive login
-   grm login
+      # Pre-fill phone number
+      grm login --phone +523335765013
 
-   # Pre-fill phone number
-   grm login --phone +523335765013
+2. Chat & Forum Topic Navigation:
 
-2. List Active Chats & Groups
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   .. code-block:: bash
 
-List chats with peer IDs, types, and titles:
+      # List active chats and supergroups
+      grm chat ls
 
-.. code-block:: bash
+      # List forum topics in a supergroup
+      grm topic ls -1001789902965
 
-   grm chat ls
+3. Message Inspection & Search:
 
-3. Read Message History
-~~~~~~~~~~~~~~~~~~~~~~~
+   .. code-block:: bash
 
-Fetch the last 20 messages from a group (e.g. ``-1001789902965``):
+      # Read recent messages from a chat
+      grm msg ls -1001789902965 20
 
-.. code-block:: bash
+      # Search chat history with regex filter
+      grm msg search -1001789902965 "reunión"
 
-   grm msg ls -1001789902965 20
+      # Export chat history to CSV or JSON
+      grm msg export -1001789902965 csv history.csv
 
-4. Extract Birthday Registrations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+4. File & Document Uploads:
 
-Scan history for birthday declarations:
+   .. code-block:: bash
 
-.. code-block:: bash
+      # Send a text message
+      grm send -1001789902965 "Hola desde grm CLI!"
 
-   grm extract bday -1001789902965
+      # Upload a document with caption
+      grm send file -1001789902965 /path/to/report.pdf --caption "Monthly Report"
 
-5. Send a Message
-~~~~~~~~~~~~~~~~~
+      # Upload a document directly to a forum topic
+      grm send file -1001789902965 /path/to/doc.pdf --topic 42
 
-Send a text message to a group or user:
+5. Birthday Data Extraction:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-   grm msg send -1001789902965 "Hola a todos desde grm CLI!"
-
-6. Upload a File / Document
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Upload and send a file:
-
-.. code-block:: bash
-
-   grm file send -1001789902965 /path/to/document.pdf "Document caption"
-
+      # Scan history for birthday announcements
+      grm extract bday -1001789902965
