@@ -11,7 +11,11 @@ App::cmd_chat_ls([[maybe_unused]] const std::vector<std::string> &args) {
   }
 
   // Pre-load chats from server / database cache
-  (void)client_->send_request("loadChats", R"({"limit": 100})", 5.0);
+  auto load_res = client_->send_request("loadChats", R"({"limit": 100})", 5.0);
+  if (!load_res) {
+    grm::log::debug("loadChats: " + load_res.error());
+  }
+
 
 
   // Request chats list
