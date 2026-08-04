@@ -88,24 +88,20 @@ std::expected<void, std::string> App::init_tdlib() {
             if (*sttype == "authorizationStateWaitTdlibParameters") {
               const std::string params = std::format(
                   R"({{
-                    "parameters": {{
-                      "@type": "tdlibParameters",
-                      "use_test_dc": false,
-                      "database_directory": "{}",
-                      "files_directory": "{}/files",
-                      "use_file_database": true,
-                      "use_chat_info_database": true,
-                      "use_message_database": true,
-                      "use_secret_chats": true,
-                      "api_id": {},
-                      "api_hash": "{}",
-                      "system_language_code": "en",
-                      "device_model": "grm CLI",
-                      "system_version": "Linux x86_64",
-                      "application_version": "10.9.1",
-                      "enable_storage_optimizer": true
-
-                    }}
+                    "use_test_dc": false,
+                    "database_directory": "{}",
+                    "files_directory": "{}/files",
+                    "use_file_database": true,
+                    "use_chat_info_database": true,
+                    "use_message_database": true,
+                    "use_secret_chats": true,
+                    "api_id": {},
+                    "api_hash": "{}",
+                    "system_language_code": "en",
+                    "device_model": "grm CLI",
+                    "system_version": "Linux x86_64",
+                    "application_version": "10.9.1",
+                    "enable_storage_optimizer": true
                   }})",
                   config_.db_dir.string(), config_.db_dir.string(),
                   config_.api_id, config_.api_hash);
