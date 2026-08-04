@@ -16,6 +16,8 @@ Usage:
   grm login                         Interactive authentication login
   grm chat ls                       List active chats (groups, channels, private)
   grm msg ls <chat_id> [limit]      List recent messages from a chat
+  grm msg export <chat_id> csv|json Export chat history to CSV or JSON file
+  grm msg search <chat_id> "<query>" Search chat history using regex filter
   grm extract bday <chat_id>        Extract registered birthdays from chat history
   grm send <chat_id> "<message>"    Send a message to a chat or group
 
@@ -124,10 +126,21 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     return cmd_chat_ls(
         std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
   }
-  if (cmd == "msg" && !sub_args.empty() && sub_args[0] == "ls") {
-    return cmd_msg_ls(
-        std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+  if (cmd == "msg" && !sub_args.empty()) {
+    if (sub_args[0] == "ls") {
+      return cmd_msg_ls(
+          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+    }
+    if (sub_args[0] == "export") {
+      return cmd_msg_export(
+          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+    }
+    if (sub_args[0] == "search") {
+      return cmd_msg_search(
+          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+    }
   }
+
   if (cmd == "extract" && !sub_args.empty() && sub_args[0] == "bday") {
     return cmd_extract_bday(
         std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));

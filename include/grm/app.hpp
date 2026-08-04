@@ -24,6 +24,10 @@ private:
   [[nodiscard]] std::expected<int, std::string>
   cmd_msg_ls(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
+  cmd_msg_export(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_msg_search(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
   cmd_extract_bday(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
   cmd_send(const std::vector<std::string> &args);
