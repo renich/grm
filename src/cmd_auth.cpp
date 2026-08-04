@@ -61,9 +61,25 @@ std::expected<int, std::string> App::cmd_login() {
         }
 
       } else if (state == "authorizationStateWaitCode") {
-        std::cout << "Enter the authentication code sent by Telegram: ";
+        std::cout << "Enter the authentication code sent by Telegram (or type "
+                     "'resend' to request SMS): ";
         std::string code;
         std::cin >> code;
+
+        if (code == "resend") {
+          std::cout << "Requesting Telegram to resend code via SMS..."
+                    << std::endl;
+          auto res =
+              client_->send_request("resendAuthenticationCode", "{}", 15.0);
+          if (!res) {
+            std::cerr << "Failed to resend code: " << res.error() << std::endl;
+          } else {
+            std::cout << "✓ Resend requested. Check your mobile phone SMS."
+                      << std::endl;
+          }
+          last_state.clear();
+          continue;
+        }
 
         const std::string payload =
             std::format(R"({{"code": "{}"}})", escape_json_string(code));
