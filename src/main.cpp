@@ -1,21 +1,34 @@
 #include "grm/app.hpp"
 #include "grm/config.hpp"
 #include "grm/logger.hpp"
+#include <algorithm>
+#include <array>
 #include <iostream>
 #include <string_view>
 #include <vector>
+
 
 int main(int argc, char *argv[]) {
   grm::CliOptions options;
   std::vector<std::string> command_args;
 
+  const std::array<std::string_view, 6> subcommands = {
+      "login", "chat", "msg", "extract", "send", "topic"};
+
   for (int i = 1; i < argc; ++i) {
     std::string_view arg(argv[i]);
+
+    if (std::ranges::find(subcommands, arg) != subcommands.end()) {
+      for (; i < argc; ++i) {
+        command_args.emplace_back(argv[i]);
+      }
+      break;
+    }
+
     if (arg == "-h" || arg == "--help") {
       options.help = true;
       command_args.emplace_back(arg);
     } else if (arg == "-V" || arg == "--version") {
-
       options.version = true;
     } else if (arg == "-v" || arg == "--verbose") {
       options.verbosity = grm::log::VerbosityLevel::Verbose;
@@ -26,12 +39,7 @@ int main(int argc, char *argv[]) {
     } else if (arg == "-T" || arg == "--test-dc") {
       options.use_test_dc = true;
     } else if ((arg == "-c" || arg == "--config") && i + 1 < argc) {
-
       options.custom_config_path = argv[++i];
-    } else if ((arg == "-p" || arg == "--phone") && i + 1 < argc) {
-      options.phone = argv[++i];
-    } else if ((arg == "-k" || arg == "--code") && i + 1 < argc) {
-      options.code = argv[++i];
     } else if ((arg == "-F" || arg == "--format") && i + 1 < argc) {
       std::string_view fmt_val(argv[++i]);
       if (fmt_val == "human") {
@@ -57,8 +65,8 @@ int main(int argc, char *argv[]) {
     } else {
       command_args.emplace_back(arg);
     }
-
   }
+
 
   grm::log::set_verbosity(options.verbosity);
 
