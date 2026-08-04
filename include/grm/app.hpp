@@ -27,7 +27,13 @@ public:
 
   static void print_usage();
   static void print_version();
-
+  static void print_login_help();
+  static void print_chat_help();
+  static void print_msg_help();
+  static void print_send_help();
+  static void print_topic_help();
+  static void print_extract_help();
+  static bool is_help_requested(const std::vector<std::string> &args);
 
 private:
   [[nodiscard]] std::expected<int, std::string> cmd_login();
@@ -49,7 +55,6 @@ private:
   cmd_topic_ls(const std::vector<std::string> &args);
 
   [[nodiscard]] std::expected<void, std::string> ensure_authenticated();
-
   [[nodiscard]] std::expected<void, std::string> init_tdlib();
 
   [[nodiscard]] std::string get_auth_state() const;

@@ -13,7 +13,9 @@ int main(int argc, char *argv[]) {
     std::string_view arg(argv[i]);
     if (arg == "-h" || arg == "--help") {
       options.help = true;
+      command_args.emplace_back(arg);
     } else if (arg == "-V" || arg == "--version") {
+
       options.version = true;
     } else if (arg == "-v" || arg == "--verbose") {
       options.verbosity = grm::log::VerbosityLevel::Verbose;

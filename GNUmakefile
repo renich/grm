@@ -41,6 +41,9 @@ check: release
 
 
 
+BASH_COMPLETION_DIR ?= $(PREFIX)/share/bash-completion/completions
+USER_BASH_COMPLETION_DIR ?= $(HOME)/.local/share/bash-completion/completions
+
 install: release
 	install -d $(DESTDIR)$(INSTALL_BIN)
 	install -m 0755 $(BUILD_DIR)/grm $(DESTDIR)$(INSTALL_BIN)/grm
@@ -48,3 +51,12 @@ install: release
 install-user: release
 	install -d $(USER_BIN)
 	install -m 0755 $(BUILD_DIR)/grm $(USER_BIN)/grm
+
+install-completions:
+	install -d $(DESTDIR)$(BASH_COMPLETION_DIR)
+	install -m 0644 completions/grm.bash $(DESTDIR)$(BASH_COMPLETION_DIR)/grm
+
+install-user-completions:
+	install -d $(USER_BASH_COMPLETION_DIR)
+	install -m 0644 completions/grm.bash $(USER_BASH_COMPLETION_DIR)/grm
+

@@ -36,9 +36,90 @@ Commands:
   grm send file <chat_id> <file> [-C|--caption]   Upload a local file or document to a chat
   grm topic ls <supergroup_id>                    List active forum topics in a supergroup
 
-
 )" << '\n';
 }
+
+bool App::is_help_requested(const std::vector<std::string> &args) {
+
+  for (const auto &arg : args) {
+    if (arg == "-h" || arg == "--help") {
+      return true;
+    }
+  }
+  return false;
+}
+
+void App::print_login_help() {
+  std::cout << R"(Usage: grm login [-p|--phone <number>] [-k|--code <code>]
+
+Authenticate your Telegram account with TDLib.
+
+Options:
+  -p, --phone <number>   Pre-fill phone number in E.164 format (e.g. +523335765013)
+  -k, --code <code>      Pre-fill authentication code for non-interactive logins
+  -h, --help             Show this help screen
+)" << '\n';
+}
+
+void App::print_chat_help() {
+  std::cout << R"(Usage: grm chat ls
+
+List all active Telegram chats, groups, channels, and private conversations.
+
+Options:
+  -h, --help             Show this help screen
+)" << '\n';
+}
+
+void App::print_msg_help() {
+  std::cout << R"(Usage: grm msg <subcommand> [args]
+
+Inspect and manage chat message history.
+
+Subcommands:
+  grm msg ls <chat_id> [limit]             List recent messages (default limit: 20)
+  grm msg export <chat_id> csv|json [path] Export chat history to CSV or JSON file
+  grm msg search <chat_id> "<query>"       Search chat history using regex pattern filter
+
+Options:
+  -h, --help                               Show this help screen
+)" << '\n';
+}
+
+void App::print_send_help() {
+  std::cout << R"(Usage:
+  grm send <chat_id> "<message>"
+  grm send file <chat_id> <file_path> [-C|--caption "<text>"] [-t|--topic <id>]
+
+Send text messages or upload local files/documents to a chat.
+
+Options:
+  -C, --caption "<text>"  Attach text caption to uploaded document
+  -t, --topic <id>        Target a specific forum topic thread ID
+  -h, --help              Show this help screen
+)" << '\n';
+}
+
+void App::print_topic_help() {
+  std::cout << R"(Usage: grm topic ls <supergroup_id>
+
+List active forum topics in a Telegram supergroup.
+
+Options:
+  -h, --help              Show this help screen
+)" << '\n';
+}
+
+void App::print_extract_help() {
+  std::cout << R"(Usage: grm extract bday <chat_id>
+
+Scan chat history with regex pattern matching to extract registered user birthdays.
+
+Options:
+  -h, --help              Show this help screen
+)" << '\n';
+}
+
 
 
 std::string App::get_auth_state() const {
@@ -164,52 +245,91 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     return 0;
   }
 
-  if (options_.help || args.empty()) {
+  if (args.empty()) {
     print_usage();
     return 0;
   }
 
   const std::string &cmd = args[0];
 
+  if (cmd == "-h" || cmd == "--help") {
+    print_usage();
+    return 0;
+  }
+
+
   std::vector<std::string> sub_args(args.begin() + 1, args.end());
 
   if (cmd == "login") {
+    if (is_help_requested(sub_args)) {
+      print_login_help();
+      return 0;
+    }
     return cmd_login();
   }
-  if (cmd == "chat" && !sub_args.empty() && sub_args[0] == "ls") {
-    return cmd_chat_ls(
-        std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+  if (cmd == "chat") {
+    if (is_help_requested(sub_args)) {
+      print_chat_help();
+      return 0;
+    }
+    if (!sub_args.empty() && sub_args[0] == "ls") {
+      return cmd_chat_ls(
+          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+    }
   }
-  if (cmd == "msg" && !sub_args.empty()) {
-    if (sub_args[0] == "ls") {
-      return cmd_msg_ls(
-          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+  if (cmd == "msg") {
+    if (is_help_requested(sub_args)) {
+      print_msg_help();
+      return 0;
     }
-    if (sub_args[0] == "export") {
-      return cmd_msg_export(
-          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
-    }
-    if (sub_args[0] == "search") {
-      return cmd_msg_search(
-          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+    if (!sub_args.empty()) {
+      if (sub_args[0] == "ls") {
+        return cmd_msg_ls(
+            std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+      }
+      if (sub_args[0] == "export") {
+        return cmd_msg_export(
+            std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+      }
+      if (sub_args[0] == "search") {
+        return cmd_msg_search(
+            std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+      }
     }
   }
 
-  if (cmd == "extract" && !sub_args.empty() && sub_args[0] == "bday") {
-    return cmd_extract_bday(
-        std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+  if (cmd == "extract") {
+    if (is_help_requested(sub_args)) {
+      print_extract_help();
+      return 0;
+    }
+    if (!sub_args.empty() && sub_args[0] == "bday") {
+      return cmd_extract_bday(
+          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+    }
   }
-  if (cmd == "topic" && !sub_args.empty() && sub_args[0] == "ls") {
-    return cmd_topic_ls(
-        std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+  if (cmd == "topic") {
+    if (is_help_requested(sub_args)) {
+      print_topic_help();
+      return 0;
+    }
+    if (!sub_args.empty() && sub_args[0] == "ls") {
+      return cmd_topic_ls(
+          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+    }
   }
   if (cmd == "send") {
+    if (is_help_requested(sub_args)) {
+      print_send_help();
+      return 0;
+    }
     if (!sub_args.empty() && sub_args[0] == "file") {
       return cmd_send_file(
           std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
     }
     return cmd_send(sub_args);
   }
+
 
   print_usage();
   return std::unexpected("Unknown command: " + cmd);
