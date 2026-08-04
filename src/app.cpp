@@ -81,8 +81,7 @@ std::expected<void, std::string> App::init_tdlib() {
                   config_.db_dir.string(), config_.db_dir.string(),
                   config_.api_id, config_.api_hash);
 
-              static_cast<void>(
-                  client_->send_request("setTdlibParameters", params, 5.0));
+              client_->send_async("setTdlibParameters", params);
             }
           }
         }

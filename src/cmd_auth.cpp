@@ -16,7 +16,7 @@ std::expected<int, std::string> App::cmd_login() {
 
   std::string last_state;
 
-  for (int attempt = 0; attempt < 100; ++attempt) {
+  for (int attempt = 0; attempt < 300; ++attempt) {
     const std::string state = get_auth_state();
 
     if (state == "authorizationStateReady") {
@@ -24,9 +24,10 @@ std::expected<int, std::string> App::cmd_login() {
       return 0;
     }
 
-    if (state != last_state) {
+    if (!state.empty() && state != last_state) {
+      last_state = state;
+
       if (state == "authorizationStateWaitPhoneNumber") {
-        last_state = state;
         std::cout << "Enter your Telegram phone number (e.g. +521234567890): ";
         std::string phone;
         std::cin >> phone;
@@ -38,9 +39,9 @@ std::expected<int, std::string> App::cmd_login() {
         if (!res) {
           std::cerr << "Failed to set phone number: " << res.error()
                     << std::endl;
+          last_state.clear(); // Allow retry
         }
       } else if (state == "authorizationStateWaitCode") {
-        last_state = state;
         std::cout << "Enter the authentication code sent by Telegram: ";
         std::string code;
         std::cin >> code;
@@ -51,9 +52,9 @@ std::expected<int, std::string> App::cmd_login() {
             client_->send_request("checkAuthenticationCode", payload, 10.0);
         if (!res) {
           std::cerr << "Invalid code: " << res.error() << std::endl;
+          last_state.clear(); // Allow retry
         }
       } else if (state == "authorizationStateWaitPassword") {
-        last_state = state;
         std::cout << "Enter your 2FA password: ";
         std::string password;
         std::cin >> password;
@@ -64,11 +65,14 @@ std::expected<int, std::string> App::cmd_login() {
             client_->send_request("checkAuthenticationPassword", payload, 10.0);
         if (!res) {
           std::cerr << "Invalid password: " << res.error() << std::endl;
+          last_state.clear(); // Allow retry
         }
+      } else {
+        std::cout << "[Auth Status]: " << state << "..." << std::endl;
       }
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
 
   return std::unexpected("Authentication loop timed out");
