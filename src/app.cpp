@@ -256,13 +256,15 @@ void App::ensure_chat_loaded(int64_t chat_id) {
     if (!load_res) {
       grm::log::debug("loadChats: " + load_res.error());
     }
-    auto retry_chat = client_->send_request("getChat", chat_req, 3.0);
-    if (!retry_chat) {
-      grm::log::debug("getChat retry: " + retry_chat.error());
+    for (int i = 0; i < 10; ++i) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      if (client_->send_request("getChat", chat_req, 2.0)) {
+        break;
+      }
     }
-
   }
 }
+
 
 std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
   if (options_.version) {
