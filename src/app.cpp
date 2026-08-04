@@ -6,36 +6,47 @@
 
 namespace grm {
 
-App::App(Config config) : config_(std::move(config)) {}
+App::App(Config config, CliOptions options)
+    : config_(std::move(config)), options_(std::move(options)) {}
+
+void App::print_version() {
+  std::cout << "grm 1.0.0 (C++23 / TDLib 1.8.66)\n";
+}
 
 void App::print_usage() {
   std::cout << R"(
 grm - Group & Telegram Manager CLI (C++23 / TDLib)
 
-Usage:
-  grm login                         Interactive authentication login
-  grm chat ls                       List active chats (groups, channels, private)
-  grm msg ls <chat_id> [limit]      List recent messages from a chat
-  grm msg export <chat_id> csv|json Export chat history to CSV or JSON file
-  grm msg search <chat_id> "<query>" Search chat history using regex filter
-  grm extract bday <chat_id>        Extract registered birthdays from chat history
-  grm send <chat_id> "<message>"    Send a message to a chat or group
-  grm send file <chat_id> <path>    Upload a local file or document to a chat
-  grm topic ls <supergroup_id>      List active forum topics in a supergroup
+Global Options:
+  -h, --help            Show this help screen
+  -V, --version         Display version and build info
+  -v, --verbose         Enable verbose TDLib state output
+  -d, --debug           Enable debug tracing
+  -q, --quiet           Suppress informational messages
+  -c, --config <path>   Path to custom configuration file
 
-
+Commands:
+  grm login [--phone <num>] [--code <code>] Interactive or non-interactive authentication
+  grm chat ls                              List active chats (groups, channels, private)
+  grm msg ls <chat_id> [limit]             List recent messages from a chat
+  grm msg export <chat_id> csv|json        Export chat history to CSV or JSON file
+  grm msg search <chat_id> "<query>"       Search chat history using regex filter
+  grm extract bday <chat_id>               Extract registered birthdays from chat history
+  grm send <chat_id> "<message>"           Send a text message to a chat or group
+  grm send file <chat_id> <path>           Upload a local file or document to a chat
+  grm topic ls <supergroup_id>             List active forum topics in a supergroup
 
 )" << std::endl;
 }
 
 std::string App::get_auth_state() const {
-  std::lock_guard<std::mutex> lock(auth_mutex_);
+  std::scoped_lock lock(auth_mutex_);
   return auth_state_;
 }
 
 void App::update_auth_state(std::string state, bool closed) {
   {
-    std::lock_guard<std::mutex> lock(auth_mutex_);
+    std::scoped_lock lock(auth_mutex_);
     auth_state_ = std::move(state);
     if (closed) {
       is_closed_ = true;
@@ -56,34 +67,26 @@ std::expected<void, std::string> App::init_tdlib() {
       if (*type == "updateAuthorizationState") {
         if (auto state = update.get_object("authorization_state")) {
           if (auto sttype = state->get_type()) {
-            std::cout << "[Auth State]: " << *sttype << std::endl;
+            grm::log::debug("[Auth State]: " + *sttype);
             if (*sttype == "authorizationStateWaitCode") {
               if (auto code_info = state->get_object("code_info")) {
                 if (auto code_type_obj = code_info->get_object("type")) {
                   if (auto code_type = code_type_obj->get_type()) {
                     if (*code_type == "authenticationCodeTypeTelegramMessage") {
-                      std::cout << "[Auth Info]: Code sent as an in-app "
-                                   "message to your active Telegram client "
-                                   "(Chat: Telegram Service Notifications)."
-                                << std::endl;
+                      grm::log::auth("Code sent as an in-app message to your active Telegram client (Chat: Telegram Service Notifications).");
                     } else if (*code_type == "authenticationCodeTypeSms") {
-                      std::cout << "[Auth Info]: Code sent via SMS to your "
-                                   "phone number."
-                                << std::endl;
+                      grm::log::auth("Code sent via SMS to your phone number.");
                     } else if (*code_type == "authenticationCodeTypeCall") {
-                      std::cout << "[Auth Info]: Code will be delivered via an "
-                                   "automated phone call."
-                                << std::endl;
+                      grm::log::auth("Code will be delivered via an automated phone call.");
                     } else {
-                      std::cout
-                          << "[Auth Info]: Code delivery method: " << *code_type
-                          << std::endl;
+                      grm::log::auth("Code delivery method: " + *code_type);
                     }
                   }
                 }
               }
             }
             update_auth_state(*sttype, *sttype == "authorizationStateClosed");
+
 
             if (*sttype == "authorizationStateWaitTdlibParameters") {
               const std::string params = std::format(
@@ -154,12 +157,18 @@ std::expected<void, std::string> App::ensure_authenticated() {
 }
 
 std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
-  if (args.empty()) {
+  if (options_.version) {
+    print_version();
+    return 0;
+  }
+
+  if (options_.help || args.empty()) {
     print_usage();
     return 0;
   }
 
   const std::string &cmd = args[0];
+
   std::vector<std::string> sub_args(args.begin() + 1, args.end());
 
   if (cmd == "login") {

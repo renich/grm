@@ -68,14 +68,26 @@ Using the ``GNUmakefile``:
 Usage Guide
 -----------
 
-1. Interactive Authentication
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Global Flags:
 
-Authenticate your Telegram account:
+- ``-h, --help``: Show help message.
+- ``-V, --version``: Display application version.
+- ``-v, --verbose``: Enable verbose TDLib state output.
+- ``-q, --quiet``: Suppress non-essential informational messages.
+- ``-c, --config <path>``: Specify custom config file path.
+
+1. Account Authentication
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Authenticate interactively or pre-fill your phone number:
 
 .. code-block:: bash
 
+   # Interactive login
    grm login
+
+   # Pre-fill phone number
+   grm login --phone +523335765013
 
 2. List Active Chats & Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -111,4 +123,14 @@ Send a text message to a group or user:
 
 .. code-block:: bash
 
-   grm send -1001789902965 "Hola a todos desde grm CLI!"
+   grm msg send -1001789902965 "Hola a todos desde grm CLI!"
+
+6. Upload a File / Document
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Upload and send a file:
+
+.. code-block:: bash
+
+   grm file send -1001789902965 /path/to/document.pdf "Document caption"
+

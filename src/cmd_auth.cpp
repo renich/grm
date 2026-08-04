@@ -1,5 +1,6 @@
 #include "grm/app.hpp"
 #include "grm/json_utils.hpp"
+#include "grm/logger.hpp"
 #include <chrono>
 #include <format>
 #include <iostream>
@@ -12,7 +13,7 @@ std::expected<int, std::string> App::cmd_login() {
     return std::unexpected(res.error());
   }
 
-  std::cout << "Initializing login flow..." << std::endl;
+  grm::log::auth("Initializing authentication flow...");
 
   std::string last_state;
 
@@ -20,7 +21,7 @@ std::expected<int, std::string> App::cmd_login() {
     const std::string state = get_auth_state();
 
     if (state == "authorizationStateReady") {
-      std::cout << "✓ Authenticated successfully as user!" << std::endl;
+      grm::log::auth("Authenticated successfully as user.");
       return 0;
     }
 
@@ -32,9 +33,14 @@ std::expected<int, std::string> App::cmd_login() {
       last_state = state;
 
       if (state == "authorizationStateWaitPhoneNumber") {
-        std::cout << "Enter your Telegram phone number (e.g. +521234567890): ";
-        std::string phone;
-        std::cin >> phone;
+        std::string phone = options_.phone;
+        if (phone.empty()) {
+          std::cout << "[AUTH] Enter your Telegram phone number (e.g. "
+                       "+521234567890): ";
+          std::cin >> phone;
+        } else {
+          grm::log::auth("Using pre-filled phone number: " + phone);
+        }
 
         const std::string payload = std::format(
             R"({{
@@ -48,34 +54,37 @@ std::expected<int, std::string> App::cmd_login() {
             }})",
             escape_json_string(phone));
 
-        std::cout << "Submitting phone number to Telegram..." << std::endl;
+        grm::log::auth("Submitting phone number to Telegram...");
         auto res = client_->send_request("setAuthenticationPhoneNumber",
                                          payload, 15.0);
         if (!res) {
-          std::cerr << "Failed to set phone number: " << res.error()
-                    << std::endl;
-          last_state.clear(); // Allow user to re-enter phone
+          grm::log::error("Failed to set phone number: " + res.error());
+          options_.phone.clear(); // Clear invalid option
+          last_state.clear();
         } else {
-          std::cout << "Phone number submitted. Waiting for code..."
-                    << std::endl;
+          grm::log::auth(
+              "Phone number submitted. Waiting for authentication code...");
         }
 
       } else if (state == "authorizationStateWaitCode") {
-        std::cout << "Enter the authentication code sent by Telegram (or type "
-                     "'resend' to request SMS): ";
-        std::string code;
-        std::cin >> code;
+        std::string code = options_.code;
+        if (code.empty()) {
+          std::cout << "[AUTH] Enter authentication code (or type 'resend' for "
+                       "SMS): ";
+          std::cin >> code;
+        } else {
+          grm::log::auth("Using pre-filled code.");
+        }
 
         if (code == "resend") {
-          std::cout << "Requesting Telegram to resend code via SMS..."
-                    << std::endl;
+          grm::log::auth("Requesting Telegram to resend code via SMS...");
           auto res =
               client_->send_request("resendAuthenticationCode", "{}", 15.0);
           if (!res) {
-            std::cerr << "Failed to resend code: " << res.error() << std::endl;
+            grm::log::error("Failed to resend code: " + res.error());
           } else {
-            std::cout << "✓ Resend requested. Check your mobile phone SMS."
-                      << std::endl;
+            grm::log::auth(
+                "SMS resend requested. Please check your mobile phone.");
           }
           last_state.clear();
           continue;
@@ -86,21 +95,22 @@ std::expected<int, std::string> App::cmd_login() {
         auto res =
             client_->send_request("checkAuthenticationCode", payload, 15.0);
         if (!res) {
-          std::cerr << "Invalid code: " << res.error() << std::endl;
-          last_state.clear(); // Allow user to re-enter code
+          grm::log::error("Invalid code: " + res.error());
+          options_.code.clear();
+          last_state.clear();
         }
       } else if (state == "authorizationStateWaitPassword") {
-        std::cout << "Enter your 2FA password: ";
+        std::cout << "[AUTH] Enter your 2FA password: ";
         std::string password;
         std::cin >> password;
 
         const std::string payload = std::format(R"({{"password": "{}"}})",
                                                 escape_json_string(password));
-        auto res =
-            client_->send_request("checkAuthenticationPassword", payload, 15.0);
+        auto res = client_->send_request("checkAuthenticationPassword", payload,
+                                         15.0);
         if (!res) {
-          std::cerr << "Invalid password: " << res.error() << std::endl;
-          last_state.clear(); // Allow user to re-enter password
+          grm::log::error("Invalid password: " + res.error());
+          last_state.clear();
         }
       }
     }

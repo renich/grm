@@ -1,6 +1,8 @@
 #include "grm/app.hpp"
 #include "grm/exporter.hpp"
 #include "grm/json_utils.hpp"
+#include "grm/logger.hpp"
+
 #include <charconv>
 #include <filesystem>
 #include <format>
@@ -266,8 +268,9 @@ App::cmd_send(const std::vector<std::string> &args) {
     return std::unexpected("Failed to send message: " + res.error());
   }
 
-  std::cout << "✓ Message sent successfully!" << std::endl;
+  grm::log::info("Message sent successfully.");
   return 0;
 }
+
 
 } // namespace grm

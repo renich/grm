@@ -1,4 +1,5 @@
 #include "grm/app.hpp"
+#include "grm/logger.hpp"
 #include "grm/uploader.hpp"
 #include <charconv>
 #include <filesystem>
@@ -52,16 +53,17 @@ App::cmd_send_file(const std::vector<std::string> &args) {
     return std::unexpected(payload_res.error());
   }
 
-  std::cout << std::format("Uploading {} to chat {}...\n", file_path.string(),
-                           chat_id);
+  grm::log::info(std::format("Uploading {} to chat {}...", file_path.string(),
+                             chat_id));
 
   auto res = client_->send_request("sendMessage", *payload_res, 30.0);
   if (!res) {
     return std::unexpected("Failed to send file: " + res.error());
   }
 
-  std::cout << "✓ File uploaded and sent successfully!" << std::endl;
+  grm::log::info("File uploaded and sent successfully.");
   return 0;
 }
+
 
 } // namespace grm

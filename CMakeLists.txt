@@ -38,6 +38,7 @@ include_directories(
 add_executable(grm
     src/main.cpp
     src/config.cpp
+    src/logger.cpp
     src/json_utils.cpp
     src/td_client.cpp
     src/app.cpp
@@ -50,6 +51,7 @@ add_executable(grm
     src/exporter.cpp
     src/uploader.cpp
 )
+
 
 
 
@@ -82,8 +84,10 @@ add_test(NAME test_json_utils COMMAND test_json_utils)
 add_executable(test_config
     tests/test_config.cpp
     src/config.cpp
+    src/logger.cpp
     src/json_utils.cpp
 )
+
 target_link_libraries(test_config PRIVATE ${JSONC_LIBRARIES})
 add_test(NAME test_config COMMAND test_config)
 

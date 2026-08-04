@@ -1,6 +1,7 @@
 #pragma once
 
 #include "grm/config.hpp"
+#include "grm/logger.hpp"
 #include "grm/td_client.hpp"
 #include <condition_variable>
 #include <expected>
@@ -13,7 +14,7 @@ namespace grm {
 
 class App {
 public:
-  explicit App(Config config);
+  explicit App(Config config, CliOptions options = {});
   ~App() = default;
 
   [[nodiscard]] std::expected<int, std::string>
@@ -39,6 +40,7 @@ private:
   cmd_topic_ls(const std::vector<std::string> &args);
 
   void print_usage();
+  void print_version();
   [[nodiscard]] std::expected<void, std::string> ensure_authenticated();
   [[nodiscard]] std::expected<void, std::string> init_tdlib();
 
@@ -46,6 +48,7 @@ private:
   void update_auth_state(std::string state, bool closed = false);
 
   Config config_;
+  CliOptions options_;
   std::unique_ptr<TdClient> client_;
   mutable std::mutex auth_mutex_;
   std::condition_variable auth_cv_;
