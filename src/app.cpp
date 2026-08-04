@@ -87,14 +87,41 @@ Options:
 
 
 void App::print_topic_help() {
-  std::cout << R"(Usage: grm topic ls <supergroup_id>
+  std::cout << R"(Usage: grm topic <subcommand> [options] [args]
 
-List active forum topics in a Telegram supergroup.
+Supergroup forum topic lifecycle management.
 
-Options:
-  -h, --help              Show this help screen
+Subcommands:
+  grm topic ls <supergroup_id>                                     List active forum topics
+  grm topic create <supergroup_id> "<topic_name>"                  Create new forum topic
+  grm topic info <supergroup_id> <topic_id>                        View topic metadata
+  grm topic edit <supergroup_id> <topic_id> "<new_name>"           Rename topic
+  grm topic close <supergroup_id> <topic_id>                       Close forum topic
+  grm topic reopen <supergroup_id> <topic_id>                      Reopen closed topic
+  grm topic pin <supergroup_id> <topic_id>                         Pin topic
+  grm topic unpin <supergroup_id> <topic_id>                       Unpin topic
+  grm topic delete <supergroup_id> <topic_id>                      Delete topic and history
 )" << '\n';
 }
+
+void App::print_file_help() {
+  std::cout << R"(Usage: grm file <subcommand> [options] [args]
+
+Download media and file attachments from chats and topics.
+
+Subcommands:
+  grm file get [-o|--output <dir|file>] [-t|--topic <id>] <chat_id> <message_ids...>
+  grm file download-all [-o|--output <dir>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id>
+
+Options:
+  -o, --output <dir|file>                                           Output destination directory or file path
+  -t, --topic <id>                                                  Target specific forum topic thread ID
+  -n, --limit <N>                                                   Maximum messages to scan (default: 100)
+  --type <photo|video|doc|audio|all>                                Filter attachment media type
+  -h, --help                                                        Show this help screen
+)" << '\n';
+}
+
 
 
 
@@ -279,51 +306,75 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
       print_chat_help();
       return 0;
     }
-    if (!sub_args.empty() && sub_args[0] == "ls") {
-      return cmd_chat_ls(
-          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+    if (!sub_args.empty()) {
+      const std::string &sub = sub_args[0];
+      std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
+      if (sub == "ls") return cmd_chat_ls(sub_opts);
+      if (sub == "create") return cmd_chat_create(sub_opts);
+      if (sub == "info") return cmd_chat_info(sub_opts);
+      if (sub == "set-title") return cmd_chat_set_title(sub_opts);
+      if (sub == "set-desc") return cmd_chat_set_desc(sub_opts);
+      if (sub == "pin") return cmd_chat_pin(sub_opts);
+      if (sub == "unpin") return cmd_chat_unpin(sub_opts);
+      if (sub == "delete") return cmd_chat_delete(sub_opts);
     }
   }
+
   if (cmd == "msg") {
     if (is_help_requested(sub_args)) {
       print_msg_help();
       return 0;
     }
     if (!sub_args.empty()) {
-      if (sub_args[0] == "ls") {
-        return cmd_msg_ls(
-            std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
-      }
-      if (sub_args[0] == "export") {
-        return cmd_msg_export(
-            std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
-      }
-      if (sub_args[0] == "search") {
-        return cmd_msg_search(
-            std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
-      }
-      if (sub_args[0] == "send") {
-        return cmd_msg_send(
-            std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
-      }
+      const std::string &sub = sub_args[0];
+      std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
+      if (sub == "ls") return cmd_msg_ls(sub_opts);
+      if (sub == "export") return cmd_msg_export(sub_opts);
+      if (sub == "search") return cmd_msg_search(sub_opts);
+      if (sub == "send") return cmd_msg_send(sub_opts);
+      if (sub == "info") return cmd_msg_info(sub_opts);
+      if (sub == "edit") return cmd_msg_edit(sub_opts);
+      if (sub == "delete") return cmd_msg_delete(sub_opts);
     }
   }
-
 
   if (cmd == "topic") {
     if (is_help_requested(sub_args)) {
       print_topic_help();
       return 0;
     }
-    if (!sub_args.empty() && sub_args[0] == "ls") {
-      return cmd_topic_ls(
-          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+    if (!sub_args.empty()) {
+      const std::string &sub = sub_args[0];
+      std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
+      if (sub == "ls") return cmd_topic_ls(sub_opts);
+      if (sub == "create") return cmd_topic_create(sub_opts);
+      if (sub == "info") return cmd_topic_info(sub_opts);
+      if (sub == "edit") return cmd_topic_edit(sub_opts);
+      if (sub == "close") return cmd_topic_toggle_close(sub_opts, true);
+      if (sub == "reopen") return cmd_topic_toggle_close(sub_opts, false);
+      if (sub == "pin") return cmd_topic_toggle_pin(sub_opts, true);
+      if (sub == "unpin") return cmd_topic_toggle_pin(sub_opts, false);
+      if (sub == "delete") return cmd_topic_delete(sub_opts);
     }
   }
 
+  if (cmd == "file") {
+    if (is_help_requested(sub_args)) {
+      print_file_help();
+      return 0;
+    }
+    if (!sub_args.empty()) {
+      const std::string &sub = sub_args[0];
+      std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
+      if (sub == "get") return cmd_file_get(sub_opts);
+      if (sub == "download-all") return cmd_file_download_all(sub_opts);
+    }
+  }
 
   print_usage();
   return std::unexpected("Unknown command: " + cmd);
+}
+
 }
 
 } // namespace grm

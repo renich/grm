@@ -514,5 +514,144 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
   return 0;
 }
 
+std::expected<int, std::string>
+App::cmd_msg_info(const std::vector<std::string> &args) {
+  if (args.size() < 2) {
+    return std::unexpected("Usage: grm msg info <chat_id> <message_id>");
+  }
+
+  auto cid_res = parse_int64(args[0]);
+  auto mid_res = parse_int64(args[1]);
+  if (!cid_res || !mid_res) return std::unexpected("Invalid chat_id or message_id");
+
+  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+
+  const std::string payload = std::format(
+      R"({{
+        "chat_id": {},
+        "message_id": {}
+      }})",
+      *cid_res, *mid_res);
+
+  auto res = client_->send_request("getMessage", payload, 5.0);
+  if (!res) {
+    return std::unexpected("Failed to get message info: " + res.error());
+  }
+
+  std::cout << res->to_string() << '\n';
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_msg_edit(const std::vector<std::string> &args) {
+  if (args.size() < 3) {
+    return std::unexpected(
+        "Usage: grm msg edit [-t|--topic <id>] <chat_id> <message_id> \"<new_text>\"");
+  }
+
+  int64_t chat_id = 0;
+  int64_t message_id = 0;
+  std::string new_text;
+  bool chat_set = false;
+  bool msg_set = false;
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
+    if (!chat_set && parse_int64(arg).has_value()) {
+      chat_id = *parse_int64(arg);
+      chat_set = true;
+    } else if (chat_set && !msg_set && parse_int64(arg).has_value()) {
+      message_id = *parse_int64(arg);
+      msg_set = true;
+    } else if (chat_set && msg_set && new_text.empty() && !arg.starts_with("-")) {
+      new_text = arg;
+    }
+  }
+
+  if (!chat_set || !msg_set || new_text.empty()) {
+    return std::unexpected(
+        "Usage: grm msg edit <chat_id> <message_id> \"<new_text>\"");
+  }
+
+  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+
+  const std::string payload = std::format(
+      R"({{
+        "chat_id": {},
+        "message_id": {},
+        "input_message_content": {{
+          "@type": "inputMessageText",
+          "text": {{
+            "@type": "formattedText",
+            "text": "{}"
+          }}
+        }}
+      }})",
+      chat_id, message_id, escape_json_string(new_text));
+
+  auto res = client_->send_request("editMessageText", payload, 10.0);
+  if (!res) {
+    return std::unexpected("Failed to edit message: " + res.error());
+  }
+
+  grm::log::info("Message edited successfully.");
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_msg_delete(const std::vector<std::string> &args) {
+  if (args.empty()) {
+    return std::unexpected(
+        "Usage: grm msg delete [--for-everyone] <chat_id> <message_ids...>");
+  }
+
+  bool revoke = false;
+  int64_t chat_id = 0;
+  bool chat_set = false;
+  std::vector<int64_t> message_ids;
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
+    if (arg == "--for-everyone" || arg == "-e") {
+      revoke = true;
+    } else if (!chat_set && parse_int64(arg).has_value()) {
+      chat_id = *parse_int64(arg);
+      chat_set = true;
+    } else if (chat_set && parse_int64(arg).has_value()) {
+      message_ids.push_back(*parse_int64(arg));
+    }
+  }
+
+  if (!chat_set || message_ids.empty()) {
+    return std::unexpected(
+        "Usage: grm msg delete [--for-everyone] <chat_id> <message_ids...>");
+  }
+
+  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+
+  std::string ids_json = "[";
+  for (size_t idx = 0; idx < message_ids.size(); ++idx) {
+    ids_json += std::to_string(message_ids[idx]);
+    if (idx + 1 < message_ids.size()) ids_json += ", ";
+  }
+  ids_json += "]";
+
+  const std::string payload = std::format(
+      R"({{
+        "chat_id": {},
+        "message_ids": {},
+        "revoke": {}
+      }})",
+      chat_id, ids_json, revoke ? "true" : "false");
+
+  auto res = client_->send_request("deleteMessages", payload, 10.0);
+  if (!res) {
+    return std::unexpected("Failed to delete messages: " + res.error());
+  }
+
+  grm::log::info("Message(s) deleted successfully.");
+  return 0;
+}
 
 } // namespace grm
+

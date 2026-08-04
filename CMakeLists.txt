@@ -55,7 +55,9 @@ add_executable(grm
     src/cmd_chat.cpp
     src/cmd_msg.cpp
     src/cmd_topic.cpp
+    src/cmd_file.cpp
     src/exporter.cpp
+
 
 
     src/uploader.cpp

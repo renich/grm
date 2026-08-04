@@ -31,12 +31,31 @@ public:
   static void print_chat_help();
   static void print_msg_help();
   static void print_topic_help();
+  static void print_file_help();
   static bool is_help_requested(const std::vector<std::string> &args);
 
 private:
   [[nodiscard]] std::expected<int, std::string> cmd_login();
+
+  // Chat & Group CRUD
   [[nodiscard]] std::expected<int, std::string>
   cmd_chat_ls(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_chat_create(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_chat_info(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_chat_set_title(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_chat_set_desc(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_chat_pin(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_chat_unpin(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_chat_delete(const std::vector<std::string> &args);
+
+  // Message CRUD
   [[nodiscard]] std::expected<int, std::string>
   cmd_msg_ls(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
@@ -46,7 +65,34 @@ private:
   [[nodiscard]] std::expected<int, std::string>
   cmd_msg_send(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
+  cmd_msg_info(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_msg_edit(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_msg_delete(const std::vector<std::string> &args);
+
+  // Supergroup Topic CRUD
+  [[nodiscard]] std::expected<int, std::string>
   cmd_topic_ls(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_topic_create(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_topic_info(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_topic_edit(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_topic_toggle_close(const std::vector<std::string> &args, bool close);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_topic_toggle_pin(const std::vector<std::string> &args, bool pin);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_topic_delete(const std::vector<std::string> &args);
+
+  // File Download Engine
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_file_get(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_file_download_all(const std::vector<std::string> &args);
+
 
 
   [[nodiscard]] std::expected<void, std::string> ensure_authenticated();
