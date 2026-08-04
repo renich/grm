@@ -61,8 +61,10 @@ add_executable(grm
 
 
     src/uploader.cpp
+    src/downloader.cpp
     src/formatter.cpp
 )
+
 
 
 

@@ -45,6 +45,13 @@ App::cmd_file_get(const std::vector<std::string> &args) {
     }
   }
 
+  if (topic_id > 0) {
+    const std::string topic_req = std::format(
+        R"({{"chat_id": {}, "message_thread_id": {}}})", chat_id, topic_id);
+    (void)client_->send_request("getForumTopic", topic_req, 2.0);
+  }
+
+
   if (!chat_set || message_ids.empty()) {
     return std::unexpected(
         "Usage: grm file get [-o|--output <dir|file>] [-t|--topic <id>] <chat_id> <message_ids...>");

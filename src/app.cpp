@@ -375,6 +375,5 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
   return std::unexpected("Unknown command: " + cmd);
 }
 
-}
-
 } // namespace grm
+
