@@ -74,10 +74,11 @@ std::expected<void, std::string> App::init_tdlib() {
                       "api_id": {},
                       "api_hash": "{}",
                       "system_language_code": "en",
-                      "device_model": "Desktop",
-                      "system_version": "Fedora Linux",
-                      "application_version": "1.0",
+                      "device_model": "grm CLI",
+                      "system_version": "Linux x86_64",
+                      "application_version": "10.9.1",
                       "enable_storage_optimizer": true
+
                     }}
                   }})",
                   config_.db_dir.string(), config_.db_dir.string(),
