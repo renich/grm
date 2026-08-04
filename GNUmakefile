@@ -8,7 +8,7 @@ USER_BIN ?= $(HOME)/bin
 CMAKE := cmake
 BUILD_TYPE ?= Release
 
-.PHONY: all build release clean check format lint install install-user
+.PHONY: all build release clean check format lint analyze install install-user
 
 all: release
 
@@ -29,8 +29,12 @@ format:
 lint: release
 	clang-tidy -p $(BUILD_DIR) src/*.cpp
 
+analyze:
+	scan-build --status-bugs $(CMAKE) --build $(BUILD_DIR) --clean-first
+
 check: release
 	ctest --test-dir $(BUILD_DIR) --output-on-failure
+
 
 
 install: release
