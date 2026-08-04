@@ -30,13 +30,19 @@ _grm_completions() {
     msg)
       if [[ ${cword} -eq 2 ]]; then
         COMPREPLY=($(compgen -W "ls export search -h --help" -- "${cur}"))
-      elif [[ ${cword} -eq 4 && "${words[2]}" == "export" ]]; then
-        COMPREPLY=($(compgen -W "csv json" -- "${cur}"))
+      elif [[ "${words[2]}" == "ls" ]]; then
+        COMPREPLY=($(compgen -W "-n --limit -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "export" ]]; then
+        COMPREPLY=($(compgen -W "-f --format -o --output -n --limit csv json -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "search" ]]; then
+        COMPREPLY=($(compgen -W "-q --query -n --limit -h --help" -- "${cur}"))
       fi
       ;;
     extract)
       if [[ ${cword} -eq 2 ]]; then
         COMPREPLY=($(compgen -W "bday -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "bday" ]]; then
+        COMPREPLY=($(compgen -W "-n --limit -h --help" -- "${cur}"))
       fi
       ;;
     topic)
@@ -47,7 +53,7 @@ _grm_completions() {
     send)
       if [[ ${cword} -eq 2 ]]; then
         if [[ "${cur}" == -* ]]; then
-          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
+          COMPREPLY=($(compgen -W "-t --topic -h --help" -- "${cur}"))
         else
           COMPREPLY=($(compgen -W "file" -- "${cur}"))
         fi
@@ -58,6 +64,7 @@ _grm_completions() {
     *)
       ;;
   esac
+
 
   return 0
 }
