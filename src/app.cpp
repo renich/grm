@@ -1,8 +1,10 @@
 #include "grm/app.hpp"
+#include <algorithm>
 #include <chrono>
 #include <format>
 #include <iostream>
 #include <thread>
+
 
 namespace grm {
 
@@ -40,13 +42,9 @@ Commands:
 }
 
 bool App::is_help_requested(const std::vector<std::string> &args) {
-
-  for (const auto &arg : args) {
-    if (arg == "-h" || arg == "--help") {
-      return true;
-    }
-  }
-  return false;
+  return std::ranges::any_of(args, [](const std::string &arg) {
+    return arg == "-h" || arg == "--help";
+  });
 }
 
 void App::print_login_help() {
