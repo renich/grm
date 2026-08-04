@@ -25,8 +25,9 @@ int main(int argc, char *argv[]) {
       options.custom_config_path = argv[++i];
     } else if ((arg == "-p" || arg == "--phone") && i + 1 < argc) {
       options.phone = argv[++i];
-    } else if (arg == "--code" && i + 1 < argc) {
+    } else if ((arg == "-k" || arg == "--code") && i + 1 < argc) {
       options.code = argv[++i];
+
     } else {
       command_args.emplace_back(arg);
     }

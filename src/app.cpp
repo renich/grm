@@ -26,15 +26,16 @@ Global Options:
   -c, --config <path>   Path to custom configuration file
 
 Commands:
-  grm login [--phone <num>] [--code <code>] Interactive or non-interactive authentication
-  grm chat ls                              List active chats (groups, channels, private)
-  grm msg ls <chat_id> [limit]             List recent messages from a chat
-  grm msg export <chat_id> csv|json        Export chat history to CSV or JSON file
-  grm msg search <chat_id> "<query>"       Search chat history using regex filter
-  grm extract bday <chat_id>               Extract registered birthdays from chat history
-  grm send <chat_id> "<message>"           Send a text message to a chat or group
-  grm send file <chat_id> <path>           Upload a local file or document to a chat
-  grm topic ls <supergroup_id>             List active forum topics in a supergroup
+  grm login [-p|--phone <num>] [-k|--code <code>] Interactive or non-interactive authentication
+  grm chat ls                                     List active chats (groups, channels, private)
+  grm msg ls <chat_id> [limit]                    List recent messages from a chat
+  grm msg export <chat_id> csv|json               Export chat history to CSV or JSON file
+  grm msg search <chat_id> "<query>"              Search chat history using regex filter
+  grm extract bday <chat_id>                      Extract registered birthdays from chat history
+  grm send <chat_id> "<message>"                  Send a text message to a chat or group
+  grm send file <chat_id> <file> [-C|--caption]   Upload a local file or document to a chat
+  grm topic ls <supergroup_id>                    List active forum topics in a supergroup
+
 
 )" << '\n';
 }

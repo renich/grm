@@ -73,14 +73,21 @@ Using the ``GNUmakefile``:
 Command Reference
 -----------------
 
-Global Flags
-~~~~~~~~~~~~
+Global Options (GNU Long & POSIX Short Pairs)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - ``-h, --help``: Display help screen and exit.
 - ``-V, --version``: Display version information and exit.
 - ``-v, --verbose``: Enable verbose TDLib state output.
+- ``-d, --debug``: Enable raw JSON payload tracing.
 - ``-q, --quiet``: Suppress non-essential informational output.
 - ``-c, --config <path>``: Custom configuration file path.
+
+Command Options
+~~~~~~~~~~~~~~~
+
+- Login: ``-p, --phone <number>``, ``-k, --code <code>``
+- Send File: ``-C, --caption "<text>"``, ``-t, --topic <id>``
 
 Usage Examples
 ~~~~~~~~~~~~~~
@@ -92,8 +99,8 @@ Usage Examples
       # Interactive login
       grm login
 
-      # Pre-fill phone number
-      grm login --phone +523335765013
+      # Pre-fill phone number (GNU short option -p / long option --phone)
+      grm login -p +523335765013
 
 2. Chat & Forum Topic Navigation:
 
@@ -125,11 +132,11 @@ Usage Examples
       # Send a text message
       grm send -1001789902965 "Hola desde grm CLI!"
 
-      # Upload a document with caption
-      grm send file -1001789902965 /path/to/report.pdf --caption "Monthly Report"
+      # Upload a document with caption (-C / --caption)
+      grm send file -1001789902965 /path/to/report.pdf -C "Monthly Report"
 
-      # Upload a document directly to a forum topic
-      grm send file -1001789902965 /path/to/doc.pdf --topic 42
+      # Upload a document directly to a forum topic (-t / --topic)
+      grm send file -1001789902965 /path/to/doc.pdf -C "Topic Doc" -t 42
 
 5. Birthday Data Extraction:
 
@@ -137,3 +144,4 @@ Usage Examples
 
       # Scan history for birthday announcements
       grm extract bday -1001789902965
+

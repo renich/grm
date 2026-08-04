@@ -27,10 +27,10 @@ App::cmd_send_file(const std::vector<std::string> &args) {
   int64_t message_thread_id = 0;
 
   for (size_t i = 2; i < args.size(); ++i) {
-    if (args[i] == "--caption" && i + 1 < args.size()) {
+    if ((args[i] == "-C" || args[i] == "--caption") && i + 1 < args.size()) {
       caption = args[i + 1];
       ++i;
-    } else if (args[i] == "--topic" && i + 1 < args.size()) {
+    } else if ((args[i] == "-t" || args[i] == "--topic") && i + 1 < args.size()) {
       auto [tptr, tec] = std::from_chars(
           args[i + 1].data(), args[i + 1].data() + args[i + 1].size(),
           message_thread_id);
@@ -41,6 +41,7 @@ App::cmd_send_file(const std::vector<std::string> &args) {
       ++i;
     }
   }
+
 
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
