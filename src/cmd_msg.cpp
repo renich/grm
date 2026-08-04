@@ -76,12 +76,11 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
       if (auto lim = parse_int32(arg.substr(8))) {
         limit = *lim;
       }
-    } else if (!chat_id_set && !arg.starts_with("-")) {
-      if (auto cid = parse_int64(arg)) {
-        chat_id = *cid;
-        chat_id_set = true;
-      }
+    } else if (!chat_id_set && parse_int64(arg).has_value()) {
+      chat_id = *parse_int64(arg);
+      chat_id_set = true;
     }
+
   }
 
   if (!chat_id_set) {
@@ -98,9 +97,11 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   std::vector<fmt::MessageItem> items;
   int64_t from_msg_id = 0;
   int empty_retries = 0;
+  const size_t target_limit = static_cast<size_t>(std::max(1, limit));
 
-  while (static_cast<int>(items.size()) < limit) {
-    int fetch_limit = std::min(limit - static_cast<int>(items.size()), 100);
+  while (items.size() < target_limit) {
+    auto fetch_limit = static_cast<int>(
+        std::min<size_t>(target_limit - items.size(), 100));
     const std::string payload = std::format(
         R"({{"chat_id": {}, "from_message_id": {}, "offset": 0, "limit": {}}})",
         chat_id, from_msg_id, fetch_limit);
@@ -133,12 +134,13 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
       if (!text.empty()) {
         items.push_back(fmt::MessageItem{
             .id = id, .chat_id = chat_id, .date = 0, .sender = "", .text = text});
-        if (static_cast<int>(items.size()) >= limit) {
+        if (items.size() >= target_limit) {
           break;
         }
       }
     }
   }
+
 
   fmt::Formatter::print_messages(items, options_.format, options_.color_mode);
   return 0;
@@ -175,21 +177,16 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
       if (auto lim = parse_int32(arg.substr(8))) {
         export_limit = *lim;
       }
-    } else if (!chat_id_set && !arg.starts_with("-")) {
-      if (auto cid = parse_int64(arg)) {
-        chat_id = *cid;
-        chat_id_set = true;
-      } else if (arg == "csv" || arg == "json") {
-        format_type = arg;
-      }
-    } else if (chat_id_set && !arg.starts_with("-")) {
-      if (arg == "csv" || arg == "json") {
-        format_type = arg;
-      } else if (out_path.empty()) {
-        out_path = arg;
-      }
+    } else if (!chat_id_set && parse_int64(arg).has_value()) {
+      chat_id = *parse_int64(arg);
+      chat_id_set = true;
+    } else if (chat_id_set && (arg == "csv" || arg == "json")) {
+      format_type = arg;
+    } else if (chat_id_set && out_path.empty() && !arg.starts_with("-")) {
+      out_path = arg;
     }
   }
+
 
   if (!chat_id_set) {
     return std::unexpected(
@@ -211,14 +208,16 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
   std::vector<MessageRecord> records;
   int64_t from_msg_id = 0;
   int empty_retries = 0;
+  const size_t target_export_limit =
+      static_cast<size_t>(std::max(1, export_limit));
 
-  while (static_cast<int>(records.size()) < export_limit) {
-
-    int fetch_limit =
-        std::min(export_limit - static_cast<int>(records.size()), 100);
+  while (records.size() < target_export_limit) {
+    auto fetch_limit = static_cast<int>(
+        std::min<size_t>(target_export_limit - records.size(), 100));
     const std::string payload = std::format(
         R"({{"chat_id": {}, "from_message_id": {}, "offset": 0, "limit": {}}})",
         chat_id, from_msg_id, fetch_limit);
+
 
     auto res = client_->send_request("getChatHistory", payload, 10.0);
     if (!res) {
@@ -302,14 +301,13 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
       if (auto lim = parse_int32(arg.substr(8))) {
         search_limit = *lim;
       }
-    } else if (!chat_id_set && !arg.starts_with("-")) {
-      if (auto cid = parse_int64(arg)) {
-        chat_id = *cid;
-        chat_id_set = true;
-      }
+    } else if (!chat_id_set && parse_int64(arg).has_value()) {
+      chat_id = *parse_int64(arg);
+      chat_id_set = true;
     } else if (chat_id_set && query.empty() && !arg.starts_with("-")) {
       query = arg;
     }
+
   }
 
   if (!chat_id_set || query.empty()) {
