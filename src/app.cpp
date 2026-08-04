@@ -256,7 +256,11 @@ void App::ensure_chat_loaded(int64_t chat_id) {
     if (!load_res) {
       grm::log::debug("loadChats: " + load_res.error());
     }
-    (void)client_->send_request("getChat", chat_req, 3.0);
+    auto retry_chat = client_->send_request("getChat", chat_req, 3.0);
+    if (!retry_chat) {
+      grm::log::debug("getChat retry: " + retry_chat.error());
+    }
+
   }
 }
 

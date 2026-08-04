@@ -160,8 +160,9 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
     return std::unexpected(export_res.error());
   }
 
-  std::cout << std::format("✓ Successfully exported {} messages to {}\n",
-                           records.size(), out_path.string());
+  grm::log::info(std::format("Successfully exported {} messages to {}",
+                             records.size(), out_path.string()));
+
   return 0;
 }
 
