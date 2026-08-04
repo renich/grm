@@ -91,6 +91,7 @@ std::expected<void, std::string> App::init_tdlib() {
                     "use_test_dc": false,
                     "database_directory": "{}",
                     "files_directory": "{}/files",
+                    "database_encryption_key": "",
                     "use_file_database": true,
                     "use_chat_info_database": true,
                     "use_message_database": true,
@@ -100,8 +101,7 @@ std::expected<void, std::string> App::init_tdlib() {
                     "system_language_code": "en",
                     "device_model": "grm CLI",
                     "system_version": "Linux x86_64",
-                    "application_version": "10.9.1",
-                    "enable_storage_optimizer": true
+                    "application_version": "10.9.1"
                   }})",
                   config_.db_dir.string(), config_.db_dir.string(),
                   config_.api_id, config_.api_hash);
