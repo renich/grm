@@ -67,12 +67,6 @@ Message Subcommands:
   - ``-o, --output <file>``: Destination export file path.
   - ``-n, --limit <N>``: Maximum records to export (default: 1000).
 
-Extract Subcommand:
-~~~~~~~~~~~~~~~~~~
-
-- ``grm extract bday [-n|--limit <N>] <chat_id>``
-  - ``-n, --limit <N>``: Maximum messages to scan (default: 100).
-
 Send Subcommands:
 ~~~~~~~~~~~~~~~~~
 

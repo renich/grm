@@ -29,7 +29,6 @@ When ``is_help_requested()`` is true, execution routes to dedicated help functio
 - ``print_msg_help()``
 - ``print_send_help()``
 - ``print_topic_help()``
-- ``print_extract_help()``
 
 Bash Autocompletion Engine
 --------------------------
@@ -39,7 +38,7 @@ File: ``completions/grm.bash``
 The script hooks into Bash completion via ``complete -F _grm_completions grm``:
 
 1. **Top-Level Commands**:
-   Completes ``login``, ``chat``, ``msg``, ``send``, ``topic``, ``extract``, and global flags (``-h``, ``--help``, ``-V``, ``--version``, ``-v``, ``--verbose``, ``-d``, ``--debug``, ``-q``, ``--quiet``, ``-c``, ``--config``).
+   Completes ``login``, ``chat``, ``msg``, ``send``, ``topic``, and global flags (``-h``, ``--help``, ``-V``, ``--version``, ``-v``, ``--verbose``, ``-d``, ``--debug``, ``-q``, ``--quiet``, ``-c``, ``--config``).
 
 2. **Subcommands & Flags**:
    - ``grm login`` $\rightarrow$ ``-p``, ``--phone``, ``-k``, ``--code``
@@ -49,4 +48,4 @@ The script hooks into Bash completion via ``complete -F _grm_completions grm``:
    - ``grm send`` $\rightarrow$ ``file``
    - ``grm send file`` $\rightarrow$ ``-C``, ``--caption``, ``-t``, ``--topic``
    - ``grm topic`` $\rightarrow$ ``ls``
-   - ``grm extract`` $\rightarrow$ ``bday``
+

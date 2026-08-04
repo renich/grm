@@ -23,7 +23,7 @@ The ``TdClient`` class wraps TDLib's C JSON API (``td_create_client_id``, ``td_s
 
 [TECH-002] RAII JSON Wrapper (grm::JsonValue)
 ---------------------------------------------
-* **Fulfills Requirements**: ``[FUNC-003]``, ``[FUNC-004]``
+* **Fulfills Requirements**: ``[FUNC-003]``
 * **Header**: ``include/grm/json_utils.hpp``
 * **Implementation**: ``src/json_utils.cpp``
 
@@ -43,5 +43,5 @@ Executes CLI subcommand routing:
 * ``cmd_login()``: Drives interactive phone and password authentication state transitions.
 * ``cmd_chat_ls()``: Fetches chat IDs via ``getChats`` and inspects details via ``getChat``.
 * ``cmd_msg_ls()``: Retrieves history via ``getChatHistory``.
-* ``cmd_extract_bday()``: Evaluates message strings against regex filters.
 * ``cmd_send()``: Dispatches formatted text via ``sendMessage``.
+

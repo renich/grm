@@ -12,9 +12,8 @@ Key Features
 - **Interactive & Pre-filled Auth**: Supports interactive login, pre-filled phone/code options, SMS resend, and 2FA password challenges.
 - **Chat & Forum Topic Management**: List active chats and inspect supergroup forum topics.
 - **Message Operations**: Read, export (CSV/JSON), and regex search message histories.
-- **File & Document Uploads**: Upload files and documents with captions and topic target flags.
-- **Data Extraction**: Scan chat history with regex patterns to extract registered user birthdays.
 - **Strict Quality Suite**: 100% C++23 standards compliance with Clang static analysis and Clang-Tidy linters.
+
 
 Directory Layout
 ----------------
@@ -140,13 +139,3 @@ Usage Examples
 
       # Upload a document directly to a forum topic (-t / --topic)
       grm send file -C "Topic Doc" -t 42 -1001789902965 /path/to/doc.pdf
-
-5. Birthday Data Extraction:
-
-   .. code-block:: bash
-
-      # Scan history for birthday announcements (-n / --limit)
-      grm extract bday -n 200 -1001789902965
-
-
-

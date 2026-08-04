@@ -37,14 +37,7 @@ _grm_completions() {
       elif [[ "${words[2]}" == "search" ]]; then
         COMPREPLY=($(compgen -W "-q --query -n --limit -h --help" -- "${cur}"))
       fi
-      ;;
-    extract)
-      if [[ ${cword} -eq 2 ]]; then
-        COMPREPLY=($(compgen -W "bday -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "bday" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -h --help" -- "${cur}"))
-      fi
-      ;;
+
     topic)
       if [[ ${cword} -eq 2 ]]; then
         COMPREPLY=($(compgen -W "ls -h --help" -- "${cur}"))

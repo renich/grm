@@ -30,8 +30,6 @@ Subcommand Target Help Examples:
 - ``grm topic -h, --help``:
   Displays forum topic thread listing parameters.
 
-- ``grm extract -h, --help``:
-  Displays regex birthday extraction parameters.
 
 Shell Autocompletion Architecture
 ---------------------------------

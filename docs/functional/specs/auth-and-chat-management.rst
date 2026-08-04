@@ -8,11 +8,11 @@ Requirements Traceability
 * **[FUNC-001]**: User Authentication
 * **[FUNC-002]**: Chat Discovery
 * **[FUNC-003]**: Message History Inspection
-* **[FUNC-004]**: Birthday Data Extraction
 * **[FUNC-005]**: Message Dispatch
 
 Detailed Functional Descriptions
 ================================
+
 
 [FUNC-001] User Authentication
 ------------------------------
@@ -39,14 +39,8 @@ The system must retrieve message streams from any target peer:
 1. Accept target ``chat_id`` and optional ``limit`` parameters.
 2. Display message ID, sender identity, and message text content.
 
-[FUNC-004] Birthday Data Extraction
------------------------------------
-The system must scan chat message histories to extract declared user birthdays:
-
-1. Match commands (e.g., ``/setbirthday``, ``/micumple``) and date strings (``DD/MM/YYYY``, ``YYYY-MM-DD``).
-2. Format extracted dates into ISO ``YYYY-MM-DD`` records.
-
 [FUNC-005] Direct Text Message Dispatch
+
 ---------------------------------------
 The system must send text messages to any chat ID:
 

@@ -7,7 +7,8 @@ Status: Accepted
 
 Context
 =======
-The team required a fast, highly reliable command-line tool for Telegram personal account management, chat discovery, message history extraction, and group member data parsing. Third-party MTProto wrappers (such as ``kaosb/tgcli``) suffered from unresolved ``AccessHash`` peer resolution defects when querying supergroups (IDs starting with ``-100...``), resulting in ``CHANNEL_INVALID`` API errors.
+The team required a fast, highly reliable command-line tool for Telegram personal account management, chat discovery, message history inspection, and group data management. Third-party MTProto wrappers (such as ``kaosb/tgcli``) suffered from unresolved ``AccessHash`` peer resolution defects when querying supergroups (IDs starting with ``-100...``), resulting in ``CHANNEL_INVALID`` API errors.
+
 
 Decision
 ========

@@ -31,10 +31,10 @@ Commands:
   grm msg ls [-n|--limit <N>] <chat_id>                            List recent messages from a chat
   grm msg export [-f|--format csv|json] [-o|--output <file>] <chat_id> Export chat history to CSV or JSON file
   grm msg search [-q|--query "<query>"] [-n|--limit <N>] <chat_id> Search chat history using regex filter
-  grm extract bday [-n|--limit <N>] <chat_id>                       Extract registered birthdays from chat history
   grm send <chat_id> "<message>"                                   Send a text message to a chat or group
   grm send file [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> <file> Upload a local file or document to a chat
   grm topic ls <supergroup_id>                                     List active forum topics in a supergroup
+
 
 )" << '\n';
 }
@@ -106,16 +106,6 @@ Options:
 )" << '\n';
 }
 
-void App::print_extract_help() {
-  std::cout << R"(Usage: grm extract bday [-n|--limit <N>] <chat_id>
-
-Scan chat history with regex pattern matching to extract registered user birthdays.
-
-Options:
-  -n, --limit <N>         Maximum number of history messages to scan (default: 100)
-  -h, --help              Show this help screen
-)" << '\n';
-}
 
 
 std::string App::get_auth_state() const {
@@ -325,16 +315,7 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     }
   }
 
-  if (cmd == "extract") {
-    if (is_help_requested(sub_args)) {
-      print_extract_help();
-      return 0;
-    }
-    if (!sub_args.empty() && sub_args[0] == "bday") {
-      return cmd_extract_bday(
-          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
-    }
-  }
+
   if (cmd == "topic") {
     if (is_help_requested(sub_args)) {
       print_topic_help();

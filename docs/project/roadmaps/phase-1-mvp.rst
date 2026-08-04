@@ -36,7 +36,5 @@ Milestone 1.3: Application Controller & CLI Commands
   * *Unblocks*: Task 1.3.2
 
 * **Task 1.3.2**: Implement ``grm chat ls``, ``grm msg ls``, and ``grm send`` commands (``[FUNC-002]``, ``[FUNC-003]``, ``[FUNC-005]``).
-  * *Unblocks*: Task 1.3.3
-
-* **Task 1.3.3**: Implement ``grm extract bday`` regex data extraction engine (``[FUNC-004]``).
   * *Unblocks*: Deployment
+
