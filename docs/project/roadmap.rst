@@ -20,8 +20,9 @@ Phase Breakdown
 
 * **Phase 1 (MVP)**: Core TDLib C++23 Engine, Authentication, Chat Discovery, Message Inspection, Birthday Extraction, and Direct Message Dispatch. *(Completed & Deployed)*
 * **Phase 2 (Data Export & Formatting)**: CSV/JSON Export, Unit Testing, App Modularization, and Interactive Search Filtering. *(Completed & Deployed)*
-* **Phase 3 (File Uploads)**: Local File & Media Attachment Dispatch. *(In Progress)*
-* **Phase 4 (Forum Topics)**: Supergroup Forum Topics Discovery & Thread-Scoped Messaging.
+* **Phase 3 (File Uploads)**: Local File & Media Attachment Dispatch. *(Completed & Deployed)*
+* **Phase 4 (Forum Topics)**: Supergroup Forum Topics Discovery & Thread-Scoped Messaging. *(In Progress)*
+
 * **Phase 5 (TUI Interface)**: Ncurses/FTXUI Terminal User Interface for Live Chat Monitoring.
 
 

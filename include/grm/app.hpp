@@ -31,6 +31,8 @@ private:
   cmd_extract_bday(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
   cmd_send(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_send_file(const std::vector<std::string> &args);
 
   void print_usage();
   [[nodiscard]] std::expected<void, std::string> ensure_authenticated();

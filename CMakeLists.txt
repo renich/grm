@@ -43,8 +43,11 @@ add_executable(grm
     src/cmd_chat.cpp
     src/cmd_msg.cpp
     src/cmd_extract.cpp
+    src/cmd_file.cpp
     src/exporter.cpp
+    src/uploader.cpp
 )
+
 
 target_link_libraries(grm PRIVATE
     ${TDJSON_LIBRARIES}
@@ -75,6 +78,14 @@ add_executable(test_export
 target_link_libraries(test_export PRIVATE)
 add_test(NAME test_export COMMAND test_export)
 
+add_executable(test_file
+    tests/test_file.cpp
+    src/uploader.cpp
+)
+target_link_libraries(test_file PRIVATE)
+add_test(NAME test_file COMMAND test_file)
+
 install(TARGETS grm DESTINATION bin)
+
 
 

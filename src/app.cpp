@@ -20,6 +20,8 @@ Usage:
   grm msg search <chat_id> "<query>" Search chat history using regex filter
   grm extract bday <chat_id>        Extract registered birthdays from chat history
   grm send <chat_id> "<message>"    Send a message to a chat or group
+  grm send file <chat_id> <path>    Upload a local file or document to a chat
+
 
 )" << std::endl;
 }
@@ -146,6 +148,10 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
         std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
   }
   if (cmd == "send") {
+    if (!sub_args.empty() && sub_args[0] == "file") {
+      return cmd_send_file(
+          std::vector<std::string>(sub_args.begin() + 1, sub_args.end()));
+    }
     return cmd_send(sub_args);
   }
 
