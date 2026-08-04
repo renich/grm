@@ -20,8 +20,9 @@ The system must support interactive terminal-based authentication:
 
 1. Prompt for international phone number format (e.g., ``+52XXXXXXXXXX``).
 2. Validate Telegram login code via SMS or app notification.
-3. Prompt for 2FA password when enabled on the account.
+3. Prompt for Telegram cloud password with terminal echo disabled (silent non-echoing entry) when enabled on the account.
 4. Persist encrypted local session state inside ``~/.config/grm/tdlib_db/``.
+
 
 [FUNC-002] Chat & Group Discovery
 ---------------------------------

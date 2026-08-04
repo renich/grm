@@ -4,9 +4,34 @@
 #include <chrono>
 #include <format>
 #include <iostream>
+#include <termios.h>
 #include <thread>
+#include <unistd.h>
 
 namespace grm {
+
+namespace {
+
+std::string read_secure_password(std::string_view prompt) {
+  std::cout << prompt;
+  std::cout.flush();
+
+  termios oldt{};
+  tcgetattr(STDIN_FILENO, &oldt);
+  termios newt = oldt;
+  newt.c_lflag &= static_cast<tcflag_t>(~ECHO);
+  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+
+  std::string password;
+  std::cin >> password;
+
+  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+  std::cout << '\n';
+
+  return password;
+}
+
+} // namespace
 
 std::expected<int, std::string> App::cmd_login() {
   if (auto res = init_tdlib(); !res) {
@@ -100,16 +125,15 @@ std::expected<int, std::string> App::cmd_login() {
           last_state.clear();
         }
       } else if (state == "authorizationStateWaitPassword") {
-        std::cout << "[AUTH] Enter your 2FA password: ";
-        std::string password;
-        std::cin >> password;
+        const std::string password =
+            read_secure_password("[AUTH] Enter your cloud password: ");
 
         const std::string payload = std::format(R"({{"password": "{}"}})",
                                                 escape_json_string(password));
-        auto res =
-            client_->send_request("checkAuthenticationPassword", payload, 15.0);
+        auto res = client_->send_request("checkAuthenticationPassword", payload,
+                                         15.0);
         if (!res) {
-          grm::log::error("Invalid password: " + res.error());
+          grm::log::error("Invalid cloud password: " + res.error());
           last_state.clear();
         }
       }
