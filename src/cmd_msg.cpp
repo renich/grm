@@ -406,8 +406,9 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
   std::string message_text;
   std::string caption;
   std::vector<std::filesystem::path> attachments;
-  bool is_media = false;
+  [[maybe_unused]] bool is_media = false;
   int64_t message_thread_id = 0;
+
 
   for (size_t i = 0; i < args.size(); ++i) {
     std::string_view arg(args[i]);
@@ -462,10 +463,13 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
           "Cannot send message: no text payload or file attachments provided.");
     }
     const std::string escaped_message = escape_json_string(message_text);
+    std::string thread_part = (message_thread_id > 0)
+                                  ? std::format(R"("message_thread_id": {},)", message_thread_id)
+                                  : "";
     const std::string payload = std::format(
         R"({{
           "chat_id": {},
-          "message_thread_id": {},
+          {}
           "input_message_content": {{
             "@type": "inputMessageText",
             "text": {{
@@ -474,7 +478,7 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
             }}
           }}
         }})",
-        chat_id, message_thread_id, escaped_message);
+        chat_id, thread_part, escaped_message);
 
     auto res = client_->send_request("sendMessage", payload, 10.0);
     if (!res) {
@@ -513,6 +517,8 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
   grm::log::info("Attachment(s) sent successfully.");
   return 0;
 }
+
+
 
 std::expected<int, std::string>
 App::cmd_msg_info(const std::vector<std::string> &args) {

@@ -119,6 +119,8 @@ App::cmd_topic_create(const std::vector<std::string> &args) {
   return 0;
 }
 
+
+
 std::expected<int, std::string>
 App::cmd_topic_info(const std::vector<std::string> &args) {
   if (args.size() < 2) {
@@ -135,9 +137,10 @@ App::cmd_topic_info(const std::vector<std::string> &args) {
   const std::string payload = std::format(
       R"({{
         "chat_id": {},
-        "message_thread_id": {}
+        "message_thread_id": {},
+        "forum_topic_id": {}
       }})",
-      *cid_res, *tid_res);
+      *cid_res, *tid_res, *tid_res);
 
   auto res = client_->send_request("getForumTopic", payload, 5.0);
   if (!res) {
@@ -166,9 +169,10 @@ App::cmd_topic_edit(const std::vector<std::string> &args) {
       R"({{
         "chat_id": {},
         "message_thread_id": {},
+        "forum_topic_id": {},
         "name": "{}"
       }})",
-      *cid_res, *tid_res, escape_json_string(new_name));
+      *cid_res, *tid_res, *tid_res, escape_json_string(new_name));
 
   auto res = client_->send_request("editForumTopic", payload, 10.0);
   if (!res) {
@@ -195,9 +199,10 @@ App::cmd_topic_toggle_close(const std::vector<std::string> &args, bool close) {
       R"({{
         "chat_id": {},
         "message_thread_id": {},
+        "forum_topic_id": {},
         "is_closed": {}
       }})",
-      *cid_res, *tid_res, close ? "true" : "false");
+      *cid_res, *tid_res, *tid_res, close ? "true" : "false");
 
   auto res = client_->send_request("toggleForumTopicIsClosed", payload, 10.0);
   if (!res) {
@@ -224,9 +229,10 @@ App::cmd_topic_toggle_pin(const std::vector<std::string> &args, bool pin) {
       R"({{
         "chat_id": {},
         "message_thread_id": {},
+        "forum_topic_id": {},
         "is_pinned": {}
       }})",
-      *cid_res, *tid_res, pin ? "true" : "false");
+      *cid_res, *tid_res, *tid_res, pin ? "true" : "false");
 
   auto res = client_->send_request("toggleForumTopicIsPinned", payload, 10.0);
   if (!res) {
@@ -236,6 +242,7 @@ App::cmd_topic_toggle_pin(const std::vector<std::string> &args, bool pin) {
   grm::log::info("Forum topic pin state updated successfully.");
   return 0;
 }
+
 
 std::expected<int, std::string>
 App::cmd_topic_delete(const std::vector<std::string> &args) {
@@ -252,9 +259,10 @@ App::cmd_topic_delete(const std::vector<std::string> &args) {
   const std::string payload = std::format(
       R"({{
         "chat_id": {},
-        "message_thread_id": {}
+        "message_thread_id": {},
+        "forum_topic_id": {}
       }})",
-      *cid_res, *tid_res);
+      *cid_res, *tid_res, *tid_res);
 
   auto res = client_->send_request("deleteForumTopic", payload, 10.0);
   if (!res) {
@@ -264,5 +272,7 @@ App::cmd_topic_delete(const std::vector<std::string> &args) {
   grm::log::info("Forum topic deleted successfully.");
   return 0;
 }
+
+
 
 } // namespace grm

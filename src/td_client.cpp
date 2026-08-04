@@ -122,9 +122,12 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
   json_object_object_add(raw_obj, "@extra",
                          json_object_new_string(extra_id.c_str()));
 
-  const char *str =
-      json_object_to_json_string_ext(raw_obj, JSON_C_TO_STRING_PLAIN);
+  const char *str = json_object_to_json_string_ext(
+      raw_obj, JSON_C_TO_STRING_PLAIN | JSON_C_TO_STRING_NOSLASHESCAPE);
+  grm::log::debug("TD_SEND: " + std::string(str));
   td_send(client_id_, str);
+
+
 
   if (created_new) {
     json_object_put(raw_obj);

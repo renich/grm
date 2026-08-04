@@ -22,11 +22,15 @@ std::expected<std::string, std::string> Uploader::build_send_document_payload(
   const std::string escaped_path = escape_json_string(abs_path);
   const std::string escaped_caption = escape_json_string(caption);
 
+  std::string thread_part = (message_thread_id > 0)
+                                ? std::format(R"("message_thread_id": {},)", message_thread_id)
+                                : "";
+
   std::string payload = std::format(
       R"({{
         "@type": "sendMessage",
         "chat_id": {},
-        "message_thread_id": {},
+        {}
         "input_message_content": {{
           "@type": "inputMessageDocument",
           "document": {{
@@ -39,7 +43,7 @@ std::expected<std::string, std::string> Uploader::build_send_document_payload(
           }}
         }}
       }})",
-      chat_id, message_thread_id, escaped_path, escaped_caption);
+      chat_id, thread_part, escaped_path, escaped_caption);
 
   return payload;
 }
@@ -62,11 +66,15 @@ std::expected<std::string, std::string> Uploader::build_send_media_payload(
   const std::string escaped_path = escape_json_string(abs_path);
   const std::string escaped_caption = escape_json_string(caption);
 
+  std::string thread_part = (message_thread_id > 0)
+                                ? std::format(R"("message_thread_id": {},)", message_thread_id)
+                                : "";
+
   std::string payload = std::format(
       R"({{
         "@type": "sendMessage",
         "chat_id": {},
-        "message_thread_id": {},
+        {}
         "input_message_content": {{
           "@type": "inputMessagePhoto",
           "photo": {{
@@ -79,10 +87,9 @@ std::expected<std::string, std::string> Uploader::build_send_media_payload(
           }}
         }}
       }})",
-      chat_id, message_thread_id, escaped_path, escaped_caption);
+      chat_id, thread_part, escaped_path, escaped_caption);
 
   return payload;
 }
 
 } // namespace grm
-
