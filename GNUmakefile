@@ -13,8 +13,9 @@ BUILD_TYPE ?= Release
 all: release
 
 build:
-	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug
 	$(CMAKE) --build $(BUILD_DIR)
+
 
 release:
 	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release
