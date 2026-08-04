@@ -185,10 +185,12 @@ std::vector<JsonValue> JsonValue::as_array() const {
 }
 
 std::string JsonValue::to_string() const {
-  if (!obj_)
+  if (!obj_) {
     return "null";
+  }
   return json_object_to_json_string_ext(obj_, JSON_C_TO_STRING_PLAIN);
 }
+
 
 std::string escape_json_string(std::string_view input) {
   std::string escaped;

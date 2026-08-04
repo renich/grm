@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
 
   auto cfg_res = grm::Config::load();
   if (!cfg_res) {
-    std::cerr << "Configuration Error: " << cfg_res.error() << std::endl;
+    std::cerr << "Configuration Error: " << cfg_res.error() << '\n';
     return 1;
   }
 
@@ -20,9 +20,10 @@ int main(int argc, char *argv[]) {
   auto result = app.run(args);
 
   if (!result) {
-    std::cerr << "Error: " << result.error() << std::endl;
+    std::cerr << "Error: " << result.error() << '\n';
     return 1;
   }
+
 
   return *result;
 }

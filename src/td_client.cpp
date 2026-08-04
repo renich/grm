@@ -81,7 +81,8 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
   std::future<JsonValue> fut;
 
   {
-    std::lock_guard<std::mutex> lock(promises_mutex_);
+    std::scoped_lock lock(promises_mutex_);
+
     fut = pending_promises_[extra_id].get_future();
   }
 
@@ -108,7 +109,8 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
       fut.wait_for(std::chrono::duration<double>(timeout_seconds));
 
   if (status == std::future_status::timeout) {
-    std::lock_guard<std::mutex> lock(promises_mutex_);
+    std::scoped_lock lock(promises_mutex_);
+
     pending_promises_.erase(extra_id);
     return std::unexpected("Request timed out (" + type + ")");
   }
@@ -125,7 +127,8 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
 }
 
 void TdClient::on_update(UpdateCallback callback) {
-  std::lock_guard<std::mutex> lock(callback_mutex_);
+  std::scoped_lock lock(callback_mutex_);
+
   callbacks_.push_back(std::move(callback));
 }
 
@@ -149,7 +152,8 @@ void TdClient::handle_incoming(const JsonValue &value) {
     bool found = false;
 
     {
-      std::lock_guard<std::mutex> lock(promises_mutex_);
+      std::scoped_lock lock(promises_mutex_);
+
       auto it = pending_promises_.find(*extra);
       if (it != pending_promises_.end()) {
         prom = std::move(it->second);
@@ -167,7 +171,8 @@ void TdClient::handle_incoming(const JsonValue &value) {
   // Dispatch to subscriber callbacks
   std::vector<UpdateCallback> callbacks_copy;
   {
-    std::lock_guard<std::mutex> lock(callback_mutex_);
+    std::scoped_lock lock(callback_mutex_);
+
     callbacks_copy = callbacks_;
   }
 

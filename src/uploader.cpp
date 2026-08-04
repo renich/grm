@@ -22,7 +22,7 @@ std::expected<std::string, std::string> Uploader::build_send_document_payload(
   const std::string escaped_path = escape_json_string(abs_path);
   const std::string escaped_caption = escape_json_string(caption);
 
-  const std::string payload = std::format(
+  std::string payload = std::format(
       R"({{
         "@type": "sendMessage",
         "chat_id": {},
@@ -42,6 +42,7 @@ std::expected<std::string, std::string> Uploader::build_send_document_payload(
       chat_id, message_thread_id, escaped_path, escaped_caption);
 
   return payload;
+
 }
 
 } // namespace grm
