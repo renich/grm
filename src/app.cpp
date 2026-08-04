@@ -56,7 +56,9 @@ std::expected<void, std::string> App::init_tdlib() {
       if (*type == "updateAuthorizationState") {
         if (auto state = update.get_object("authorization_state")) {
           if (auto sttype = state->get_type()) {
+            std::cout << "[Auth State]: " << *sttype << std::endl;
             update_auth_state(*sttype, *sttype == "authorizationStateClosed");
+
             if (*sttype == "authorizationStateWaitTdlibParameters") {
               const std::string params = std::format(
                   R"({{

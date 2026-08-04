@@ -16,12 +16,16 @@ std::expected<int, std::string> App::cmd_login() {
 
   std::string last_state;
 
-  for (int attempt = 0; attempt < 300; ++attempt) {
+  while (true) {
     const std::string state = get_auth_state();
 
     if (state == "authorizationStateReady") {
       std::cout << "✓ Authenticated successfully as user!" << std::endl;
       return 0;
+    }
+
+    if (state == "authorizationStateClosed") {
+      return std::unexpected("TDLib session closed");
     }
 
     if (!state.empty() && state != last_state) {
@@ -43,12 +47,17 @@ std::expected<int, std::string> App::cmd_login() {
               }}
             }})",
             escape_json_string(phone));
+
+        std::cout << "Submitting phone number to Telegram..." << std::endl;
         auto res = client_->send_request("setAuthenticationPhoneNumber",
-                                         payload, 10.0);
+                                         payload, 15.0);
         if (!res) {
           std::cerr << "Failed to set phone number: " << res.error()
                     << std::endl;
-          last_state.clear(); // Allow retry
+          last_state.clear(); // Allow user to re-enter phone
+        } else {
+          std::cout << "Phone number submitted. Waiting for code..."
+                    << std::endl;
         }
 
       } else if (state == "authorizationStateWaitCode") {
@@ -59,10 +68,10 @@ std::expected<int, std::string> App::cmd_login() {
         const std::string payload =
             std::format(R"({{"code": "{}"}})", escape_json_string(code));
         auto res =
-            client_->send_request("checkAuthenticationCode", payload, 10.0);
+            client_->send_request("checkAuthenticationCode", payload, 15.0);
         if (!res) {
           std::cerr << "Invalid code: " << res.error() << std::endl;
-          last_state.clear(); // Allow retry
+          last_state.clear(); // Allow user to re-enter code
         }
       } else if (state == "authorizationStateWaitPassword") {
         std::cout << "Enter your 2FA password: ";
@@ -72,20 +81,16 @@ std::expected<int, std::string> App::cmd_login() {
         const std::string payload = std::format(R"({{"password": "{}"}})",
                                                 escape_json_string(password));
         auto res =
-            client_->send_request("checkAuthenticationPassword", payload, 10.0);
+            client_->send_request("checkAuthenticationPassword", payload, 15.0);
         if (!res) {
           std::cerr << "Invalid password: " << res.error() << std::endl;
-          last_state.clear(); // Allow retry
+          last_state.clear(); // Allow user to re-enter password
         }
-      } else {
-        std::cout << "[Auth Status]: " << state << "..." << std::endl;
       }
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
-
-  return std::unexpected("Authentication loop timed out");
 }
 
 } // namespace grm
