@@ -93,6 +93,9 @@ std::expected<void, std::string> App::init_tdlib() {
     return std::unexpected(res.error());
   }
 
+  // Trigger initial TDLib authorization state update
+  client_->send_async("getAuthorizationState", "{}");
+
   return {};
 }
 
