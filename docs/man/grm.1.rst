@@ -6,8 +6,9 @@ grm
 Group & Telegram Manager CLI (C++23 / TDLib)
 --------------------------------------------
 
-:Author: Rénich Bon Ćirić <renich@evalinux.com> & Antigravity AI (Google DeepMind)
+:Authors: Rénich Bon Ćirić <renich@evalinux.com> & Antigravity AI (Google DeepMind)
 :Date: 2026-08-04
+
 :Manual section: 1
 :Manual group: User Commands
 
