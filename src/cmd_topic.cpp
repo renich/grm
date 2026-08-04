@@ -46,28 +46,24 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
   std::cout << std::string(60, '-') << "\n";
 
   for (const auto &t : topics) {
-    if (grm::log::get_verbosity() >= grm::log::VerbosityLevel::Debug) {
-      std::cout << "[DEBUG] Topic JSON: " << t.to_string() << "\n";
-    }
-
     int64_t thread_id = 0;
     std::string name;
     int64_t total_messages = t.get_int("total_message_count").value_or(0);
 
     if (auto info = t.get_object("info")) {
-      if (auto tid = info->get_int("message_thread_id")) {
+      if (auto fid = info->get_int("forum_topic_id")) {
+        thread_id = *fid;
+      } else if (auto tid = info->get_int("message_thread_id")) {
         thread_id = *tid;
-      } else if (auto id = info->get_int("id")) {
-        thread_id = *id;
       }
       name = info->get_string("name").value_or("");
     }
 
     if (thread_id == 0) {
-      if (auto tid = t.get_int("message_thread_id")) {
+      if (auto fid = t.get_int("forum_topic_id")) {
+        thread_id = *fid;
+      } else if (auto tid = t.get_int("message_thread_id")) {
         thread_id = *tid;
-      } else if (auto id = t.get_int("id")) {
-        thread_id = *id;
       }
     }
 
@@ -78,6 +74,7 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
     std::cout << std::format("{:<15} {:<30} {}\n", thread_id, name,
                              total_messages);
   }
+
 
 
 
