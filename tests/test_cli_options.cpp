@@ -1,4 +1,4 @@
-#include <cassert>
+#include <cstdlib>
 #include <charconv>
 #include <iostream>
 #include <optional>
@@ -54,22 +54,22 @@ int main() {
 
   // Test short -n limit flag
   auto limit1 = grm::test::parse_limit({"-n", "50"});
-  assert(limit1.has_value() && *limit1 == 50);
+  if (!limit1.has_value() || *limit1 != 50) std::abort();
 
   // Test long --limit=100 flag
   auto limit2 = grm::test::parse_limit({"--limit=100"});
-  assert(limit2.has_value() && *limit2 == 100);
+  if (!limit2.has_value() || *limit2 != 100) std::abort();
 
   // Test long --limit 75 flag
   auto limit3 = grm::test::parse_limit({"--limit", "75"});
-  assert(limit3.has_value() && *limit3 == 75);
+  if (!limit3.has_value() || *limit3 != 75) std::abort();
 
   // Test format options
   auto fmt1 = grm::test::parse_format({"-f", "csv"});
-  assert(fmt1.has_value() && *fmt1 == "csv");
+  if (!fmt1.has_value() || *fmt1 != "csv") std::abort();
 
   auto fmt2 = grm::test::parse_format({"--format=json"});
-  assert(fmt2.has_value() && *fmt2 == "json");
+  if (!fmt2.has_value() || *fmt2 != "json") std::abort();
 
   std::cout << "test_cli_options passed successfully!\n";
   return 0;

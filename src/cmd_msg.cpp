@@ -211,9 +211,9 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
   std::vector<MessageRecord> records;
   int64_t from_msg_id = 0;
   int empty_retries = 0;
-  const int export_limit = 1000;
 
   while (static_cast<int>(records.size()) < export_limit) {
+
     int fetch_limit =
         std::min(export_limit - static_cast<int>(records.size()), 100);
     const std::string payload = std::format(
