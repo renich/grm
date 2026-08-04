@@ -145,3 +145,10 @@ Usage Examples
    .. code-block:: bash
 
       grm file download-all -o ~/Downloads/topic2_files -t 2 -1003750297693
+
+Authors & Credits
+-----------------
+
+- **Principal Architect & Maintainer**: Rénich Bon Ćirić (<renich@evalinux.com>)
+- **AI Systems & Pair Programming Partner**: Antigravity AI (Google DeepMind)
+

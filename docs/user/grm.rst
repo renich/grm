@@ -6,10 +6,11 @@ GRM - Group & Telegram Manager
 C++23 / TDLib Telegram CLI User & Operator Guide
 ----------------------------------------------------
 
-:Author: Rénich Bon Ćirić
+:Author: Rénich Bon Ćirić & Antigravity AI (Google DeepMind)
 :Contact: renich@evalinux.com
 :Manual section: 1
 :Manual group: User Commands
+
 
 Description
 ===========
