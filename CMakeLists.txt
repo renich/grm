@@ -53,10 +53,22 @@ add_executable(grm
 
 
 
+set(LOCAL_TDJSON "${CMAKE_CURRENT_SOURCE_DIR}/deps/lib/libtdjson.so")
+if(EXISTS "${LOCAL_TDJSON}")
+    set(TDJSON_LIB "${LOCAL_TDJSON}")
+    set(CMAKE_BUILD_RPATH "${CMAKE_CURRENT_SOURCE_DIR}/deps/lib")
+    set(CMAKE_INSTALL_RPATH "${CMAKE_CURRENT_SOURCE_DIR}/deps/lib")
+else()
+    set(TDJSON_LIB ${TDJSON_LIBRARIES})
+endif()
+
 target_link_libraries(grm PRIVATE
-    ${TDJSON_LIBRARIES}
+    ${TDJSON_LIB}
     ${JSONC_LIBRARIES}
 )
+
+
+
 
 enable_testing()
 

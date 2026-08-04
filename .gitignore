@@ -1,5 +1,7 @@
 /build/
 *.o
 *.a
-*.so
 .grm/
+/deps/tdlib/
+!/deps/lib/
+!/deps/lib/*.so*
