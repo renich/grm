@@ -135,7 +135,13 @@ add_executable(test_formatter
 target_link_libraries(test_formatter PRIVATE ${JSONC_LIBRARIES})
 add_test(NAME test_formatter COMMAND test_formatter)
 
+add_executable(test_cli_options
+    tests/test_cli_options.cpp
+)
+add_test(NAME test_cli_options COMMAND test_cli_options)
+
 install(TARGETS grm DESTINATION bin)
+
 
 
 

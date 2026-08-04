@@ -61,22 +61,33 @@ static std::string extract_message_text(const JsonValue &m) {
 
 std::expected<int, std::string>
 App::cmd_msg_ls(const std::vector<std::string> &args) {
-  if (args.empty()) {
-    return std::unexpected("Usage: grm msg ls <chat_id> [limit]");
-  }
-
-  auto chat_id_res = parse_int64(args[0]);
-  if (!chat_id_res) {
-    return std::unexpected("Invalid chat_id: " + args[0]);
-  }
-  const int64_t chat_id = *chat_id_res;
-
   int limit = 20;
-  if (args.size() >= 2) {
-    if (auto lim_res = parse_int32(args[1])) {
-      limit = *lim_res;
+  int64_t chat_id = 0;
+  bool chat_id_set = false;
+
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
+    if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
+      if (auto lim = parse_int32(args[++i])) {
+        limit = *lim;
+      }
+    } else if (arg.starts_with("--limit=")) {
+      if (auto lim = parse_int32(arg.substr(8))) {
+        limit = *lim;
+      }
+    } else if (!chat_id_set && !arg.starts_with("-")) {
+      if (auto cid = parse_int64(arg)) {
+        chat_id = *cid;
+        chat_id_set = true;
+      }
     }
   }
+
+  if (!chat_id_set) {
+    return std::unexpected("Usage: grm msg ls <chat_id> [-n|--limit <N>]");
+  }
+
 
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
@@ -139,26 +150,57 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_export(const std::vector<std::string> &args) {
-  if (args.size() < 2) {
+  int64_t chat_id = 0;
+  bool chat_id_set = false;
+
+  std::string format_type = "json";
+  std::filesystem::path out_path;
+  int export_limit = 1000;
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
+    if ((arg == "-f" || arg == "--format") && i + 1 < args.size()) {
+      format_type = args[++i];
+    } else if (arg.starts_with("--format=")) {
+      format_type = arg.substr(9);
+    } else if ((arg == "-o" || arg == "--output") && i + 1 < args.size()) {
+      out_path = args[++i];
+    } else if (arg.starts_with("--output=")) {
+      out_path = arg.substr(9);
+    } else if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
+      if (auto lim = parse_int32(args[++i])) {
+        export_limit = *lim;
+      }
+    } else if (arg.starts_with("--limit=")) {
+      if (auto lim = parse_int32(arg.substr(8))) {
+        export_limit = *lim;
+      }
+    } else if (!chat_id_set && !arg.starts_with("-")) {
+      if (auto cid = parse_int64(arg)) {
+        chat_id = *cid;
+        chat_id_set = true;
+      } else if (arg == "csv" || arg == "json") {
+        format_type = arg;
+      }
+    } else if (chat_id_set && !arg.starts_with("-")) {
+      if (arg == "csv" || arg == "json") {
+        format_type = arg;
+      } else if (out_path.empty()) {
+        out_path = arg;
+      }
+    }
+  }
+
+  if (!chat_id_set) {
     return std::unexpected(
-        "Usage: grm msg export <chat_id> csv|json [filename]");
+        "Usage: grm msg export <chat_id> [-f|--format csv|json] [-o|--output "
+        "<file>] [-n|--limit <N>]");
   }
 
-  auto chat_id_res = parse_int64(args[0]);
-  if (!chat_id_res) {
-    return std::unexpected("Invalid chat_id: " + args[0]);
-  }
-  const int64_t chat_id = *chat_id_res;
-
-  const std::string &format_type = args[1];
-  if (format_type != "csv" && format_type != "json") {
-    return std::unexpected("Format must be 'csv' or 'json'");
+  if (out_path.empty()) {
+    out_path = std::format("chat_{}_export.{}", chat_id, format_type);
   }
 
-  std::filesystem::path out_path =
-      (args.size() >= 3) ? std::filesystem::path(args[2])
-                         : std::filesystem::path(std::format(
-                               "chat_{}_export.{}", chat_id, format_type));
 
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
@@ -240,17 +282,42 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_search(const std::vector<std::string> &args) {
-  if (args.size() < 2) {
-    return std::unexpected("Usage: grm msg search <chat_id> \"<query>\"");
+  int64_t chat_id = 0;
+  bool chat_id_set = false;
+
+  std::string query;
+  int search_limit = 100;
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
+    if ((arg == "-q" || arg == "--query") && i + 1 < args.size()) {
+      query = args[++i];
+    } else if (arg.starts_with("--query=")) {
+      query = arg.substr(8);
+    } else if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
+      if (auto lim = parse_int32(args[++i])) {
+        search_limit = *lim;
+      }
+    } else if (arg.starts_with("--limit=")) {
+      if (auto lim = parse_int32(arg.substr(8))) {
+        search_limit = *lim;
+      }
+    } else if (!chat_id_set && !arg.starts_with("-")) {
+      if (auto cid = parse_int64(arg)) {
+        chat_id = *cid;
+        chat_id_set = true;
+      }
+    } else if (chat_id_set && query.empty() && !arg.starts_with("-")) {
+      query = arg;
+    }
   }
 
-  auto chat_id_res = parse_int64(args[0]);
-  if (!chat_id_res) {
-    return std::unexpected("Invalid chat_id: " + args[0]);
+  if (!chat_id_set || query.empty()) {
+    return std::unexpected(
+        "Usage: grm msg search <chat_id> [-q|--query \"<query>\"] [-n|--limit "
+        "<N>]");
   }
-  const int64_t chat_id = *chat_id_res;
 
-  const std::string &query = args[1];
   std::regex search_regex;
   try {
     search_regex = std::regex(query, std::regex::icase);

@@ -5,7 +5,7 @@ Technical Architecture: CLI Options & Logging
 Overview
 --------
 
-This architecture document details the C++23 design for global option parsing, verbosity control, and structured terminal logging in **grm**.
+This architecture document details the C++23 design for global option parsing, subcommand GNU flag parsing, verbosity control, and structured terminal logging in **grm**.
 
 Data Structures
 ---------------
@@ -17,23 +17,44 @@ Defined in ``include/grm/config.hpp``:
 
 .. code-block:: cpp
 
-   enum class VerbosityLevel {
-     Quiet = 0,
-     Normal = 1,
-     Verbose = 2,
-     Debug = 3
-   };
+   namespace grm {
 
    struct CliOptions {
      std::string phone;
      std::string code;
-     std::filesystem::path config_path;
-     VerbosityLevel verbosity{VerbosityLevel::Normal};
+     std::filesystem::path custom_config_path;
+     log::VerbosityLevel verbosity{log::VerbosityLevel::Normal};
+     fmt::OutputFormat format{fmt::OutputFormat::Auto};
+     fmt::ColorMode color_mode{fmt::ColorMode::Auto};
      bool use_test_dc{false};
      bool help{false};
      bool version{false};
    };
 
+   } // namespace grm
+
+Subcommand Option Parsers
+------------------------
+
+Subcommands parse GNU options using clean helper loops with ``std::from_chars`` for exception-free numeric parsing:
+
+- **Message Listing**: ``grm msg ls <chat_id> [-n|--limit <N>]``
+  - Positional 0: ``chat_id`` (int64)
+  - Option ``-n, --limit``: limit (int32, default 20)
+- **Message Search**: ``grm msg search <chat_id> [-q|--query "<pattern>"] [-n|--limit <N>]``
+  - Positional 0: ``chat_id`` (int64)
+  - Option ``-q, --query`` or Positional 1: query regex string
+  - Option ``-n, --limit``: limit (int32, default 100)
+- **Message Export**: ``grm msg export <chat_id> [-f|--format csv|json] [-o|--output <file>] [-n|--limit <N>]``
+  - Positional 0: ``chat_id`` (int64)
+  - Option ``-f, --format``: format type (default ``json``)
+  - Option ``-o, --output``: output file path
+  - Option ``-n, --limit``: max records (default 1000)
+- **File Upload**: ``grm send file <chat_id> <file> [-C|--caption "<text>"] [-t|--topic <id>]``
+  - Positional 0: ``chat_id`` (int64)
+  - Positional 1: ``file_path`` (path)
+  - Option ``-C, --caption``: caption string
+  - Option ``-t, --topic``: topic ID (int64)
 
 Logging Utility API
 -------------------
@@ -54,14 +75,3 @@ Defined in ``include/grm/logger.hpp``:
    VerbosityLevel get_verbosity();
 
    } // namespace grm::log
-
-Command Line Parser
--------------------
-
-The CLI argument parser iterates over ``argv`` using non-throwing ``std::string_view`` checks. Global options are extracted into ``CliOptions`` before dispatching to specific command handlers.
-
-TDLib Update Filtering
-----------------------
-
-Internal TDLib updates (e.g. ``authorizationStateWaitTdlibParameters``) are routed through ``grm::log::debug()`` and will only print when ``verbosity >= VerbosityLevel::Verbose``.
-User-facing auth steps (e.g. ``Enter authentication code:``) are routed through ``grm::log::auth()``.

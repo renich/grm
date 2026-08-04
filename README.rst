@@ -101,7 +101,7 @@ Usage Examples
       # Interactive login
       grm login
 
-      # Pre-fill phone number (GNU short option -p / long option --phone)
+      # Pre-fill phone number (-p / --phone)
       grm login -p +523335765013
 
 2. Chat & Forum Topic Navigation:
@@ -118,14 +118,14 @@ Usage Examples
 
    .. code-block:: bash
 
-      # Read recent messages from a chat
-      grm msg ls -1001789902965 20
+      # Read recent messages from a chat (-n / --limit)
+      grm msg ls -1001789902965 -n 50
 
-      # Search chat history with regex filter
-      grm msg search -1001789902965 "reunión"
+      # Search chat history with regex filter (-q / --query)
+      grm msg search -1001789902965 -q "reunión" -n 100
 
-      # Export chat history to CSV or JSON
-      grm msg export -1001789902965 csv history.csv
+      # Export chat history to CSV or JSON (-f / --format, -o / --output)
+      grm msg export -1001789902965 -f csv -o /tmp/history.csv -n 500
 
 4. File & Document Uploads:
 
@@ -144,6 +144,7 @@ Usage Examples
 
    .. code-block:: bash
 
-      # Scan history for birthday announcements
-      grm extract bday -1001789902965
+      # Scan history for birthday announcements (-n / --limit)
+      grm extract bday -1001789902965 -n 200
+
 

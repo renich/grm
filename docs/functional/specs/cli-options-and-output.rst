@@ -7,16 +7,20 @@ Overview
 
 This specification defines the user-facing GNU/POSIX CLI option interface and output formatting guidelines for **grm**. It establishes global options, non-interactive login parameters, verbosity levels, and clean terminal output formatting adhering to GNU Coding Standards.
 
-Output Design Principles
-------------------------
+GNU Option Design Principles
+---------------------------
 
-1. **No Emoji Clutter**: Terminal output is clean, professional, and free of emojis.
-2. **Structured Level Prefixes**: Output messages use clear, bracketed level indicators:
+1. **Strict GNU Option Compatibility**:
+   - Short options use a single dash (e.g. ``-n 50``).
+   - Long options use double dashes (e.g. ``--limit 50`` or ``--limit=50``).
+   - Positional operands are restricted strictly to primary target identifiers (e.g., ``<chat_id>`` or ``<file>``). Optional flags, limits, formats, and outputs are configured via explicit short/long options.
+2. **No Emoji Clutter**: Terminal output is clean, professional, and free of emojis.
+3. **Structured Level Prefixes**: Output messages use clear, bracketed level indicators:
    - ``[INFO]``: General status and informational messages.
    - ``[WARN]``: Warning alerts and retries.
    - ``[ERROR]``: Fatal errors and failed operations.
    - ``[AUTH]``: Authentication progress and state transitions.
-3. **Controlled Verbosity**: Internal TDLib protocol updates (e.g. ``authorizationStateWaitTdlibParameters``) are suppressed by default in normal mode and only displayed when ``-v, --verbose`` or ``-d, --debug`` is set.
+4. **Controlled Verbosity**: Internal TDLib protocol updates (e.g. ``authorizationStateWaitTdlibParameters``) are suppressed by default in normal mode and only displayed when ``-v, --verbose`` or ``-d, --debug`` is set.
 
 Global Options (GNU Long & POSIX Short Pairs)
 ---------------------------------------------
@@ -36,52 +40,68 @@ Global Options:
 - ``-d, --debug``: Enable raw TDLib JSON request/response payload tracing.
 - ``-q, --quiet``: Suppress non-essential output (output only command results or errors).
 - ``-c, --config <path>``: Specify custom configuration file path (default: ``~/.config/grm/config.json``).
+- ``-F, --format <fmt>``: Output format: ``human``, ``markdown``, ``json``, ``plain`` (default: ``auto``).
+- ``--color <mode>``: Color mode: ``auto``, ``always``, ``never`` (or ``--no-color``).
 - ``-T, --test-dc``: Connect to Telegram Test Data Center environment (isolated test DB and servers).
 
-
-Command Options
----------------
+Subcommand GNU Options Matrix
+-----------------------------
 
 Login Command:
 ~~~~~~~~~~~~~~
 
-- ``-p, --phone <number>``: Pre-fill Telegram phone number in E.164 format (e.g. ``+523335765013``).
-- ``-k, --code <code>``: Pre-fill authentication code for non-interactive scripts.
+- ``grm login [-p|--phone <number>] [-k|--code <code>]``
+  - ``-p, --phone <number>``: Pre-fill Telegram phone number in E.164 format.
+  - ``-k, --code <code>``: Pre-fill authentication code for non-interactive scripts.
 
-Send File Command:
+Message Subcommands:
+~~~~~~~~~~~~~~~~~~~
+
+- ``grm msg ls <chat_id> [-n|--limit <N>]``
+  - ``-n, --limit <N>``: Limit maximum messages to fetch (default: 20).
+- ``grm msg search <chat_id> [-q|--query "<pattern>"] [-n|--limit <N>]``
+  - ``-q, --query "<pattern>"``: Filter messages using regex search pattern.
+  - ``-n, --limit <N>``: Scan limit (default: 100).
+- ``grm msg export <chat_id> [-f|--format csv|json] [-o|--output <file>] [-n|--limit <N>]``
+  - ``-f, --format <fmt>``: Export format (``json`` or ``csv``, default: ``json``).
+  - ``-o, --output <file>``: Destination export file path.
+  - ``-n, --limit <N>``: Maximum records to export (default: 1000).
+
+Extract Subcommand:
 ~~~~~~~~~~~~~~~~~~
 
-- ``-C, --caption "<text>"``: Attach text caption to uploaded document.
-- ``-t, --topic <id>``: Direct document upload to a specific forum topic thread ID.
+- ``grm extract bday <chat_id> [-n|--limit <N>]``
+  - ``-n, --limit <N>``: Maximum messages to scan (default: 100).
+
+Send Subcommands:
+~~~~~~~~~~~~~~~~~
+
+- ``grm send <chat_id> "<message>" [-t|--topic <id>]``
+  - ``-t, --topic <id>``: Direct text message to a specific forum topic thread ID.
+- ``grm send file <chat_id> <file> [-C|--caption "<text>"] [-t|--topic <id>]``
+  - ``-C, --caption "<text>"``: Attach text caption to uploaded document.
+  - ``-t, --topic <id>``: Direct document upload to a specific forum topic thread ID.
 
 Examples
 --------
 
-Pre-filled Login:
-~~~~~~~~~~~~~~~~~
+GNU Formatted History Listing:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
-   grm login -p +523335765013
+   grm msg ls -1002289735000 -n 50
 
-Upload Document to Forum Topic:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+GNU Formatted Export with Explicit Output Path:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   grm msg export -1002289735000 -f csv -o /tmp/evalinux_history.csv -n 500
+
+Upload Document with Caption to Forum Topic:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
    grm send file -1001789902965 /path/to/report.pdf -C "Monthly Report" -t 42
-
-Verbose Diagnostic Execution:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-   grm -v chat ls
-
-Test Data Center Authentication:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-   grm -T login -p +9996612345 -k 22222
-

@@ -8,16 +8,42 @@ namespace grm {
 
 std::expected<int, std::string>
 App::cmd_extract_bday(const std::vector<std::string> &args) {
-  if (args.empty()) {
-    return std::unexpected("Usage: grm extract bday <chat_id>");
+  int scan_limit = 100;
+  int64_t chat_id = 0;
+  bool chat_id_set = false;
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
+    if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
+      int val = 0;
+      auto [ptr, ec] = std::from_chars(
+          args[i + 1].data(), args[i + 1].data() + args[i + 1].size(), val);
+      if (ec == std::errc{}) {
+        scan_limit = val;
+        ++i;
+      }
+    } else if (arg.starts_with("--limit=")) {
+      auto val_str = arg.substr(8);
+      int val = 0;
+      auto [ptr, ec] = std::from_chars(val_str.data(),
+                                       val_str.data() + val_str.size(), val);
+      if (ec == std::errc{}) {
+        scan_limit = val;
+      }
+    } else if (!chat_id_set && !arg.starts_with("-")) {
+      auto [ptr, ec] =
+          std::from_chars(arg.data(), arg.data() + arg.size(), chat_id);
+      if (ec == std::errc{} && ptr == arg.data() + arg.size()) {
+        chat_id_set = true;
+      }
+    }
   }
 
-  int64_t chat_id = 0;
-  auto [ptr, ec] =
-      std::from_chars(args[0].data(), args[0].data() + args[0].size(), chat_id);
-  if (ec != std::errc{} || ptr != args[0].data() + args[0].size()) {
-    return std::unexpected("Invalid chat_id: " + args[0]);
+  if (!chat_id_set) {
+    return std::unexpected(
+        "Usage: grm extract bday <chat_id> [-n|--limit <N>]");
   }
+
 
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
@@ -26,8 +52,9 @@ App::cmd_extract_bday(const std::vector<std::string> &args) {
   ensure_chat_loaded(chat_id);
 
   const std::string payload = std::format(
-      R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": 100}})",
-      chat_id);
+      R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": {}}})",
+      chat_id, scan_limit);
+
 
   auto res = client_->send_request("getChatHistory", payload, 10.0);
   if (!res) {
