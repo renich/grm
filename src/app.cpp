@@ -26,6 +26,8 @@ Global Options:
   -d, --debug           Enable debug tracing
   -q, --quiet           Suppress informational messages
   -c, --config <path>   Path to custom configuration file
+  -T, --test-dc         Connect to Telegram Test Data Center (Test DC)
+
 
 Commands:
   grm login [-p|--phone <num>] [-k|--code <code>] Interactive or non-interactive authentication
@@ -170,9 +172,17 @@ std::expected<void, std::string> App::init_tdlib() {
 
 
             if (*sttype == "authorizationStateWaitTdlibParameters") {
+              const auto db_path = options_.use_test_dc
+                                       ? config_.config_dir / "tdlib_test_db"
+                                       : config_.db_dir;
+              if (options_.use_test_dc) {
+                grm::log::info(
+                    "Connecting to Telegram Test Data Center (Test DC)...");
+              }
+
               const std::string params = std::format(
                   R"({{
-                    "use_test_dc": false,
+                    "use_test_dc": {},
                     "database_directory": "{}",
                     "files_directory": "{}/files",
                     "database_encryption_key": "",
@@ -187,11 +197,12 @@ std::expected<void, std::string> App::init_tdlib() {
                     "system_version": "Linux x86_64",
                     "application_version": "10.9.1"
                   }})",
-                  config_.db_dir.string(), config_.db_dir.string(),
-                  config_.api_id, config_.api_hash);
+                  options_.use_test_dc ? "true" : "false", db_path.string(),
+                  db_path.string(), config_.api_id, config_.api_hash);
 
               client_->send_async("setTdlibParameters", params);
-            } else if (*sttype == "authorizationStateWaitEncryptionKey") {
+            }
+ else if (*sttype == "authorizationStateWaitEncryptionKey") {
               client_->send_async("checkDatabaseEncryptionKey",
                                   R"({"encryption_key": ""})");
             }

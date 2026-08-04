@@ -23,7 +23,10 @@ int main(int argc, char *argv[]) {
       options.verbosity = grm::log::VerbosityLevel::Debug;
     } else if (arg == "-q" || arg == "--quiet") {
       options.verbosity = grm::log::VerbosityLevel::Quiet;
+    } else if (arg == "-T" || arg == "--test-dc") {
+      options.use_test_dc = true;
     } else if ((arg == "-c" || arg == "--config") && i + 1 < argc) {
+
       options.custom_config_path = argv[++i];
     } else if ((arg == "-p" || arg == "--phone") && i + 1 < argc) {
       options.phone = argv[++i];

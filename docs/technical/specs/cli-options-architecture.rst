@@ -29,9 +29,11 @@ Defined in ``include/grm/config.hpp``:
      std::string code;
      std::filesystem::path config_path;
      VerbosityLevel verbosity{VerbosityLevel::Normal};
+     bool use_test_dc{false};
      bool help{false};
      bool version{false};
    };
+
 
 Logging Utility API
 -------------------

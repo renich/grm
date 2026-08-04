@@ -6,7 +6,8 @@ _grm_completions() {
   _init_completion || return
 
   local commands="login chat msg extract send topic"
-  local global_opts="-h --help -V --version -v --verbose -d --debug -q --quiet -c --config"
+  local global_opts="-h --help -V --version -v --verbose -d --debug -q --quiet -c --config -T --test-dc"
+
 
   if [[ ${cword} -eq 1 ]]; then
     if [[ "${cur}" == -* ]]; then

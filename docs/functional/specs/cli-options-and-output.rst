@@ -36,6 +36,8 @@ Global Options:
 - ``-d, --debug``: Enable raw TDLib JSON request/response payload tracing.
 - ``-q, --quiet``: Suppress non-essential output (output only command results or errors).
 - ``-c, --config <path>``: Specify custom configuration file path (default: ``~/.config/grm/config.json``).
+- ``-T, --test-dc``: Connect to Telegram Test Data Center environment (isolated test DB and servers).
+
 
 Command Options
 ---------------
@@ -75,3 +77,11 @@ Verbose Diagnostic Execution:
 .. code-block:: bash
 
    grm -v chat ls
+
+Test Data Center Authentication:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   grm -T login -p +9996612345 -k 22222
+

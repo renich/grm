@@ -82,6 +82,8 @@ Global Options (GNU Long & POSIX Short Pairs)
 - ``-d, --debug``: Enable raw JSON payload tracing.
 - ``-q, --quiet``: Suppress non-essential informational output.
 - ``-c, --config <path>``: Custom configuration file path.
+- ``-T, --test-dc``: Connect to Telegram Test Data Center environment.
+
 
 Command Options
 ~~~~~~~~~~~~~~~

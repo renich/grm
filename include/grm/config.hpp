@@ -12,9 +12,11 @@ struct CliOptions {
   std::string code;
   std::filesystem::path custom_config_path;
   log::VerbosityLevel verbosity{log::VerbosityLevel::Normal};
+  bool use_test_dc{false};
   bool help{false};
   bool version{false};
 };
+
 
 struct Config {
   int32_t api_id{27379307};
