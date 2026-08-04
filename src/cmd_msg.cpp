@@ -555,8 +555,8 @@ App::cmd_msg_edit(const std::vector<std::string> &args) {
   bool chat_set = false;
   bool msg_set = false;
 
-  for (size_t i = 0; i < args.size(); ++i) {
-    std::string_view arg(args[i]);
+  for (const auto &raw_arg : args) {
+    std::string_view arg(raw_arg);
     if (!chat_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_set = true;
@@ -610,8 +610,8 @@ App::cmd_msg_delete(const std::vector<std::string> &args) {
   bool chat_set = false;
   std::vector<int64_t> message_ids;
 
-  for (size_t i = 0; i < args.size(); ++i) {
-    std::string_view arg(args[i]);
+  for (const auto &raw_arg : args) {
+    std::string_view arg(raw_arg);
     if (arg == "--for-everyone" || arg == "-e") {
       revoke = true;
     } else if (!chat_set && parse_int64(arg).has_value()) {
@@ -621,6 +621,7 @@ App::cmd_msg_delete(const std::vector<std::string> &args) {
       message_ids.push_back(*parse_int64(arg));
     }
   }
+
 
   if (!chat_set || message_ids.empty()) {
     return std::unexpected(

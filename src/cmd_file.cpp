@@ -48,8 +48,10 @@ App::cmd_file_get(const std::vector<std::string> &args) {
   if (topic_id > 0) {
     const std::string topic_req = std::format(
         R"({{"chat_id": {}, "message_thread_id": {}}})", chat_id, topic_id);
-    (void)client_->send_request("getForumTopic", topic_req, 2.0);
+    auto unused_topic = client_->send_request("getForumTopic", topic_req, 2.0);
+    (void)unused_topic;
   }
+
 
 
   if (!chat_set || message_ids.empty()) {
@@ -204,10 +206,12 @@ App::cmd_file_download_all(const std::vector<std::string> &args) {
     if (file_id > 0) {
       auto dl_payload = Downloader::build_download_file_payload(file_id, 1);
       if (dl_payload) {
-        (void)client_->send_request("downloadFile", *dl_payload, 30.0);
+        auto unused_dl = client_->send_request("downloadFile", *dl_payload, 30.0);
+        (void)unused_dl;
         downloaded_count++;
       }
     }
+
   }
 
   grm::log::info(std::format("Initiated bulk download for {} attachment(s) to {}", downloaded_count, out_dir.string()));
