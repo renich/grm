@@ -51,7 +51,8 @@ void App::print_login_help() {
 Authenticate your Telegram account with TDLib.
 
 Options:
-  -p, --phone <number>   Pre-fill phone number in E.164 format (e.g. +523335765013)
+  -p, --phone <number>   Pre-fill phone number in E.164 format (e.g. +12025550123)
+
   -k, --code <code>      Pre-fill authentication code for non-interactive logins
   -h, --help             Show this help screen
 )" << '\n';

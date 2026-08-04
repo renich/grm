@@ -102,7 +102,8 @@ Usage Examples
       grm login
 
       # Pre-fill phone number (-p / --phone)
-      grm login -p +523335765013
+      grm login -p +12025550123
+
 
 2. Chat & Forum Topic Navigation:
 
