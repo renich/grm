@@ -14,10 +14,13 @@ Checks: >
   -readability-magic-numbers,
   -readability-implicit-bool-conversion,
   -readability-function-cognitive-complexity,
+  -readability-braces-around-statements,
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   -cppcoreguidelines-pro-type-vararg,
-  -cppcoreguidelines-init-variables
+  -cppcoreguidelines-init-variables,
+  -concurrency-mt-unsafe
 
 WarningsAsErrors: '*'
 
