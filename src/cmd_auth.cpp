@@ -32,8 +32,17 @@ std::expected<int, std::string> App::cmd_login() {
         std::string phone;
         std::cin >> phone;
 
-        const std::string payload = std::format(R"({{"phone_number": "{}"}})",
-                                                escape_json_string(phone));
+        const std::string payload = std::format(
+            R"({{
+              "phone_number": "{}",
+              "settings": {{
+                "@type": "phoneNumberAuthenticationSettings",
+                "allow_flash_call": false,
+                "is_current_phone_number": false,
+                "allow_sms_retriever_api": false
+              }}
+            }})",
+            escape_json_string(phone));
         auto res = client_->send_request("setAuthenticationPhoneNumber",
                                          payload, 10.0);
         if (!res) {
@@ -41,6 +50,7 @@ std::expected<int, std::string> App::cmd_login() {
                     << std::endl;
           last_state.clear(); // Allow retry
         }
+
       } else if (state == "authorizationStateWaitCode") {
         std::cout << "Enter the authentication code sent by Telegram: ";
         std::string code;

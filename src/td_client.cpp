@@ -113,7 +113,15 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
     return std::unexpected("Request timed out (" + type + ")");
   }
 
-  return fut.get();
+  auto val = fut.get();
+  if (auto t = val.get_type(); t && *t == "error") {
+    const std::string msg =
+        val.get_string("message").value_or("Unknown TDLib error");
+    const int64_t code = val.get_int("code").value_or(0);
+    return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
+  }
+
+  return val;
 }
 
 void TdClient::on_update(UpdateCallback callback) {
