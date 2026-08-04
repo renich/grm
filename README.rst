@@ -2,18 +2,16 @@
 grm — Group & Telegram Manager CLI
 ==================================
 
-**grm** is a high-performance, native **C++23** command-line interface for managing Telegram accounts, groups, message history, forum topics, file uploads, and data extractions. Powered by Telegram's official engine **TDLib** (``libtdjson``).
+**grm** is a high-performance, native **C++23** command-line interface for managing Telegram accounts, groups, message history, forum topics, file uploads/downloads, and data extractions. Powered by Telegram's official engine **TDLib** (``libtdjson``).
 
 Key Features
 ------------
 
 - **TDLib Engine**: Direct C++ integration with ``libtdjson`` for complete MTProto coverage.
 - **Zero AccessHash Peer Bugs**: Automatically resolves supergroup and channel IDs (``-100...``) without invalid peer errors.
-- **Interactive & Pre-filled Auth**: Supports interactive login, pre-filled phone/code options, SMS resend, and 2FA password challenges.
-- **Chat & Forum Topic Management**: List active chats and inspect supergroup forum topics.
-- **Message Operations**: Read, export (CSV/JSON), and regex search message histories.
+- **Full CRUD Support**: Complete lifecycle management for Chats, Groups, Channels, Forum Topics, Messages, and Files.
+- **File Download Engine**: Download individual attachments or bulk download all media from chats and forum topics.
 - **Strict Quality Suite**: 100% C++23 standards compliance with Clang static analysis and Clang-Tidy linters.
-
 
 Directory Layout
 ----------------
@@ -83,59 +81,53 @@ Global Options (GNU Long & POSIX Short Pairs)
 - ``-c, --config <path>``: Custom configuration file path.
 - ``-T, --test-dc``: Connect to Telegram Test Data Center environment.
 
+CRUD Command Structure
+~~~~~~~~~~~~~~~~~~~~~~
 
-Command Options
-~~~~~~~~~~~~~~~
+1. **Chats & Groups (`grm chat`)**:
+   - `grm chat create group [--private|--public] "<title>"`
+   - `grm chat create channel [--private|--public] "<title>" ["<description>"]`
+   - `grm chat ls [-n|--limit <N>]`
+   - `grm chat info <chat_id>`
+   - `grm chat set-title <chat_id> "<new_title>"`
+   - `grm chat set-desc <chat_id> "<description>"`
+   - `grm chat pin <chat_id> <message_id>`
+   - `grm chat unpin <chat_id> [<message_id>]`
+   - `grm chat delete <chat_id>`
 
-- Login: ``-p, --phone <number>``, ``-k, --code <code>``
-- Send File: ``-C, --caption "<text>"``, ``-t, --topic <id>``
+2. **Supergroup Forum Topics (`grm topic`)**:
+   - `grm topic create <supergroup_id> "<topic_name>" [--icon-color <color>] [--icon-emoji <id>]`
+   - `grm topic ls [-n|--limit <N>] <supergroup_id>`
+   - `grm topic info <supergroup_id> <topic_id>`
+   - `grm topic edit <supergroup_id> <topic_id> [--name "<new_name>"] [--icon-emoji <id>]`
+   - `grm topic close <supergroup_id> <topic_id>`
+   - `grm topic reopen <supergroup_id> <topic_id>`
+   - `grm topic pin <supergroup_id> <topic_id>`
+   - `grm topic unpin <supergroup_id> <topic_id>`
+   - `grm topic delete <supergroup_id> <topic_id>`
+
+3. **Messages & Attachments (`grm msg`)**:
+   - `grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"]`
+   - `grm msg ls [-t|--topic <id>] [-n|--limit <N>] <chat_id>`
+   - `grm msg info <chat_id> <message_id>`
+   - `grm msg search [-t|--topic <id>] [-q|--query "<pattern>"] [-n|--limit <N>] <chat_id>`
+   - `grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] [-n|--limit <N>] <chat_id>`
+   - `grm msg edit [-t|--topic <id>] <chat_id> <message_id> "<new_text>"`
+   - `grm msg delete [--for-everyone] <chat_id> <message_ids...>`
+
+4. **File Downloads (`grm file`)**:
+   - `grm file get [-o|--output <dir|file>] [-t|--topic <id>] <chat_id> <message_ids...>`
+   - `grm file download-all [-o|--output <dir>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id>`
 
 Usage Examples
 ~~~~~~~~~~~~~~
 
-1. Account Authentication:
-   
+1. **Send Message with Multi-File Attachments**:
    .. code-block:: bash
 
-      # Interactive login
-      grm login
+      grm msg send -a /tmp/report.pdf -a /tmp/chart.png -m -C "Q3 Report" -t 2 -1003750297693
 
-      # Pre-fill phone number (-p / --phone)
-      grm login -p +12025550123
-
-
-2. Chat & Forum Topic Navigation:
-
+2. **Download Attachments from Topic**:
    .. code-block:: bash
 
-      # List active chats and supergroups
-      grm chat ls
-
-      # List forum topics in a supergroup
-      grm topic ls -1001789902965
-
-3. Message Inspection & Search:
-
-   .. code-block:: bash
-
-      # Read recent messages from a chat (-n / --limit)
-      grm msg ls -n 50 -1001789902965
-
-      # Search chat history with regex filter (-q / --query)
-      grm msg search -q "reunión" -n 100 -1001789902965
-
-      # Export chat history to CSV or JSON (-f / --format, -o / --output)
-      grm msg export -f csv -o /tmp/history.csv -n 500 -1001789902965
-
-4. File & Document Uploads:
-
-   .. code-block:: bash
-
-      # Send a text message
-      grm send -1001789902965 "Hola desde grm CLI!"
-
-      # Upload a document with caption (-C / --caption)
-      grm send file -C "Monthly Report" -1001789902965 /path/to/report.pdf
-
-      # Upload a document directly to a forum topic (-t / --topic)
-      grm send file -C "Topic Doc" -t 42 -1001789902965 /path/to/doc.pdf
+      grm file download-all -o ~/Downloads/topic2_files -t 2 -1003750297693

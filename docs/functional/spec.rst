@@ -6,24 +6,22 @@ grm Functional Specification
    :maxdepth: 2
 
    specs/auth-and-chat-management
-   specs/file-uploads
-   specs/forum-topics
-
+   specs/message-crud-and-export
+   specs/file-uploads-and-downloads
+   specs/forum-topics-crud
 
 Overview
 ========
 
-The **grm** (Group & Telegram Manager CLI) utility provides a fast, dependable terminal interface for inspecting Telegram chats, viewing message histories, exporting data, uploading files, and managing forum topics.
+The **grm** (Group & Telegram Manager CLI) utility provides a fast, dependable command-line interface for full CRUD management across Telegram entities: Chats, Private/Public Groups, Channels, Forum Topics, Messages, and File Downloads/Uploads.
 
 Core Functional Requirements
 ============================
 
-* **[FUNC-001]**: Interactive Telegram User & Bot Authentication via TDLib.
-* **[FUNC-002]**: Chat, Channel & Supergroup Discovery across all datacenters.
-* **[FUNC-003]**: Message History Inspection & Filtering for any peer ID.
-* **[FUNC-005]**: Direct Text Message Dispatch to individual users or groups.
-
+* **[FUNC-001]**: Interactive & Non-Interactive Telegram User Authentication via TDLib.
+* **[FUNC-002]**: Full Chat & Group CRUD (Create Groups/Channels, Read Info/List, Update Title/Desc/Pin, Delete/Leave).
+* **[FUNC-003]**: Full Message CRUD (Create/Send, Read/List/Search/Info, Update/Edit, Delete for self/everyone).
 * **[FUNC-006]**: Message History Export Engine (CSV and JSON formats).
-* **[FUNC-007]**: File & Media Upload Dispatch (Documents, Images, Audio).
-* **[FUNC-008]**: Supergroup Forum Topics Discovery & Thread-Scoped Dispatch.
-
+* **[FUNC-007]**: File & Media Upload Dispatch (Documents, Images, Video, Audio).
+* **[FUNC-008]**: File & Media Attachment Download Engine (Single & Bulk Download per Chat/Topic).
+* **[FUNC-009]**: Supergroup Forum Topics CRUD (Create Topic, Read List/Info, Update Edit/Close/Reopen/Pin, Delete Topic).

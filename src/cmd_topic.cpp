@@ -1,5 +1,6 @@
 #include "grm/app.hpp"
 #include "grm/formatter.hpp"
+#include "grm/logger.hpp"
 #include <charconv>
 
 namespace grm {
@@ -44,18 +45,20 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
   items.reserve(topics.size());
 
   for (const auto &t : topics) {
+    log::debug("Topic JSON: " + t.to_string());
     int64_t thread_id = 0;
     std::string name;
     int64_t total_messages = t.get_int("total_message_count").value_or(0);
 
     if (auto info = t.get_object("info")) {
-      if (auto fid = info->get_int("forum_topic_id")) {
-        thread_id = *fid;
-      } else if (auto tid = info->get_int("message_thread_id")) {
+      if (auto tid = info->get_int("message_thread_id")) {
         thread_id = *tid;
+      } else if (auto fid = info->get_int("forum_topic_id")) {
+        thread_id = *fid;
       }
       name = info->get_string("name").value_or("");
     }
+
 
     if (thread_id == 0) {
       if (auto fid = t.get_int("forum_topic_id")) {

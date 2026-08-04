@@ -46,11 +46,12 @@ void TdClient::stop() {
     return;
   }
 
+  is_running_ = false;
+
   if (client_id_ >= 0) {
     send_async("close", "{}");
   }
 
-  is_running_ = false;
   if (receiver_thread_.joinable()) {
     receiver_thread_.join();
   }
@@ -65,14 +66,17 @@ std::string TdClient::generate_extra_id() {
 
 void TdClient::send_async(const std::string &type,
                           std::string_view payload_json) const {
+  if (client_id_ < 0) return;
 
   auto parsed = JsonValue::parse(payload_json);
   json_object *raw_obj = nullptr;
+  bool created_new = false;
 
   if (parsed && parsed->is_object()) {
-    raw_obj = json_object_get(parsed->raw());
+    raw_obj = parsed->raw();
   } else {
     raw_obj = json_object_new_object();
+    created_new = true;
   }
 
   json_object_object_add(raw_obj, "@type",
@@ -81,7 +85,10 @@ void TdClient::send_async(const std::string &type,
   const char *str =
       json_object_to_json_string_ext(raw_obj, JSON_C_TO_STRING_PLAIN);
   td_send(client_id_, str);
-  json_object_put(raw_obj);
+
+  if (created_new) {
+    json_object_put(raw_obj);
+  }
 }
 
 std::expected<JsonValue, std::string>
@@ -96,17 +103,18 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
 
   {
     std::scoped_lock lock(promises_mutex_);
-
     fut = pending_promises_[extra_id].get_future();
   }
 
   auto parsed = JsonValue::parse(payload_json);
   json_object *raw_obj = nullptr;
+  bool created_new = false;
 
   if (parsed && parsed->is_object()) {
-    raw_obj = json_object_get(parsed->raw());
+    raw_obj = parsed->raw();
   } else {
     raw_obj = json_object_new_object();
+    created_new = true;
   }
 
   json_object_object_add(raw_obj, "@type",
@@ -117,14 +125,16 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
   const char *str =
       json_object_to_json_string_ext(raw_obj, JSON_C_TO_STRING_PLAIN);
   td_send(client_id_, str);
-  json_object_put(raw_obj);
+
+  if (created_new) {
+    json_object_put(raw_obj);
+  }
 
   const auto status =
       fut.wait_for(std::chrono::duration<double>(timeout_seconds));
 
   if (status == std::future_status::timeout) {
     std::scoped_lock lock(promises_mutex_);
-
     pending_promises_.erase(extra_id);
     return std::unexpected("Request timed out (" + type + ")");
   }
@@ -142,13 +152,12 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
 
 void TdClient::on_update(UpdateCallback callback) {
   std::scoped_lock lock(callback_mutex_);
-
   callbacks_.push_back(std::move(callback));
 }
 
 void TdClient::receiver_loop() {
   while (is_running_) {
-    const char *raw_res = td_receive(1.0);
+    const char *raw_res = td_receive(0.5);
     if (!raw_res) {
       continue;
     }
@@ -167,7 +176,6 @@ void TdClient::handle_incoming(const JsonValue &value) {
 
     {
       std::scoped_lock lock(promises_mutex_);
-
       auto it = pending_promises_.find(*extra);
       if (it != pending_promises_.end()) {
         prom = std::move(it->second);
@@ -186,7 +194,6 @@ void TdClient::handle_incoming(const JsonValue &value) {
   std::vector<UpdateCallback> callbacks_copy;
   {
     std::scoped_lock lock(callback_mutex_);
-
     callbacks_copy = callbacks_;
   }
 

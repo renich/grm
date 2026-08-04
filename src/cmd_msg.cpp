@@ -66,7 +66,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   int limit = 20;
   int64_t chat_id = 0;
   bool chat_id_set = false;
-
+  int64_t topic_id = 0;
 
   for (size_t i = 0; i < args.size(); ++i) {
     std::string_view arg(args[i]);
@@ -78,17 +78,24 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
       if (auto lim = parse_int32(arg.substr(8))) {
         limit = *lim;
       }
+    } else if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
+      if (auto tid = parse_int64(args[++i])) {
+        topic_id = *tid;
+      }
+    } else if (arg.starts_with("--topic=")) {
+      if (auto tid = parse_int64(arg.substr(8))) {
+        topic_id = *tid;
+      }
     } else if (!chat_id_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_id_set = true;
     }
-
   }
 
   if (!chat_id_set) {
-    return std::unexpected("Usage: grm msg ls <chat_id> [-n|--limit <N>]");
+    return std::unexpected(
+        "Usage: grm msg ls [-t|--topic <id>] [-n|--limit <N>] <chat_id>");
   }
-
 
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
@@ -103,12 +110,39 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
 
   while (items.size() < target_limit) {
     auto fetch_limit = static_cast<int>(
-        std::min<size_t>(target_limit - items.size(), 100));
-    const std::string payload = std::format(
-        R"({{"chat_id": {}, "from_message_id": {}, "offset": 0, "limit": {}}})",
-        chat_id, from_msg_id, fetch_limit);
+        std::min<size_t>(100, target_limit - items.size()));
 
-    auto res = client_->send_request("getChatHistory", payload, 10.0);
+    const std::string method_name =
+        (topic_id > 0) ? "getForumTopicHistory" : "getChatHistory";
+    std::string payload;
+    if (topic_id > 0) {
+      payload = std::format(
+          R"({{
+            "chat_id": {},
+            "forum_topic_id": {},
+            "message_thread_id": {},
+            "from_message_id": {},
+            "offset": 0,
+            "limit": {}
+          }})",
+          chat_id, topic_id, topic_id, from_msg_id, fetch_limit);
+    } else {
+
+
+
+      payload = std::format(
+          R"({{
+            "chat_id": {},
+            "from_message_id": {},
+            "offset": 0,
+            "limit": {},
+            "only_local": false
+          }})",
+          chat_id, from_msg_id, fetch_limit);
+    }
+
+    auto res = client_->send_request(method_name, payload, 10.0);
+
     if (!res) {
       if (items.empty()) {
         return std::unexpected("Failed to get chat history: " + res.error());
