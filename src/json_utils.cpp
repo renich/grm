@@ -3,7 +3,7 @@
 
 namespace grm {
 
-JsonValue::JsonValue() : obj_(nullptr) {}
+JsonValue::JsonValue() = default;
 
 JsonValue::JsonValue(json_object *raw_obj, bool take_ownership)
     : obj_(raw_obj) {
@@ -64,9 +64,11 @@ JsonValue::parse(std::string_view json_str) {
   }
 
   const auto len = static_cast<int>(json_str.size());
+  // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
   json_object *parsed = json_tokener_parse_ex(tok, json_str.data(), len);
   const json_tokener_error err = json_tokener_get_error(tok);
   json_tokener_free(tok);
+
 
   if (err != json_tokener_success || !parsed) {
     if (parsed) {

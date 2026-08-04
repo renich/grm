@@ -35,7 +35,8 @@ public:
                double timeout_seconds = 10.0);
 
   void send_async(const std::string &type,
-                  std::string_view payload_json = "{}");
+                  std::string_view payload_json = "{}") const;
+
 
   void on_update(UpdateCallback callback);
 

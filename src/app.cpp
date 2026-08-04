@@ -36,8 +36,9 @@ Commands:
   grm send file <chat_id> <path>           Upload a local file or document to a chat
   grm topic ls <supergroup_id>             List active forum topics in a supergroup
 
-)" << std::endl;
+)" << '\n';
 }
+
 
 std::string App::get_auth_state() const {
   std::scoped_lock lock(auth_mutex_);

@@ -17,8 +17,17 @@ public:
   explicit App(Config config, CliOptions options = {});
   ~App() = default;
 
+  App(const App &) = delete;
+  App &operator=(const App &) = delete;
+  App(App &&) = default;
+  App &operator=(App &&) = default;
+
   [[nodiscard]] std::expected<int, std::string>
   run(const std::vector<std::string> &args);
+
+  static void print_usage();
+  static void print_version();
+
 
 private:
   [[nodiscard]] std::expected<int, std::string> cmd_login();
@@ -39,9 +48,8 @@ private:
   [[nodiscard]] std::expected<int, std::string>
   cmd_topic_ls(const std::vector<std::string> &args);
 
-  void print_usage();
-  void print_version();
   [[nodiscard]] std::expected<void, std::string> ensure_authenticated();
+
   [[nodiscard]] std::expected<void, std::string> init_tdlib();
 
   [[nodiscard]] std::string get_auth_state() const;

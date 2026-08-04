@@ -93,10 +93,9 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
   if (!chat_id_res) {
     return std::unexpected("Invalid chat_id: " + args[0]);
   }
-  const int64_t chat_id = *chat_id_res;
-
-  const std::string format_type = args[1];
+  const std::string &format_type = args[1];
   if (format_type != "csv" && format_type != "json") {
+
     return std::unexpected("Format must be 'csv' or 'json'");
   }
 

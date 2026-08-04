@@ -4,10 +4,13 @@
 
 namespace grm::log {
 
-static VerbosityLevel g_verbosity = VerbosityLevel::Normal;
-static std::mutex g_log_mutex;
+namespace {
+VerbosityLevel g_verbosity = VerbosityLevel::Normal;
+std::mutex g_log_mutex;
+} // namespace
 
 void set_verbosity(VerbosityLevel level) {
+
   std::scoped_lock lock(g_log_mutex);
   g_verbosity = level;
 }
