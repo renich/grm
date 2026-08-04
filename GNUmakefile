@@ -25,6 +25,7 @@ release:
 
 clean:
 	rm -rf $(BUILD_DIR)
+	$(MAKE) -C docs clean BUILD_DIR="$(abspath $(BUILD_DIR))"
 
 format:
 	clang-format -i include/grm/*.hpp src/*.cpp
@@ -39,11 +40,10 @@ check: release
 	ctest --test-dir $(BUILD_DIR) --output-on-failure
 
 man:
-	mkdir -p $(BUILD_DIR)
-	rst2man docs/man/grm.1.rst $(BUILD_DIR)/grm.1
+	$(MAKE) -C docs man BUILD_DIR="$(abspath $(BUILD_DIR))"
 
 doc-check:
-	rstcheck docs/user/grm.rst docs/man/grm.1.rst
+	$(MAKE) -C docs doc-check
 
 BASH_COMPLETION_DIR ?= $(PREFIX)/share/bash-completion/completions
 USER_BASH_COMPLETION_DIR ?= $(HOME)/.local/share/bash-completion/completions
@@ -56,13 +56,11 @@ install-user: release install-user-man
 	install -d $(USER_BIN)
 	install -m 0755 $(BUILD_DIR)/grm $(USER_BIN)/grm
 
-install-man: man
-	install -d $(DESTDIR)$(MAN_DIR)
-	install -m 0644 $(BUILD_DIR)/grm.1 $(DESTDIR)$(MAN_DIR)/grm.1
+install-man:
+	$(MAKE) -C docs install-man BUILD_DIR="$(abspath $(BUILD_DIR))" PREFIX="$(PREFIX)" MAN_DIR="$(MAN_DIR)" DESTDIR="$(DESTDIR)"
 
-install-user-man: man
-	install -d $(USER_MAN_DIR)
-	install -m 0644 $(BUILD_DIR)/grm.1 $(USER_MAN_DIR)/grm.1
+install-user-man:
+	$(MAKE) -C docs install-user-man BUILD_DIR="$(abspath $(BUILD_DIR))" USER_MAN_DIR="$(USER_MAN_DIR)"
 
 install-completions:
 	install -d $(DESTDIR)$(BASH_COMPLETION_DIR)
