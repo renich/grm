@@ -127,7 +127,16 @@ add_executable(test_topic
 target_link_libraries(test_topic PRIVATE ${JSONC_LIBRARIES})
 add_test(NAME test_topic COMMAND test_topic)
 
+add_executable(test_formatter
+    tests/test_formatter.cpp
+    src/formatter.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_formatter PRIVATE ${JSONC_LIBRARIES})
+add_test(NAME test_formatter COMMAND test_formatter)
+
 install(TARGETS grm DESTINATION bin)
+
 
 
 
