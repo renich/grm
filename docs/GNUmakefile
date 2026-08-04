@@ -15,6 +15,7 @@ all: man
 man:
 	mkdir -p $(BUILD_DIR)
 	$(RST2MAN) man/grm.1.rst $(BUILD_DIR)/grm.1
+	sed -i 's/\.SH Name/\.SH NAME/' $(BUILD_DIR)/grm.1
 
 doc-check:
 	$(RSTCHECK) user/grm.rst man/grm.1.rst
