@@ -185,6 +185,33 @@ void Formatter::print_topics(const std::vector<TopicItem> &topics,
   }
 }
 
+static std::vector<std::string_view> split_lines(std::string_view text) {
+  std::vector<std::string_view> lines;
+  size_t start = 0;
+  size_t pos = 0;
+  while ((pos = text.find('\n', start)) != std::string_view::npos) {
+    lines.push_back(text.substr(start, pos - start));
+    start = pos + 1;
+  }
+  lines.push_back(text.substr(start));
+  return lines;
+}
+
+static std::string escape_markdown_table_cell(std::string_view text) {
+  std::string escaped;
+  escaped.reserve(text.size() * 2);
+  for (char c : text) {
+    if (c == '\n') {
+      escaped += "<br>";
+    } else if (c == '|') {
+      escaped += "\\|";
+    } else {
+      escaped += c;
+    }
+  }
+  return escaped;
+}
+
 void Formatter::print_messages(const std::vector<MessageItem> &messages,
                                OutputFormat format, ColorMode color_mode) {
   const OutputFormat fmt = resolve_format(format);
@@ -214,20 +241,36 @@ void Formatter::print_messages(const std::vector<MessageItem> &messages,
     std::cout << "| Message ID | Sender | Text |\n";
     std::cout << "| :--- | :--- | :--- |\n";
     for (const auto &m : messages) {
-      std::cout << std::format("| {} | {} | {} |\n", m.id, m.sender, m.text);
+      std::cout << std::format("| {} | {} | {} |\n", m.id, m.sender,
+                               escape_markdown_table_cell(m.text));
     }
     return;
   }
 
   // Human / Plain mode
   for (const auto &m : messages) {
+    auto lines = split_lines(m.text);
+    if (lines.empty()) {
+      continue;
+    }
+
+    const std::string prefix_plain = std::format("[MsgID {}]: ", m.id);
+    const std::string indent(prefix_plain.size(), ' ');
+
     if (use_color) {
       std::cout << std::format("{}[MsgID {}]{}: {}\n", COLOR_CYAN, m.id,
-                               COLOR_RESET, m.text);
+                               COLOR_RESET, lines[0]);
+      for (size_t i = 1; i < lines.size(); ++i) {
+        std::cout << std::format("{}{}\n", indent, lines[i]);
+      }
     } else {
-      std::cout << std::format("[MsgID {}]: {}\n", m.id, m.text);
+      std::cout << std::format("[MsgID {}]: {}\n", m.id, lines[0]);
+      for (size_t i = 1; i < lines.size(); ++i) {
+        std::cout << std::format("{}{}\n", indent, lines[i]);
+      }
     }
   }
 }
+
 
 } // namespace grm::fmt
