@@ -19,6 +19,8 @@ build:
 release:
 	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release
 	$(CMAKE) --build $(BUILD_DIR)
+	strip --strip-unneeded $(BUILD_DIR)/grm
+
 
 clean:
 	rm -rf $(BUILD_DIR)
