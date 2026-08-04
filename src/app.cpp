@@ -57,6 +57,32 @@ std::expected<void, std::string> App::init_tdlib() {
         if (auto state = update.get_object("authorization_state")) {
           if (auto sttype = state->get_type()) {
             std::cout << "[Auth State]: " << *sttype << std::endl;
+            if (*sttype == "authorizationStateWaitCode") {
+              if (auto code_info = state->get_object("code_info")) {
+                if (auto code_type_obj = code_info->get_object("type")) {
+                  if (auto code_type = code_type_obj->get_type()) {
+                    if (*code_type == "authenticationCodeTypeTelegramMessage") {
+                      std::cout << "[Auth Info]: Code sent as an in-app "
+                                   "message to your active Telegram client "
+                                   "(Chat: Telegram Service Notifications)."
+                                << std::endl;
+                    } else if (*code_type == "authenticationCodeTypeSms") {
+                      std::cout << "[Auth Info]: Code sent via SMS to your "
+                                   "phone number."
+                                << std::endl;
+                    } else if (*code_type == "authenticationCodeTypeCall") {
+                      std::cout << "[Auth Info]: Code will be delivered via an "
+                                   "automated phone call."
+                                << std::endl;
+                    } else {
+                      std::cout
+                          << "[Auth Info]: Code delivery method: " << *code_type
+                          << std::endl;
+                    }
+                  }
+                }
+              }
+            }
             update_auth_state(*sttype, *sttype == "authorizationStateClosed");
 
             if (*sttype == "authorizationStateWaitTdlibParameters") {

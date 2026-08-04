@@ -42,7 +42,6 @@ std::expected<std::string, std::string> Uploader::build_send_document_payload(
       chat_id, message_thread_id, escaped_path, escaped_caption);
 
   return payload;
-
 }
 
 } // namespace grm
