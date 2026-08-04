@@ -39,11 +39,35 @@ add_executable(grm
     src/json_utils.cpp
     src/td_client.cpp
     src/app.cpp
+    src/cmd_auth.cpp
+    src/cmd_chat.cpp
+    src/cmd_msg.cpp
+    src/cmd_extract.cpp
 )
+
 
 target_link_libraries(grm PRIVATE
     ${TDJSON_LIBRARIES}
     ${JSONC_LIBRARIES}
 )
 
+enable_testing()
+
+add_executable(test_json_utils
+    tests/test_json_utils.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_json_utils PRIVATE ${JSONC_LIBRARIES})
+add_test(NAME test_json_utils COMMAND test_json_utils)
+
+add_executable(test_config
+    tests/test_config.cpp
+    src/config.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_config PRIVATE ${JSONC_LIBRARIES})
+add_test(NAME test_config COMMAND test_config)
+
+
 install(TARGETS grm DESTINATION bin)
+

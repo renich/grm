@@ -15,13 +15,14 @@ Milestone 2.1: Test Infrastructure & App Modularization
 
 * **Task 2.1.1**: Setup CTest and implement unit tests for ``grm::JsonValue``, ``grm::Config``, and birthday extraction regex matching.
   * *Delivers*: ``tests/test_json_utils.cpp``, ``tests/test_config.cpp``, ``tests/test_extract.cpp``
-  * *Status*: ``[~]`` In Progress
+  * *Status*: ``[x]`` Completed
   * *Unblocks*: Task 2.1.2
 
 * **Task 2.1.2**: Refactor monolithic ``src/app.cpp`` (>300 lines) into modular command handlers.
   * *Delivers*: ``src/cmd_auth.cpp``, ``src/cmd_chat.cpp``, ``src/cmd_msg.cpp``, ``src/cmd_extract.cpp``
-  * *Status*: ``[ ]`` Pending
+  * *Status*: ``[x]`` Completed
   * *Unblocks*: Task 2.2.1
+
 
 Milestone 2.2: Data Export & Search Filtering Engine
 ----------------------------------------------------

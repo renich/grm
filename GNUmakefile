@@ -27,6 +27,7 @@ format:
 	clang-format -i include/grm/*.hpp src/*.cpp
 
 check: release
+	ctest --test-dir $(BUILD_DIR) --output-on-failure
 
 install: release
 	install -d $(DESTDIR)$(INSTALL_BIN)
