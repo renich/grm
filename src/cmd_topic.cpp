@@ -1,7 +1,6 @@
 #include "grm/app.hpp"
+#include "grm/formatter.hpp"
 #include <charconv>
-#include <format>
-#include <iostream>
 
 namespace grm {
 
@@ -41,9 +40,8 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
   }
 
   auto topics = res->get_array("topics");
-  std::cout << std::format("{:<15} {:<30} {}\n", "TOPIC ID", "NAME",
-                           "MESSAGES COUNT");
-  std::cout << std::string(60, '-') << "\n";
+  std::vector<fmt::TopicItem> items;
+  items.reserve(topics.size());
 
   for (const auto &t : topics) {
     int64_t thread_id = 0;
@@ -71,13 +69,12 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
       name = t.get_string("name").value_or("General");
     }
 
-    std::cout << std::format("{:<15} {:<30} {}\n", thread_id, name,
-                             total_messages);
+    items.push_back(fmt::TopicItem{.id = thread_id,
+                                   .name = name,
+                                   .message_count = total_messages});
   }
 
-
-
-
+  fmt::Formatter::print_topics(items, options_.format, options_.color_mode);
   return 0;
 }
 

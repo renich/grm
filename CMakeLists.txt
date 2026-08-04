@@ -59,7 +59,9 @@ add_executable(grm
     src/cmd_topic.cpp
     src/exporter.cpp
     src/uploader.cpp
+    src/formatter.cpp
 )
+
 
 
 

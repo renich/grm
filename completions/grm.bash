@@ -5,9 +5,7 @@ _grm_completions() {
   local cur prev words cword
   _init_completion || return
 
-  local commands="login chat msg extract send topic"
-  local global_opts="-h --help -V --version -v --verbose -d --debug -q --quiet -c --config -T --test-dc"
-
+  local global_opts="-h --help -V --version -v --verbose -d --debug -q --quiet -c --config -T --test-dc -F --format --color --no-color"
 
   if [[ ${cword} -eq 1 ]]; then
     if [[ "${cur}" == -* ]]; then

@@ -22,9 +22,8 @@ Global Options:
   -v, --verbose         Enable verbose TDLib state output
   -d, --debug           Enable debug tracing
   -q, --quiet           Suppress informational messages
-  -c, --config <path>   Path to custom configuration file
-  -T, --test-dc         Connect to Telegram Test Data Center (Test DC)
-
+  -F, --format <fmt>    Output format: human, markdown, json, plain (default: auto)
+  --color <mode>        Color mode: auto, always, never (or --no-color)
 
 Commands:
   grm login [-p|--phone <num>] [-k|--code <code>] Interactive or non-interactive authentication

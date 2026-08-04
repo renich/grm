@@ -1,5 +1,6 @@
 #pragma once
 
+#include "grm/formatter.hpp"
 #include "grm/logger.hpp"
 #include <expected>
 #include <filesystem>
@@ -12,6 +13,8 @@ struct CliOptions {
   std::string code;
   std::filesystem::path custom_config_path;
   log::VerbosityLevel verbosity{log::VerbosityLevel::Normal};
+  fmt::OutputFormat format{fmt::OutputFormat::Auto};
+  fmt::ColorMode color_mode{fmt::ColorMode::Auto};
   bool use_test_dc{false};
   bool help{false};
   bool version{false};

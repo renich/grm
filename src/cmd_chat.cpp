@@ -1,6 +1,5 @@
 #include "grm/app.hpp"
-#include <format>
-#include <iostream>
+#include "grm/formatter.hpp"
 
 namespace grm {
 
@@ -23,12 +22,11 @@ App::cmd_chat_ls([[maybe_unused]] const std::vector<std::string> &args) {
   }
 
   auto chat_ids = chats_res->get_array("chat_ids");
-  std::cout << std::format("{:<20} {:<15} {}\n", "CHAT ID", "TYPE", "TITLE");
-  std::cout << std::string(60, '-') << "\n";
+  std::vector<fmt::ChatItem> items;
+  items.reserve(chat_ids.size());
 
   for (const auto &id_val : chat_ids) {
     if (auto cid = id_val.as_int64()) {
-
       const std::string chat_req = std::format(R"({{"chat_id": {}}})", *cid);
       auto chat_info = client_->send_request("getChat", chat_req, 3.0);
       if (chat_info) {
@@ -37,11 +35,13 @@ App::cmd_chat_ls([[maybe_unused]] const std::vector<std::string> &args) {
         if (auto type_obj = chat_info->get_object("type")) {
           type_name = type_obj->get_type().value_or("Chat");
         }
-        std::cout << std::format("{:<20} {:<15} {}\n", *cid, type_name, title);
+        items.push_back(
+            fmt::ChatItem{.id = *cid, .type = type_name, .title = title});
       }
     }
   }
 
+  fmt::Formatter::print_chats(items, options_.format, options_.color_mode);
   return 0;
 }
 

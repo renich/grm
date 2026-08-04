@@ -32,8 +32,30 @@ int main(int argc, char *argv[]) {
       options.phone = argv[++i];
     } else if ((arg == "-k" || arg == "--code") && i + 1 < argc) {
       options.code = argv[++i];
-
-    } else {
+    } else if ((arg == "-F" || arg == "--format") && i + 1 < argc) {
+      std::string_view fmt_val(argv[++i]);
+      if (fmt_val == "human") {
+        options.format = grm::fmt::OutputFormat::Human;
+      } else if (fmt_val == "markdown") {
+        options.format = grm::fmt::OutputFormat::Markdown;
+      } else if (fmt_val == "json") {
+        options.format = grm::fmt::OutputFormat::Json;
+      } else if (fmt_val == "plain") {
+        options.format = grm::fmt::OutputFormat::Plain;
+      }
+    } else if (arg == "--color" && i + 1 < argc) {
+      std::string_view color_val(argv[++i]);
+      if (color_val == "always") {
+        options.color_mode = grm::fmt::ColorMode::Always;
+      } else if (color_val == "never") {
+        options.color_mode = grm::fmt::ColorMode::Never;
+      } else if (color_val == "auto") {
+        options.color_mode = grm::fmt::ColorMode::Auto;
+      }
+    } else if (arg == "--no-color") {
+      options.color_mode = grm::fmt::ColorMode::Never;
+    }
+ else {
       command_args.emplace_back(arg);
     }
   }

@@ -1,7 +1,9 @@
 #include "grm/app.hpp"
 #include "grm/exporter.hpp"
+#include "grm/formatter.hpp"
 #include "grm/json_utils.hpp"
 #include "grm/logger.hpp"
+
 
 #include <charconv>
 #include <filesystem>
@@ -89,19 +91,21 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   }
 
   auto msgs = res->get_array("messages");
-  std::cout << std::format("Fetched {} messages for chat {}\n", msgs.size(),
-                           chat_id);
-  std::cout << std::string(60, '-') << "\n";
+  std::vector<fmt::MessageItem> items;
+  items.reserve(msgs.size());
 
   for (const auto &m : msgs) {
     auto id = m.get_int("id").value_or(0);
     std::string text = extract_message_text(m);
     if (!text.empty()) {
-      std::cout << std::format("[MsgID {}]: {}\n", id, text);
+      items.push_back(fmt::MessageItem{
+          .id = id, .chat_id = chat_id, .date = 0, .sender = "", .text = text});
     }
   }
 
+  fmt::Formatter::print_messages(items, options_.format, options_.color_mode);
   return 0;
+
 }
 
 
@@ -224,19 +228,22 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
   std::cout << std::string(60, '=') << "\n";
 
   int match_count = 0;
+  std::vector<fmt::MessageItem> items;
   for (const auto &m : msgs) {
     auto id = m.get_int("id").value_or(0);
     std::string text = extract_message_text(m);
 
     if (!text.empty() && std::regex_search(text, search_regex)) {
-      std::cout << std::format("[MsgID {}]: {}\n", id, text);
+      items.push_back(fmt::MessageItem{
+          .id = id, .chat_id = chat_id, .date = 0, .sender = "", .text = text});
       match_count++;
     }
   }
 
-
-  std::cout << std::format("Found {} matching messages.\n", match_count);
+  fmt::Formatter::print_messages(items, options_.format, options_.color_mode);
+  grm::log::info(std::format("Found {} matching messages.", match_count));
   return 0;
+
 }
 
 std::expected<int, std::string>
