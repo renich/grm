@@ -1,5 +1,7 @@
 #include "grm/app.hpp"
 #include "grm/exporter.hpp"
+#include "grm/json_utils.hpp"
+#include <charconv>
 #include <filesystem>
 #include <format>
 #include <iostream>
@@ -7,24 +9,40 @@
 
 namespace grm {
 
+static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
+  int64_t val = 0;
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), val);
+  if (ec != std::errc{} || ptr != str.data() + str.size()) {
+    return std::unexpected("Invalid integer parameter: " + std::string(str));
+  }
+  return val;
+}
+
+static std::expected<int, std::string> parse_int32(std::string_view str) {
+  int val = 0;
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), val);
+  if (ec != std::errc{} || ptr != str.data() + str.size()) {
+    return std::unexpected("Invalid integer parameter: " + std::string(str));
+  }
+  return val;
+}
+
 std::expected<int, std::string>
 App::cmd_msg_ls(const std::vector<std::string> &args) {
   if (args.empty()) {
     return std::unexpected("Usage: grm msg ls <chat_id> [limit]");
   }
 
-  int64_t chat_id = 0;
-  try {
-    chat_id = std::stoll(args[0]);
-  } catch (...) {
+  auto chat_id_res = parse_int64(args[0]);
+  if (!chat_id_res) {
     return std::unexpected("Invalid chat_id: " + args[0]);
   }
+  const int64_t chat_id = *chat_id_res;
 
   int limit = 20;
   if (args.size() >= 2) {
-    try {
-      limit = std::stoi(args[1]);
-    } catch (...) {
+    if (auto lim_res = parse_int32(args[1])) {
+      limit = *lim_res;
     }
   }
 
@@ -69,12 +87,11 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
         "Usage: grm msg export <chat_id> csv|json [filename]");
   }
 
-  int64_t chat_id = 0;
-  try {
-    chat_id = std::stoll(args[0]);
-  } catch (...) {
+  auto chat_id_res = parse_int64(args[0]);
+  if (!chat_id_res) {
     return std::unexpected("Invalid chat_id: " + args[0]);
   }
+  const int64_t chat_id = *chat_id_res;
 
   const std::string format_type = args[1];
   if (format_type != "csv" && format_type != "json") {
@@ -108,7 +125,16 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
     rec.id = m.get_int("id").value_or(0);
     rec.chat_id = chat_id;
     rec.date = m.get_int("date").value_or(0);
-    rec.sender = std::to_string(m.get_int("sender_id").value_or(0));
+    rec.sender = "0";
+    if (auto sender_obj = m.get_object("sender_id")) {
+      if (auto uid = sender_obj->get_int("user_id")) {
+        rec.sender = std::to_string(*uid);
+      } else if (auto cid = sender_obj->get_int("chat_id")) {
+        rec.sender = std::to_string(*cid);
+      }
+    } else if (auto raw_sender = m.get_int("sender_id")) {
+      rec.sender = std::to_string(*raw_sender);
+    }
     if (auto content = m.get_object("content")) {
       if (auto text_obj = content->get_object("text")) {
         rec.text = text_obj->get_string("text").value_or("");
@@ -139,12 +165,11 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
     return std::unexpected("Usage: grm msg search <chat_id> \"<query>\"");
   }
 
-  int64_t chat_id = 0;
-  try {
-    chat_id = std::stoll(args[0]);
-  } catch (...) {
+  auto chat_id_res = parse_int64(args[0]);
+  if (!chat_id_res) {
     return std::unexpected("Invalid chat_id: " + args[0]);
   }
+  const int64_t chat_id = *chat_id_res;
 
   const std::string &query = args[1];
   std::regex search_regex;
@@ -198,21 +223,19 @@ App::cmd_send(const std::vector<std::string> &args) {
     return std::unexpected("Usage: grm send <chat_id> \"<message>\"");
   }
 
-  int64_t chat_id = 0;
-  try {
-    chat_id = std::stoll(args[0]);
-  } catch (...) {
+  auto chat_id_res = parse_int64(args[0]);
+  if (!chat_id_res) {
     return std::unexpected("Invalid chat_id: " + args[0]);
   }
+  const int64_t chat_id = *chat_id_res;
 
   const std::string &message_text = args[1];
   int64_t message_thread_id = 0;
 
   for (size_t i = 2; i < args.size(); ++i) {
     if (args[i] == "--topic" && i + 1 < args.size()) {
-      try {
-        message_thread_id = std::stoll(args[i + 1]);
-      } catch (...) {
+      if (auto thread_res = parse_int64(args[i + 1])) {
+        message_thread_id = *thread_res;
       }
       ++i;
     }
@@ -221,6 +244,8 @@ App::cmd_send(const std::vector<std::string> &args) {
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
   }
+
+  const std::string escaped_message = escape_json_string(message_text);
 
   const std::string payload = std::format(
       R"({{
@@ -234,7 +259,7 @@ App::cmd_send(const std::vector<std::string> &args) {
           }}
         }}
       }})",
-      chat_id, message_thread_id, message_text);
+      chat_id, message_thread_id, escaped_message);
 
   auto res = client_->send_request("sendMessage", payload, 10.0);
   if (!res) {

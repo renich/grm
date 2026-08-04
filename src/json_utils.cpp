@@ -69,6 +69,9 @@ JsonValue::parse(std::string_view json_str) {
   json_tokener_free(tok);
 
   if (err != json_tokener_success || !parsed) {
+    if (parsed) {
+      json_object_put(parsed);
+    }
     return std::unexpected("JSON parse error: " +
                            std::string(json_tokener_error_desc(err)));
   }
@@ -185,6 +188,40 @@ std::string JsonValue::to_string() const {
   if (!obj_)
     return "null";
   return json_object_to_json_string_ext(obj_, JSON_C_TO_STRING_PLAIN);
+}
+
+std::string escape_json_string(std::string_view input) {
+  std::string escaped;
+  escaped.reserve(input.size() + 8);
+  for (char c : input) {
+    switch (c) {
+    case '"':
+      escaped += "\\\"";
+      break;
+    case '\\':
+      escaped += "\\\\";
+      break;
+    case '\b':
+      escaped += "\\b";
+      break;
+    case '\f':
+      escaped += "\\f";
+      break;
+    case '\n':
+      escaped += "\\n";
+      break;
+    case '\r':
+      escaped += "\\r";
+      break;
+    case '\t':
+      escaped += "\\t";
+      break;
+    default:
+      escaped += c;
+      break;
+    }
+  }
+  return escaped;
 }
 
 } // namespace grm

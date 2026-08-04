@@ -48,4 +48,6 @@ private:
   json_object *obj_{nullptr};
 };
 
+[[nodiscard]] std::string escape_json_string(std::string_view input);
+
 } // namespace grm

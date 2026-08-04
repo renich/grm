@@ -76,16 +76,19 @@ add_test(NAME test_config COMMAND test_config)
 add_executable(test_export
     tests/test_export.cpp
     src/exporter.cpp
+    src/json_utils.cpp
 )
-target_link_libraries(test_export PRIVATE)
+target_link_libraries(test_export PRIVATE ${JSONC_LIBRARIES})
 add_test(NAME test_export COMMAND test_export)
 
 add_executable(test_file
     tests/test_file.cpp
     src/uploader.cpp
+    src/json_utils.cpp
 )
-target_link_libraries(test_file PRIVATE)
+target_link_libraries(test_file PRIVATE ${JSONC_LIBRARIES})
 add_test(NAME test_file COMMAND test_file)
+
 
 add_executable(test_topic
     tests/test_topic.cpp

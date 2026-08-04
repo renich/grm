@@ -2,8 +2,10 @@
 
 #include "grm/config.hpp"
 #include "grm/td_client.hpp"
+#include <condition_variable>
 #include <expected>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -40,8 +42,13 @@ private:
   [[nodiscard]] std::expected<void, std::string> ensure_authenticated();
   [[nodiscard]] std::expected<void, std::string> init_tdlib();
 
+  [[nodiscard]] std::string get_auth_state() const;
+  void update_auth_state(std::string state, bool closed = false);
+
   Config config_;
   std::unique_ptr<TdClient> client_;
+  mutable std::mutex auth_mutex_;
+  std::condition_variable auth_cv_;
   std::string auth_state_;
   bool is_closed_{false};
 };

@@ -37,11 +37,15 @@ std::expected<Config, std::string> Config::load() {
       ss << file.rdbuf();
       auto parsed = JsonValue::parse(ss.str());
       if (parsed) {
-        if (auto id = parsed->get_int("app_id")) {
+        if (auto id = parsed->get_int("api_id")) {
           cfg.api_id = static_cast<int32_t>(*id);
+        } else if (auto legacy_id = parsed->get_int("app_id")) {
+          cfg.api_id = static_cast<int32_t>(*legacy_id);
         }
-        if (auto hash = parsed->get_string("app_hash")) {
+        if (auto hash = parsed->get_string("api_hash")) {
           cfg.api_hash = *hash;
+        } else if (auto legacy_hash = parsed->get_string("app_hash")) {
+          cfg.api_hash = *legacy_hash;
         }
       }
     }

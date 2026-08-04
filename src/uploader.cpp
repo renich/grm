@@ -1,35 +1,8 @@
 #include "grm/uploader.hpp"
+#include "grm/json_utils.hpp"
 #include <format>
 
 namespace grm {
-
-static std::string escape_json_field(const std::string &field) {
-  std::string escaped;
-  escaped.reserve(field.size() + 8);
-  for (char c : field) {
-    switch (c) {
-    case '"':
-      escaped += "\\\"";
-      break;
-    case '\\':
-      escaped += "\\\\";
-      break;
-    case '\n':
-      escaped += "\\n";
-      break;
-    case '\r':
-      escaped += "\\r";
-      break;
-    case '\t':
-      escaped += "\\t";
-      break;
-    default:
-      escaped += c;
-      break;
-    }
-  }
-  return escaped;
-}
 
 std::expected<std::string, std::string> Uploader::build_send_document_payload(
     int64_t chat_id, const std::filesystem::path &file_path,
@@ -46,8 +19,8 @@ std::expected<std::string, std::string> Uploader::build_send_document_payload(
 
   const std::string abs_path =
       std::filesystem::absolute(file_path, ec).string();
-  const std::string escaped_path = escape_json_field(abs_path);
-  const std::string escaped_caption = escape_json_field(caption);
+  const std::string escaped_path = escape_json_string(abs_path);
+  const std::string escaped_caption = escape_json_string(caption);
 
   const std::string payload = std::format(
       R"({{

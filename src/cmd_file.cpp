@@ -1,5 +1,6 @@
 #include "grm/app.hpp"
 #include "grm/uploader.hpp"
+#include <charconv>
 #include <filesystem>
 #include <format>
 #include <iostream>
@@ -14,9 +15,9 @@ App::cmd_send_file(const std::vector<std::string> &args) {
   }
 
   int64_t chat_id = 0;
-  try {
-    chat_id = std::stoll(args[0]);
-  } catch (...) {
+  auto [ptr, ec] =
+      std::from_chars(args[0].data(), args[0].data() + args[0].size(), chat_id);
+  if (ec != std::errc{} || ptr != args[0].data() + args[0].size()) {
     return std::unexpected("Invalid chat_id: " + args[0]);
   }
 
@@ -29,9 +30,12 @@ App::cmd_send_file(const std::vector<std::string> &args) {
       caption = args[i + 1];
       ++i;
     } else if (args[i] == "--topic" && i + 1 < args.size()) {
-      try {
-        message_thread_id = std::stoll(args[i + 1]);
-      } catch (...) {
+      auto [tptr, tec] = std::from_chars(
+          args[i + 1].data(), args[i + 1].data() + args[i + 1].size(),
+          message_thread_id);
+      if (tec == std::errc{} &&
+          tptr == args[i + 1].data() + args[i + 1].size()) {
+        // Parsed successfully
       }
       ++i;
     }

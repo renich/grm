@@ -1,4 +1,5 @@
 #include "grm/app.hpp"
+#include <charconv>
 #include <format>
 #include <iostream>
 
@@ -11,9 +12,9 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
   }
 
   int64_t chat_id = 0;
-  try {
-    chat_id = std::stoll(args[0]);
-  } catch (...) {
+  auto [ptr, ec] =
+      std::from_chars(args[0].data(), args[0].data() + args[0].size(), chat_id);
+  if (ec != std::errc{} || ptr != args[0].data() + args[0].size()) {
     return std::unexpected("Invalid supergroup_id: " + args[0]);
   }
 

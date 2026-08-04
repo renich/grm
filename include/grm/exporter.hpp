@@ -27,7 +27,6 @@ public:
 
 private:
   [[nodiscard]] static std::string escape_csv_field(const std::string &field);
-  [[nodiscard]] static std::string escape_json_field(const std::string &field);
 };
 
 } // namespace grm

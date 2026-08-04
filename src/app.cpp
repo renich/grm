@@ -28,6 +28,22 @@ Usage:
 )" << std::endl;
 }
 
+std::string App::get_auth_state() const {
+  std::lock_guard<std::mutex> lock(auth_mutex_);
+  return auth_state_;
+}
+
+void App::update_auth_state(std::string state, bool closed) {
+  {
+    std::lock_guard<std::mutex> lock(auth_mutex_);
+    auth_state_ = std::move(state);
+    if (closed) {
+      is_closed_ = true;
+    }
+  }
+  auth_cv_.notify_all();
+}
+
 std::expected<void, std::string> App::init_tdlib() {
   if (client_) {
     return {};
@@ -40,9 +56,33 @@ std::expected<void, std::string> App::init_tdlib() {
       if (*type == "updateAuthorizationState") {
         if (auto state = update.get_object("authorization_state")) {
           if (auto sttype = state->get_type()) {
-            auth_state_ = *sttype;
-            if (*sttype == "authorizationStateClosed") {
-              is_closed_ = true;
+            update_auth_state(*sttype, *sttype == "authorizationStateClosed");
+            if (*sttype == "authorizationStateWaitTdlibParameters") {
+              const std::string params = std::format(
+                  R"({{
+                    "parameters": {{
+                      "@type": "tdlibParameters",
+                      "use_test_dc": false,
+                      "database_directory": "{}",
+                      "files_directory": "{}/files",
+                      "use_file_database": true,
+                      "use_chat_info_database": true,
+                      "use_message_database": true,
+                      "use_secret_chats": true,
+                      "api_id": {},
+                      "api_hash": "{}",
+                      "system_language_code": "en",
+                      "device_model": "Desktop",
+                      "system_version": "Fedora Linux",
+                      "application_version": "1.0",
+                      "enable_storage_optimizer": true
+                    }}
+                  }})",
+                  config_.db_dir.string(), config_.db_dir.string(),
+                  config_.api_id, config_.api_hash);
+
+              static_cast<void>(
+                  client_->send_request("setTdlibParameters", params, 5.0));
             }
           }
         }
@@ -54,26 +94,6 @@ std::expected<void, std::string> App::init_tdlib() {
     return std::unexpected(res.error());
   }
 
-  // Set parameters
-  const std::string params = std::format(
-      R"({{
-        "api_id": {},
-        "api_hash": "{}",
-        "system_language_code": "en",
-        "device_model": "Desktop",
-        "system_version": "Fedora Linux",
-        "application_version": "1.0",
-        "database_directory": "{}",
-        "use_message_database": true,
-        "use_secret_chats": true
-      }})",
-      config_.api_id, config_.api_hash, config_.db_dir.string());
-
-  auto res = client_->send_request("setTdlibParameters", params, 5.0);
-  if (!res) {
-    // Parameter setting error or already initialized
-  }
-
   return {};
 }
 
@@ -82,36 +102,25 @@ std::expected<void, std::string> App::ensure_authenticated() {
     return std::unexpected(res.error());
   }
 
-  // Wait up to 3 seconds for authorization state to resolve
-  for (int i = 0; i < 30; ++i) {
-    if (!auth_state_.empty()) {
-      break;
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // Block and wait up to 5 seconds for authorization state to resolve
+  {
+    std::unique_lock<std::mutex> lock(auth_mutex_);
+    auth_cv_.wait_for(lock, std::chrono::seconds(5), [this] {
+      return auth_state_ == "authorizationStateReady" ||
+             auth_state_ == "authorizationStateWaitPhoneNumber" ||
+             auth_state_ == "authorizationStateWaitCode" ||
+             auth_state_ == "authorizationStateWaitPassword" || is_closed_;
+    });
   }
 
-  if (auth_state_ == "authorizationStateReady") {
+  const std::string current_state = get_auth_state();
+
+  if (current_state == "authorizationStateReady") {
     return {};
   }
 
-  if (auth_state_ == "authorizationStateWaitTdlibParameters") {
-    const std::string params = std::format(
-        R"({{
-          "api_id": {},
-          "api_hash": "{}",
-          "system_language_code": "en",
-          "device_model": "Desktop",
-          "system_version": "Fedora Linux",
-          "application_version": "1.0",
-          "use_message_database": true,
-          "use_secret_chats": true
-        }})",
-        config_.api_id, config_.api_hash, config_.db_dir.string());
-
-    static_cast<void>(client_->send_request("setTdlibParameters", params, 5.0));
-  }
-
-  return {};
+  return std::unexpected(
+      "Not authenticated. Please run 'grm login' to authenticate first.");
 }
 
 std::expected<int, std::string> App::run(const std::vector<std::string> &args) {

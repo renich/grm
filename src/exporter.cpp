@@ -1,4 +1,5 @@
 #include "grm/exporter.hpp"
+#include "grm/json_utils.hpp"
 #include <format>
 #include <fstream>
 #include <sstream>
@@ -28,40 +29,6 @@ std::string Exporter::escape_csv_field(const std::string &field) {
   return escaped;
 }
 
-std::string Exporter::escape_json_field(const std::string &field) {
-  std::string escaped;
-  escaped.reserve(field.size() + 8);
-  for (char c : field) {
-    switch (c) {
-    case '"':
-      escaped += "\\\"";
-      break;
-    case '\\':
-      escaped += "\\\\";
-      break;
-    case '\b':
-      escaped += "\\b";
-      break;
-    case '\f':
-      escaped += "\\f";
-      break;
-    case '\n':
-      escaped += "\\n";
-      break;
-    case '\r':
-      escaped += "\\r";
-      break;
-    case '\t':
-      escaped += "\\t";
-      break;
-    default:
-      escaped += c;
-      break;
-    }
-  }
-  return escaped;
-}
-
 std::expected<void, std::string>
 Exporter::to_json(const std::vector<MessageRecord> &messages,
                   const std::filesystem::path &out_path) {
@@ -74,16 +41,16 @@ Exporter::to_json(const std::vector<MessageRecord> &messages,
   outfile << "[\n";
   for (size_t i = 0; i < messages.size(); ++i) {
     const auto &m = messages[i];
-    outfile << std::format("  {{\n"
-                           "    \"id\": {},\n"
-                           "    \"chat_id\": {},\n"
-                           "    \"date\": {},\n"
-                           "    \"sender\": \"{}\",\n"
-                           "    \"text\": \"{}\"\n"
-                           "  }}{}",
-                           m.id, m.chat_id, m.date, escape_json_field(m.sender),
-                           escape_json_field(m.text),
-                           (i + 1 < messages.size() ? ",\n" : "\n"));
+    outfile << std::format(
+        "  {{\n"
+        "    \"id\": {},\n"
+        "    \"chat_id\": {},\n"
+        "    \"date\": {},\n"
+        "    \"sender\": \"{}\",\n"
+        "    \"text\": \"{}\"\n"
+        "  }}{}",
+        m.id, m.chat_id, m.date, escape_json_string(m.sender),
+        escape_json_string(m.text), (i + 1 < messages.size() ? ",\n" : "\n"));
   }
   outfile << "]\n";
   return {};

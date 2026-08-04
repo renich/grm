@@ -1,4 +1,5 @@
 #include "grm/app.hpp"
+#include <charconv>
 #include <format>
 #include <iostream>
 #include <regex>
@@ -12,9 +13,9 @@ App::cmd_extract_bday(const std::vector<std::string> &args) {
   }
 
   int64_t chat_id = 0;
-  try {
-    chat_id = std::stoll(args[0]);
-  } catch (...) {
+  auto [ptr, ec] =
+      std::from_chars(args[0].data(), args[0].data() + args[0].size(), chat_id);
+  if (ec != std::errc{} || ptr != args[0].data() + args[0].size()) {
     return std::unexpected("Invalid chat_id: " + args[0]);
   }
 
@@ -33,7 +34,8 @@ App::cmd_extract_bday(const std::vector<std::string> &args) {
 
   auto msgs = res->get_array("messages");
   const std::regex bday_regex(
-      R"((?i)(setbirthday|micumple|cumple|\b\d{1,2}[\/\.-]\d{1,2}([\/\.-]\d{2,4})?\b))");
+      R"((setbirthday|micumple|cumple|\b\d{1,2}[\/\.-]\d{1,2}([\/\.-]\d{2,4})?\b))",
+      std::regex::icase);
 
   std::cout << std::format("Scanning {} messages for birthdays in chat {}\n",
                            msgs.size(), chat_id);

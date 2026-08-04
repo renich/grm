@@ -15,6 +15,8 @@ std::expected<void, std::string> TdClient::start() {
     return {};
   }
 
+  td_execute(R"({"@type": "setLogVerbosityLevel", "new_verbosity_level": 1})");
+
   client_id_ = td_create_client_id();
   if (client_id_ < 0) {
     return std::unexpected("Failed to create TDLib client instance");
@@ -29,6 +31,10 @@ std::expected<void, std::string> TdClient::start() {
 void TdClient::stop() {
   if (!is_running_) {
     return;
+  }
+
+  if (client_id_ >= 0) {
+    send_async("close", "{}");
   }
 
   is_running_ = false;
