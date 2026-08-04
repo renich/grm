@@ -7,9 +7,10 @@
 
 namespace grm::fmt {
 
-enum class OutputFormat { Auto, Human, Markdown, Json, Plain };
+enum class OutputFormat : std::uint8_t { Auto, Human, Markdown, Json, Plain };
 
-enum class ColorMode { Auto, Always, Never };
+enum class ColorMode : std::uint8_t { Auto, Always, Never };
+
 
 struct ChatItem {
   int64_t id{0};

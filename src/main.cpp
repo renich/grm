@@ -54,10 +54,10 @@ int main(int argc, char *argv[]) {
       }
     } else if (arg == "--no-color") {
       options.color_mode = grm::fmt::ColorMode::Never;
-    }
- else {
+    } else {
       command_args.emplace_back(arg);
     }
+
   }
 
   grm::log::set_verbosity(options.verbosity);
