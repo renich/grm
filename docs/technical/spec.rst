@@ -6,7 +6,9 @@ grm Technical Architecture
    :maxdepth: 2
 
    specs/tdlib-client-architecture
-   specs/media-and-topics-architecture
+   specs/file-uploader-architecture
+   specs/forum-topics-architecture
+
 
 Architectural Blueprint
 =======================

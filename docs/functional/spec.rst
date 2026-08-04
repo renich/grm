@@ -6,7 +6,9 @@ grm Functional Specification
    :maxdepth: 2
 
    specs/auth-and-chat-management
-   specs/media-and-topics
+   specs/file-uploads
+   specs/forum-topics
+
 
 Overview
 ========
