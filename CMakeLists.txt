@@ -87,8 +87,9 @@ target_link_libraries(grm PRIVATE
 
 
 
-enable_testing()
+include(CTest)
 if(BUILD_TESTING)
+
 add_executable(test_json_utils
     tests/test_json_utils.cpp
     src/json_utils.cpp
