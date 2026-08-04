@@ -82,6 +82,9 @@ std::expected<void, std::string> App::init_tdlib() {
                   config_.api_id, config_.api_hash);
 
               client_->send_async("setTdlibParameters", params);
+            } else if (*sttype == "authorizationStateWaitEncryptionKey") {
+              client_->send_async("checkDatabaseEncryptionKey",
+                                  R"({"encryption_key": ""})");
             }
           }
         }
