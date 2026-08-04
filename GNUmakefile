@@ -6,11 +6,12 @@ INSTALL_BIN ?= $(PREFIX)/bin
 USER_BIN ?= $(HOME)/bin
 
 CMAKE := cmake
-BUILD_TYPE ?= Release
+BUILD_TYPE ?= Debug
 
 .PHONY: all build release clean check format lint analyze install install-user
 
-all: release
+all: build
+
 
 build:
 	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug
