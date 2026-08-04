@@ -6,10 +6,13 @@
 
 
 #include <charconv>
+#include <chrono>
 #include <filesystem>
 #include <format>
 #include <iostream>
 #include <regex>
+#include <thread>
+
 
 namespace grm {
 
@@ -81,30 +84,55 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
 
   ensure_chat_loaded(chat_id);
 
-  const std::string payload = std::format(
-      R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": {}}})",
-      chat_id, limit);
-
-  auto res = client_->send_request("getChatHistory", payload, 10.0);
-  if (!res) {
-    return std::unexpected("Failed to get chat history: " + res.error());
-  }
-
-  auto msgs = res->get_array("messages");
   std::vector<fmt::MessageItem> items;
-  items.reserve(msgs.size());
+  int64_t from_msg_id = 0;
+  int empty_retries = 0;
 
-  for (const auto &m : msgs) {
-    auto id = m.get_int("id").value_or(0);
-    std::string text = extract_message_text(m);
-    if (!text.empty()) {
-      items.push_back(fmt::MessageItem{
-          .id = id, .chat_id = chat_id, .date = 0, .sender = "", .text = text});
+  while (static_cast<int>(items.size()) < limit) {
+    int fetch_limit = std::min(limit - static_cast<int>(items.size()), 100);
+    const std::string payload = std::format(
+        R"({{"chat_id": {}, "from_message_id": {}, "offset": 0, "limit": {}}})",
+        chat_id, from_msg_id, fetch_limit);
+
+    auto res = client_->send_request("getChatHistory", payload, 10.0);
+    if (!res) {
+      if (items.empty()) {
+        return std::unexpected("Failed to get chat history: " + res.error());
+      }
+      break;
+    }
+
+    auto batch = res->get_array("messages");
+    if (batch.empty()) {
+      empty_retries++;
+      if (empty_retries > 2) {
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(150));
+      continue;
+    }
+
+    empty_retries = 0;
+    for (const auto &m : batch) {
+      auto id = m.get_int("id").value_or(0);
+      if (id != 0) {
+        from_msg_id = id;
+      }
+      std::string text = extract_message_text(m);
+      if (!text.empty()) {
+        items.push_back(fmt::MessageItem{
+            .id = id, .chat_id = chat_id, .date = 0, .sender = "", .text = text});
+        if (static_cast<int>(items.size()) >= limit) {
+          break;
+        }
+      }
     }
   }
 
   fmt::Formatter::print_messages(items, options_.format, options_.color_mode);
   return 0;
+
+
 
 }
 
@@ -138,37 +166,60 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
 
   ensure_chat_loaded(chat_id);
 
-  const std::string payload = std::format(
-      R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": 100}})",
-      chat_id);
-
-  auto res = client_->send_request("getChatHistory", payload, 10.0);
-  if (!res) {
-    return std::unexpected("Failed to get chat history: " + res.error());
-  }
-
-  auto msgs = res->get_array("messages");
   std::vector<MessageRecord> records;
-  records.reserve(msgs.size());
+  int64_t from_msg_id = 0;
+  int empty_retries = 0;
+  const int export_limit = 1000;
 
-  for (const auto &m : msgs) {
-    MessageRecord rec;
-    rec.id = m.get_int("id").value_or(0);
-    rec.chat_id = chat_id;
-    rec.date = m.get_int("date").value_or(0);
-    rec.sender = "0";
-    if (auto sender_obj = m.get_object("sender_id")) {
-      if (auto uid = sender_obj->get_int("user_id")) {
-        rec.sender = std::to_string(*uid);
-      } else if (auto cid = sender_obj->get_int("chat_id")) {
-        rec.sender = std::to_string(*cid);
+  while (static_cast<int>(records.size()) < export_limit) {
+    int fetch_limit =
+        std::min(export_limit - static_cast<int>(records.size()), 100);
+    const std::string payload = std::format(
+        R"({{"chat_id": {}, "from_message_id": {}, "offset": 0, "limit": {}}})",
+        chat_id, from_msg_id, fetch_limit);
+
+    auto res = client_->send_request("getChatHistory", payload, 10.0);
+    if (!res) {
+      if (records.empty()) {
+        return std::unexpected("Failed to get chat history: " + res.error());
       }
-    } else if (auto raw_sender = m.get_int("sender_id")) {
-      rec.sender = std::to_string(*raw_sender);
+      break;
     }
-    rec.text = extract_message_text(m);
-    records.push_back(rec);
+
+    auto batch = res->get_array("messages");
+    if (batch.empty()) {
+      empty_retries++;
+      if (empty_retries > 2) {
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(150));
+      continue;
+    }
+
+    empty_retries = 0;
+    for (const auto &m : batch) {
+      MessageRecord rec;
+      rec.id = m.get_int("id").value_or(0);
+      if (rec.id != 0) {
+        from_msg_id = rec.id;
+      }
+      rec.chat_id = chat_id;
+      rec.date = m.get_int("date").value_or(0);
+      rec.sender = "0";
+      if (auto sender_obj = m.get_object("sender_id")) {
+        if (auto uid = sender_obj->get_int("user_id")) {
+          rec.sender = std::to_string(*uid);
+        } else if (auto cid = sender_obj->get_int("chat_id")) {
+          rec.sender = std::to_string(*cid);
+        }
+      } else if (auto raw_sender = m.get_int("sender_id")) {
+        rec.sender = std::to_string(*raw_sender);
+      }
+      rec.text = extract_message_text(m);
+      records.push_back(rec);
+    }
   }
+
 
   std::expected<void, std::string> export_res;
   if (format_type == "json") {
