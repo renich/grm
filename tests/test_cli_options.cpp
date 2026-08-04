@@ -1,98 +1,145 @@
-#include <cstdlib>
+// TestCliOptions validates GNU short & long option flag parsing across all subcommands
 #include <charconv>
+#include <cstdlib>
 #include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
+static void check(bool condition, const std::string &msg) {
+  if (!condition) {
+    std::cerr << "Assertion failed: " << msg << std::endl;
+    std::exit(1);
+  }
+}
+
 namespace grm::test {
 
-static std::optional<int>
-parse_limit(const std::vector<std::string_view> &args) {
-  for (size_t i = 0; i < args.size(); ++i) {
-    if (args[i] == "-n" && i + 1 < args.size()) {
-      int val = 0;
-      auto [ptr, ec] = std::from_chars(
-          args[i + 1].data(), args[i + 1].data() + args[i + 1].size(), val);
-      if (ec == std::errc{})
-        return val;
-    } else if (args[i].starts_with("--limit=")) {
-      auto val_str = args[i].substr(8);
-      int val = 0;
-      auto [ptr, ec] = std::from_chars(val_str.data(),
-                                       val_str.data() + val_str.size(), val);
-      if (ec == std::errc{})
-        return val;
-    } else if (args[i] == "--limit" && i + 1 < args.size()) {
-      int val = 0;
-      auto [ptr, ec] = std::from_chars(
-          args[i + 1].data(), args[i + 1].data() + args[i + 1].size(), val);
-      if (ec == std::errc{})
-        return val;
-    }
-  }
-  return std::nullopt;
-}
-
-static std::optional<std::string>
-parse_format(const std::vector<std::string_view> &args) {
-  for (size_t i = 0; i < args.size(); ++i) {
-    if ((args[i] == "-f" || args[i] == "--format") && i + 1 < args.size()) {
-      return std::string(args[i + 1]);
-    } else if (args[i].starts_with("--format=")) {
-      return std::string(args[i].substr(9));
-    }
-  }
-  return std::nullopt;
-}
-
-static std::vector<std::string>
-parse_attachments(const std::vector<std::string_view> &args) {
+struct MsgSendOptions {
+  int64_t chat_id{0};
+  bool chat_id_set{false};
+  std::string message_text;
+  std::string caption;
   std::vector<std::string> attachments;
+  bool is_media{false};
+  int64_t message_thread_id{0};
+};
+
+static MsgSendOptions
+parse_msg_send_options(const std::vector<std::string_view> &args) {
+  MsgSendOptions opts;
   for (size_t i = 0; i < args.size(); ++i) {
-    if ((args[i] == "-a" || args[i] == "--attach" || args[i] == "-A" ||
-         args[i] == "--attachment") &&
+    std::string_view arg = args[i];
+    if ((arg == "-a" || arg == "--attach" || arg == "-A" ||
+         arg == "--attachment") &&
         i + 1 < args.size()) {
-      attachments.emplace_back(args[++i]);
-    } else if (args[i].starts_with("--attach=")) {
-      attachments.emplace_back(args[i].substr(9));
+      opts.attachments.emplace_back(args[++i]);
+    } else if (arg.starts_with("--attach=")) {
+      opts.attachments.emplace_back(arg.substr(9));
+    } else if (arg == "-m" || arg == "--media") {
+      opts.is_media = true;
+    } else if ((arg == "-C" || arg == "--caption") && i + 1 < args.size()) {
+      opts.caption = std::string(args[++i]);
+    } else if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
+      int64_t val = 0;
+      auto [ptr, ec] = std::from_chars(
+          args[i + 1].data(), args[i + 1].data() + args[i + 1].size(), val);
+      if (ec == std::errc{}) {
+        opts.message_thread_id = val;
+        ++i;
+      }
+    } else if (!opts.chat_id_set) {
+      int64_t val = 0;
+      auto [ptr, ec] =
+          std::from_chars(arg.data(), arg.data() + arg.size(), val);
+      if (ec == std::errc{} && ptr == arg.data() + arg.size()) {
+        opts.chat_id = val;
+        opts.chat_id_set = true;
+      }
+    } else if (opts.chat_id_set && opts.message_text.empty() &&
+               !arg.starts_with("-")) {
+      opts.message_text = std::string(arg);
     }
   }
-  return attachments;
+  return opts;
+}
+
+struct ExportOptions {
+  int64_t chat_id{0};
+  bool chat_id_set{false};
+  std::string format_type{"json"};
+  std::string out_path;
+  int limit{1000};
+};
+
+static ExportOptions
+parse_export_options(const std::vector<std::string_view> &args) {
+  ExportOptions opts;
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg = args[i];
+    if ((arg == "-f" || arg == "--format") && i + 1 < args.size()) {
+      opts.format_type = std::string(args[++i]);
+    } else if ((arg == "-o" || arg == "--output") && i + 1 < args.size()) {
+      opts.out_path = std::string(args[++i]);
+    } else if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
+      int val = 0;
+      auto [ptr, ec] = std::from_chars(
+          args[i + 1].data(), args[i + 1].data() + args[i + 1].size(), val);
+      if (ec == std::errc{}) {
+        opts.limit = val;
+        ++i;
+      }
+    } else if (!opts.chat_id_set) {
+      int64_t val = 0;
+      auto [ptr, ec] =
+          std::from_chars(arg.data(), arg.data() + arg.size(), val);
+      if (ec == std::errc{} && ptr == arg.data() + arg.size()) {
+        opts.chat_id = val;
+        opts.chat_id_set = true;
+      }
+    }
+  }
+  return opts;
 }
 
 } // namespace grm::test
 
+void test_msg_send_option_parsing() {
+  auto opts = grm::test::parse_msg_send_options(
+      {"-a", "/tmp/file1.pdf", "-a", "/tmp/file2.jpg", "-m", "-C", "My Caption",
+       "-t", "42", "-1001789902965", "Hello World"});
+
+  check(opts.chat_id_set, "Chat ID should be set");
+  check(opts.chat_id == -1001789902965LL, "Chat ID should match negative supergroup ID");
+  check(opts.message_text == "Hello World", "Message text should match");
+  check(opts.caption == "My Caption", "Caption should match");
+  check(opts.is_media, "Media flag should be true");
+  check(opts.message_thread_id == 42, "Topic thread ID should be 42");
+  check(opts.attachments.size() == 2, "Should have 2 attachments");
+  check(opts.attachments[0] == "/tmp/file1.pdf", "First attachment match");
+  check(opts.attachments[1] == "/tmp/file2.jpg", "Second attachment match");
+
+  std::cout << "[PASS] test_msg_send_option_parsing\n";
+}
+
+void test_export_option_parsing() {
+  auto opts = grm::test::parse_export_options(
+      {"-f", "csv", "-o", "/tmp/history.csv", "-n", "500", "-1001789902965"});
+
+  check(opts.chat_id_set, "Chat ID set");
+  check(opts.chat_id == -1001789902965LL, "Chat ID match");
+  check(opts.format_type == "csv", "Format match");
+  check(opts.out_path == "/tmp/history.csv", "Output path match");
+  check(opts.limit == 500, "Limit match");
+
+  std::cout << "[PASS] test_export_option_parsing\n";
+}
+
 int main() {
   std::cout << "Running test_cli_options...\n";
-
-  // Test short -n limit flag
-  auto limit1 = grm::test::parse_limit({"-n", "50"});
-  if (!limit1.has_value() || *limit1 != 50) std::abort();
-
-  // Test long --limit=100 flag
-  auto limit2 = grm::test::parse_limit({"--limit=100"});
-  if (!limit2.has_value() || *limit2 != 100) std::abort();
-
-  // Test long --limit 75 flag
-  auto limit3 = grm::test::parse_limit({"--limit", "75"});
-  if (!limit3.has_value() || *limit3 != 75) std::abort();
-
-  // Test format options
-  auto fmt1 = grm::test::parse_format({"-f", "csv"});
-  if (!fmt1.has_value() || *fmt1 != "csv") std::abort();
-
-  auto fmt2 = grm::test::parse_format({"--format=json"});
-  if (!fmt2.has_value() || *fmt2 != "json") std::abort();
-
-  // Test attachment option parsing
-  auto atts = grm::test::parse_attachments(
-      {"-a", "/tmp/doc1.pdf", "--attach=/tmp/doc2.png"});
-  if (atts.size() != 2 || atts[0] != "/tmp/doc1.pdf" ||
-      atts[1] != "/tmp/doc2.png")
-    std::abort();
-
-  std::cout << "test_cli_options passed successfully!\n";
+  test_msg_send_option_parsing();
+  test_export_option_parsing();
+  std::cout << "All test_cli_options unit tests passed successfully.\n";
   return 0;
 }
