@@ -64,8 +64,22 @@ Using the ``GNUmakefile``:
    make lint
    make analyze
 
-   # Install binary to ~/bin/grm
+   # Build man page and check RST documentation syntax
+   make man
+   make doc-check
+
+   # Install binary and man page for current user (~/bin/grm and ~/.local/share/man/man1/grm.1)
    make install-user
+   make install-user-man
+
+Documentation & Man Page
+------------------------
+
+- **User Guide**: Comprehensive reStructuredText documentation in ``docs/user/grm.rst``.
+- **Man Page**: Source maintained in ``docs/man/grm.1.rst``, compiled with ``rst2man`` to ``build/grm.1``.
+- **System Installation**: Run ``sudo make install`` to install ``grm`` to ``/usr/local/bin/grm`` and man page to ``/usr/local/share/man/man1/grm.1``.
+- **User Installation**: Run ``make install-user`` and ``make install-user-man`` to install binary to ``~/bin/grm`` and man page to ``~/.local/share/man/man1/grm.1``. You can then view the man page with ``man grm``.
+
 
 Command Reference
 -----------------
