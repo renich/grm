@@ -28,7 +28,6 @@ std::expected<std::string, std::string> Uploader::build_send_document_payload(
 
   std::string payload = std::format(
       R"({{
-        "@type": "sendMessage",
         "chat_id": {},
         {}
         "input_message_content": {{
@@ -72,7 +71,6 @@ std::expected<std::string, std::string> Uploader::build_send_media_payload(
 
   std::string payload = std::format(
       R"({{
-        "@type": "sendMessage",
         "chat_id": {},
         {}
         "input_message_content": {{

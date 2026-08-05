@@ -484,7 +484,8 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
     if (!res) {
       return std::unexpected("Failed to send message: " + res.error());
     }
-    grm::log::info("Message sent successfully.");
+    int64_t sent_id = res->get_int("id").value_or(0);
+    grm::log::info(std::format("Message sent successfully (ID: {}).", sent_id));
     return 0;
   }
 
@@ -531,6 +532,7 @@ App::cmd_msg_info(const std::vector<std::string> &args) {
   if (!cid_res || !mid_res) return std::unexpected("Invalid chat_id or message_id");
 
   if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  ensure_chat_loaded(*cid_res);
 
   const std::string payload = std::format(
       R"({{

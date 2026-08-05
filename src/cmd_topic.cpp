@@ -91,14 +91,25 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_topic_create(const std::vector<std::string> &args) {
-  if (args.size() < 2) {
-    return std::unexpected(
-        "Usage: grm topic create <supergroup_id> \"<topic_name>\"");
+  std::string icon_emoji_id = "0";
+  std::vector<std::string> positional;
+  for (size_t i = 0; i < args.size(); ++i) {
+    if ((args[i] == "-e" || args[i] == "--emoji" || args[i] == "--icon") &&
+        i + 1 < args.size()) {
+      icon_emoji_id = args[++i];
+    } else {
+      positional.push_back(args[i]);
+    }
   }
 
-  auto cid_res = parse_int64(args[0]);
+  if (positional.size() < 2) {
+    return std::unexpected(
+        "Usage: grm topic create [-e|--emoji <custom_emoji_id>] <supergroup_id> \"<topic_name>\"");
+  }
+
+  auto cid_res = parse_int64(positional[0]);
   if (!cid_res) return std::unexpected(cid_res.error());
-  const std::string &name = args[1];
+  const std::string &name = positional[1];
 
   if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
   ensure_chat_loaded(*cid_res);
@@ -106,9 +117,10 @@ App::cmd_topic_create(const std::vector<std::string> &args) {
   const std::string payload = std::format(
       R"({{
         "chat_id": {},
-        "name": "{}"
+        "name": "{}",
+        "icon_custom_emoji_id": "{}"
       }})",
-      *cid_res, escape_json_string(name));
+      *cid_res, escape_json_string(name), icon_emoji_id);
 
   auto res = client_->send_request("createForumTopic", payload, 10.0);
   if (!res) {
@@ -118,8 +130,6 @@ App::cmd_topic_create(const std::vector<std::string> &args) {
   grm::log::info("Forum topic created successfully: " + name);
   return 0;
 }
-
-
 
 std::expected<int, std::string>
 App::cmd_topic_info(const std::vector<std::string> &args) {
@@ -153,15 +163,28 @@ App::cmd_topic_info(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_topic_edit(const std::vector<std::string> &args) {
-  if (args.size() < 3) {
-    return std::unexpected(
-        "Usage: grm topic edit <supergroup_id> <topic_id> \"<new_name>\"");
+  std::string icon_emoji_id = "0";
+  bool has_icon = false;
+  std::vector<std::string> positional;
+  for (size_t i = 0; i < args.size(); ++i) {
+    if ((args[i] == "-e" || args[i] == "--emoji" || args[i] == "--icon") &&
+        i + 1 < args.size()) {
+      icon_emoji_id = args[++i];
+      has_icon = true;
+    } else {
+      positional.push_back(args[i]);
+    }
   }
 
-  auto cid_res = parse_int64(args[0]);
-  auto tid_res = parse_int64(args[1]);
+  if (positional.size() < 2) {
+    return std::unexpected(
+        "Usage: grm topic edit [-e|--emoji <custom_emoji_id>] <supergroup_id> <topic_id> [\"<new_name>\"]");
+  }
+
+  auto cid_res = parse_int64(positional[0]);
+  auto tid_res = parse_int64(positional[1]);
   if (!cid_res || !tid_res) return std::unexpected("Invalid supergroup_id or topic_id");
-  const std::string &new_name = args[2];
+  const std::string new_name = positional.size() >= 3 ? positional[2] : "";
 
   if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
 
@@ -170,9 +193,12 @@ App::cmd_topic_edit(const std::vector<std::string> &args) {
         "chat_id": {},
         "message_thread_id": {},
         "forum_topic_id": {},
-        "name": "{}"
+        "name": "{}",
+        "edit_icon_custom_emoji": {},
+        "icon_custom_emoji_id": "{}"
       }})",
-      *cid_res, *tid_res, *tid_res, escape_json_string(new_name));
+      *cid_res, *tid_res, *tid_res, escape_json_string(new_name),
+      has_icon ? "true" : "false", icon_emoji_id.empty() ? "0" : icon_emoji_id);
 
   auto res = client_->send_request("editForumTopic", payload, 10.0);
   if (!res) {

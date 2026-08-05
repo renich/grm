@@ -92,15 +92,15 @@ void App::print_topic_help() {
 Supergroup forum topic lifecycle management.
 
 Subcommands:
-  grm topic ls <supergroup_id>                                     List active forum topics
-  grm topic create <supergroup_id> "<topic_name>"                  Create new forum topic
-  grm topic info <supergroup_id> <topic_id>                        View topic metadata
-  grm topic edit <supergroup_id> <topic_id> "<new_name>"           Rename topic
-  grm topic close <supergroup_id> <topic_id>                       Close forum topic
-  grm topic reopen <supergroup_id> <topic_id>                      Reopen closed topic
-  grm topic pin <supergroup_id> <topic_id>                         Pin topic
-  grm topic unpin <supergroup_id> <topic_id>                       Unpin topic
-  grm topic delete <supergroup_id> <topic_id>                      Delete topic and history
+  grm topic ls <supergroup_id>                                           List active forum topics
+  grm topic create [-e|--emoji <id>] <supergroup_id> "<topic_name>"      Create new forum topic with optional custom emoji icon
+  grm topic info <supergroup_id> <topic_id>                              View topic metadata
+  grm topic edit [-e|--emoji <id>] <supergroup_id> <topic_id> ["<name>"] Edit topic title or custom emoji icon
+  grm topic close <supergroup_id> <topic_id>                             Close forum topic
+  grm topic reopen <supergroup_id> <topic_id>                            Reopen closed topic
+  grm topic pin <supergroup_id> <topic_id>                               Pin topic
+  grm topic unpin <supergroup_id> <topic_id>                             Unpin topic
+  grm topic delete <supergroup_id> <topic_id>                            Delete topic and history
 )" << '\n';
 }
 

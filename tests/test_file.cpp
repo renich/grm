@@ -33,7 +33,8 @@ void test_uploader_document_payload_generation() {
       -1001789902965, dummy_file, "Hola desde grm file upload", 42);
   check(res.has_value(), "Payload generation should succeed");
   const std::string &payload = *res;
-  check(payload.find("sendMessage") != std::string::npos, "Has sendMessage");
+  check(payload.find("inputMessageDocument") != std::string::npos,
+        "Has inputMessageDocument");
   check(payload.find("-1001789902965") != std::string::npos, "Has chat_id");
   check(payload.find("inputMessageDocument") != std::string::npos,
         "Has inputMessageDocument");
@@ -60,7 +61,8 @@ void test_uploader_media_payload_generation() {
       -1001789902965, dummy_file, "Photo caption test", 15);
   check(res.has_value(), "Media payload generation should succeed");
   const std::string &payload = *res;
-  check(payload.find("sendMessage") != std::string::npos, "Has sendMessage");
+  check(payload.find("inputMessagePhoto") != std::string::npos,
+        "Has inputMessagePhoto");
   check(payload.find("-1001789902965") != std::string::npos, "Has chat_id");
   check(payload.find("inputMessagePhoto") != std::string::npos,
         "Has inputMessagePhoto");
