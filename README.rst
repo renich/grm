@@ -1,7 +1,7 @@
 .. image:: assets/logo.svg
    :alt: grm — Group & Telegram Manager CLI
    :align: center
-   :width: 100%
+   :width: 180px
 
 ==================================
 grm — Group & Telegram Manager CLI

@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="800" height="240">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Background Radial Glow -->
-    <radialGradient id="bgGlow" cx="25%" cy="50%" r="65%">
+    <!-- Dark Glass Background Gradient -->
+    <radialGradient id="bgGlow" cx="50%" cy="45%" r="65%">
       <stop offset="0%" stop-color="#1E1B4B" stop-opacity="0.95"/>
       <stop offset="60%" stop-color="#0F172A" stop-opacity="0.98"/>
       <stop offset="100%" stop-color="#090D16" stop-opacity="1.0"/>
@@ -49,79 +49,69 @@
       <stop offset="100%" stop-color="#38BDF8"/>
     </linearGradient>
 
-    <!-- Drop Shadow Filter -->
-    <filter id="shardGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#6366F1" flood-opacity="0.35"/>
-      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#38BDF8" flood-opacity="0.25"/>
+    <!-- Outer Glow Filter -->
+    <filter id="shardGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#6366F1" flood-opacity="0.45"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#38BDF8" flood-opacity="0.30"/>
     </filter>
   </defs>
 
-  <!-- Container Box -->
-  <rect width="800" height="240" rx="20" fill="url(#bgGlow)"/>
+  <!-- Base Square Container with Rounded Corners -->
+  <rect width="512" height="512" rx="96" fill="url(#bgGlow)" stroke="#312E81" stroke-width="3"/>
 
-  <!-- Outer Geometric Accent Grid -->
-  <g stroke="#312E81" stroke-width="1" opacity="0.25">
-    <line x1="40" y1="40" x2="760" y2="40"/>
-    <line x1="40" y1="200" x2="760" y2="200"/>
-    <line x1="180" y1="20" x2="180" y2="220"/>
+  <!-- Background Subtle Geometry Grid -->
+  <g stroke="#312E81" stroke-width="1.5" opacity="0.3">
+    <circle cx="256" cy="220" r="160" fill="none"/>
+    <circle cx="256" cy="220" r="110" fill="none"/>
+    <line x1="256" y1="40" x2="256" y2="400"/>
+    <line x1="76" y1="220" x2="436" y2="220"/>
   </g>
 
-  <!-- Crystal Shard Emblem Group -->
-  <g transform="translate(100, 120)" filter="url(#shardGlow)">
-    <!-- Main Crystal Shard Polygon Outer Outline -->
-    <!-- Top Apex: (0, -75), Right: (55, -20), Bottom Apex: (0, 75), Left: (-55, -20) -->
+  <!-- Centered Crystal Shard Emblem -->
+  <g transform="translate(256, 210)" filter="url(#shardGlow)">
+    <!-- Top Apex (0, -135), Right (-95, -35), Mid Right (75, 60), Bottom Apex (0, 135), Mid Left (-75, 60), Left (-95, -35) -->
 
     <!-- Facet 1: Top Left -->
-    <polygon points="0,-75 -55,-20 0,0" fill="url(#facetTopLeft)" opacity="0.95"/>
-    
+    <polygon points="0,-135 -95,-35 0,0" fill="url(#facetTopLeft)" opacity="0.95"/>
+
     <!-- Facet 2: Top Right -->
-    <polygon points="0,-75 55,-20 0,0" fill="url(#facetTopRight)" opacity="0.90"/>
+    <polygon points="0,-135 95,-35 0,0" fill="url(#facetTopRight)" opacity="0.90"/>
 
-    <!-- Facet 3: Center Mid-Left Shard -->
-    <polygon points="-55,-20 -40,35 0,0" fill="url(#facetCenterLeft)" opacity="0.98"/>
+    <!-- Facet 3: Mid-Left Shard -->
+    <polygon points="-95,-35 -75,60 0,0" fill="url(#facetCenterLeft)" opacity="0.98"/>
 
-    <!-- Facet 4: Center Mid-Right Shard -->
-    <polygon points="55,-20 40,35 0,0" fill="url(#facetCenterRight)" opacity="0.92"/>
+    <!-- Facet 4: Mid-Right Shard -->
+    <polygon points="95,-35 75,60 0,0" fill="url(#facetCenterRight)" opacity="0.92"/>
 
-    <!-- Facet 5: Bottom Left Shard Apex -->
-    <polygon points="-40,35 0,75 0,0" fill="url(#facetBottomLeft)" opacity="0.90"/>
+    <!-- Facet 5: Bottom Left Apex Shard -->
+    <polygon points="-75,60 0,135 0,0" fill="url(#facetBottomLeft)" opacity="0.90"/>
 
-    <!-- Facet 6: Bottom Right Shard Apex -->
-    <polygon points="40,35 0,75 0,0" fill="url(#facetBottomRight)" opacity="0.95"/>
+    <!-- Facet 6: Bottom Right Apex Shard -->
+    <polygon points="75,60 0,135 0,0" fill="url(#facetBottomRight)" opacity="0.95"/>
 
-    <!-- Crystalline Facet Edge Highlights -->
-    <g stroke="#F0F9FF" stroke-width="1.2" opacity="0.75">
-      <line x1="0" y1="-75" x2="0" y2="75"/>
-      <line x1="-55" y1="-20" x2="55" y2="-20"/>
-      <line x1="-55" y1="-20" x2="0" y2="0"/>
-      <line x1="55" y1="-20" x2="0" y2="0"/>
-      <line x1="-40" y1="35" x2="0" y2="0"/>
-      <line x1="40" y1="35" x2="0" y2="0"/>
+    <!-- Edge Highlights -->
+    <g stroke="#F0F9FF" stroke-width="2" opacity="0.8">
+      <line x1="0" y1="-135" x2="0" y2="135"/>
+      <line x1="-95" y1="-35" x2="95" y2="-35"/>
+      <line x1="-95" y1="-35" x2="0" y2="0"/>
+      <line x1="95" y1="-35" x2="0" y2="0"/>
+      <line x1="-75" y1="60" x2="0" y2="0"/>
+      <line x1="75" y1="60" x2="0" y2="0"/>
     </g>
 
     <!-- Outer Polygon Rim -->
-    <polygon points="0,-75 55,-20 40,35 0,75 -40,35 -55,-20" fill="none" stroke="#A5B4FC" stroke-width="2" opacity="0.9"/>
+    <polygon points="0,-135 95,-35 75,60 0,135 -75,60 -95,-35" fill="none" stroke="#A5B4FC" stroke-width="3" opacity="0.95"/>
 
-    <!-- Embedded Stylized Telegram Paper Plane Geometric Vector -->
-    <g transform="translate(-2, -2) scale(0.95)">
+    <!-- Embedded Telegram Vector -->
+    <g transform="translate(-4, -4) scale(1.6)">
       <path d="M-18,-8 L22,-18 L-6,18 L-6,4 Z" fill="url(#planeGrad)" opacity="0.95"/>
       <path d="M-6,4 L6,-2 L-6,18 Z" fill="#93C5FD" opacity="0.90"/>
     </g>
   </g>
 
-  <!-- Typography Group -->
-  <g transform="translate(210, 110)">
-    <!-- Title: grm -->
-    <text x="0" y="22" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="900" font-size="76" letter-spacing="-2" fill="url(#textGrad)">grm</text>
-
-    <!-- Version Badge -->
-    <rect x="180" y="-32" width="84" height="28" rx="6" fill="#312E81" stroke="#6366F1" stroke-width="1"/>
-    <text x="222" y="-13" font-family="monospace, 'Courier New'" font-weight="700" font-size="13" fill="#E0F2FE" text-anchor="middle">v1.0.0</text>
-
-    <!-- Subtitle: Group & Telegram Manager -->
-    <text x="2" y="52" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="17" letter-spacing="4" fill="#94A3B8">GROUP &amp; TELEGRAM MANAGER</text>
-
-    <!-- Subtitle Tech Tag -->
-    <text x="2" y="76" font-family="monospace, 'Courier New'" font-weight="600" font-size="13" letter-spacing="2" fill="#38BDF8">C++23 • OFFICIAL TDLib ENGINE • AI &amp; HUMAN CLI</text>
+  <!-- Logotype at Bottom -->
+  <g transform="translate(256, 425)">
+    <text x="0" y="0" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="900" font-size="52" letter-spacing="4" fill="url(#textGrad)" text-anchor="middle">grm</text>
+    <text x="0" y="24" font-family="monospace, 'Courier New'" font-weight="600" font-size="14" letter-spacing="3" fill="#38BDF8" text-anchor="middle">v0.5.0</text>
   </g>
 </svg>
