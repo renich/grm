@@ -462,7 +462,8 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
       return std::unexpected(
           "Cannot send message: no text payload or file attachments provided.");
     }
-    const std::string escaped_message = escape_json_string(message_text);
+    auto text_obj = parse_formatted_text(message_text, "markdown");
+    std::string text_json = text_obj ? text_obj->to_string() : std::format(R"({{"@type":"formattedText","text":"{}"}})", escape_json_string(message_text));
     std::string thread_part = (message_thread_id > 0)
                                   ? std::format(R"("message_thread_id": {},)", message_thread_id)
                                   : "";
@@ -472,13 +473,10 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
           {}
           "input_message_content": {{
             "@type": "inputMessageText",
-            "text": {{
-              "@type": "formattedText",
-              "text": "{}"
-            }}
+            "text": {}
           }}
         }})",
-        chat_id, thread_part, escaped_message);
+        chat_id, thread_part, text_json);
 
     auto res = client_->send_request("sendMessage", payload, 10.0);
     if (!res) {
@@ -493,25 +491,64 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
     const auto &file_path = attachments[idx];
     const std::string file_caption = (idx == 0) ? caption : "";
 
-    std::expected<std::string, std::string> payload_res;
+    std::error_code ec;
+    if (!std::filesystem::exists(file_path, ec) || !std::filesystem::is_regular_file(file_path, ec)) {
+      return std::unexpected("Attachment file not found: " + file_path.string());
+    }
+
+    const std::string abs_path = std::filesystem::absolute(file_path, ec).string();
+    grm::log::info(std::format("Uploading {} to chat {}...", file_path.string(), chat_id));
+
+    std::string caption_part;
+    if (!file_caption.empty()) {
+      auto caption_obj = parse_formatted_text(file_caption, "markdown");
+      std::string caption_json = caption_obj ? caption_obj->to_string() : std::format(R"({{"@type":"formattedText","text":"{}","entities":[]}})", escape_json_string(file_caption));
+      caption_part = std::format(R"(, "caption": {})", caption_json);
+    }
+
+    std::string thread_part;
+    if (message_thread_id > 0) {
+      thread_part = std::format(R"(, "message_thread_id": {})", message_thread_id);
+    }
+
+    std::string msg_payload;
     if (is_media) {
-      payload_res = Uploader::build_send_media_payload(
-          chat_id, file_path, file_caption, message_thread_id);
+      msg_payload = std::format(
+          R"({{
+            "chat_id": {}{},
+            "input_message_content": {{
+              "@type": "inputMessagePhoto",
+              "photo": {{
+                "@type": "inputPhoto",
+                "photo": {{
+                  "@type": "inputFileLocal",
+                  "path": "{}"
+                }}
+              }}{}
+            }}
+          }})",
+          chat_id, thread_part, escape_json_string(abs_path), caption_part);
     } else {
-      payload_res = Uploader::build_send_document_payload(
-          chat_id, file_path, file_caption, message_thread_id);
+      msg_payload = std::format(
+          R"({{
+            "chat_id": {}{},
+            "input_message_content": {{
+              "@type": "inputMessageDocument",
+              "document": {{
+                "@type": "inputDocument",
+                "document": {{
+                  "@type": "inputFileLocal",
+                  "path": "{}"
+                }}
+              }}{}
+            }}
+          }})",
+          chat_id, thread_part, escape_json_string(abs_path), caption_part);
     }
 
-    if (!payload_res) {
-      return std::unexpected(payload_res.error());
-    }
-
-    grm::log::info(std::format("Uploading {} to chat {}...", file_path.string(),
-                               chat_id));
-    auto res = client_->send_request("sendMessage", *payload_res, 30.0);
+    auto res = client_->send_request("sendMessage", msg_payload, 30.0);
     if (!res) {
-      return std::unexpected("Failed to send file " + file_path.string() +
-                             ": " + res.error());
+      return std::unexpected("Failed to send file " + file_path.string() + ": " + res.error());
     }
   }
 

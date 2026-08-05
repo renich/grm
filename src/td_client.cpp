@@ -19,7 +19,7 @@ std::expected<void, std::string> TdClient::start() {
 
   int td_verbosity = 0;
   if (log::get_verbosity() >= log::VerbosityLevel::Debug) {
-    td_verbosity = 2;
+    td_verbosity = 4;
   } else if (log::get_verbosity() == log::VerbosityLevel::Verbose) {
     td_verbosity = 1;
   }
@@ -106,32 +106,28 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
     fut = pending_promises_[extra_id].get_future();
   }
 
-  auto parsed = JsonValue::parse(payload_json);
-  json_object *raw_obj = nullptr;
-  bool created_new = false;
-
-  if (parsed && parsed->is_object()) {
-    raw_obj = parsed->raw();
-  } else {
-    raw_obj = json_object_new_object();
-    created_new = true;
-  }
-
+  json_object *raw_obj = json_object_new_object();
   json_object_object_add(raw_obj, "@type",
                          json_object_new_string(type.c_str()));
   json_object_object_add(raw_obj, "@extra",
                          json_object_new_string(extra_id.c_str()));
+
+  auto parsed = JsonValue::parse(payload_json);
+  if (parsed && parsed->is_object()) {
+    json_object_object_foreach(parsed->raw(), key, val) {
+      if (std::string_view(key) != "@type" &&
+          std::string_view(key) != "@extra") {
+        json_object_object_add(raw_obj, key, json_object_get(val));
+      }
+    }
+  }
 
   const char *str = json_object_to_json_string_ext(
       raw_obj, JSON_C_TO_STRING_PLAIN | JSON_C_TO_STRING_NOSLASHESCAPE);
   grm::log::debug("TD_SEND: " + std::string(str));
   td_send(client_id_, str);
 
-
-
-  if (created_new) {
-    json_object_put(raw_obj);
-  }
+  json_object_put(raw_obj);
 
   const auto status =
       fut.wait_for(std::chrono::duration<double>(timeout_seconds));

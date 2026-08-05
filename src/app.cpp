@@ -375,5 +375,44 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
   return std::unexpected("Unknown command: " + cmd);
 }
 
+std::expected<JsonValue, std::string>
+App::parse_formatted_text(const std::string &text, const std::string &mode) {
+  if (text.empty()) {
+    std::string empty_payload = R"({"@type": "formattedText", "text": "", "entities": []})";
+    return *JsonValue::parse(empty_payload);
+  }
+
+  std::string parse_mode_type = "textParseModeMarkdown";
+  if (mode == "html" || mode == "HTML") {
+    parse_mode_type = "textParseModeHTML";
+  }
+
+  const std::string payload = std::format(
+      R"({{
+        "@type": "parseTextEntities",
+        "text": "{}",
+        "parse_mode": {{
+          "@type": "{}",
+          "version": 2
+        }}
+      }})",
+      escape_json_string(text), parse_mode_type);
+
+  auto res = client_->send_request("parseTextEntities", payload, 5.0);
+  if (!res) {
+    grm::log::debug("parseTextEntities failed: " + res.error() + ", falling back to plain formattedText");
+    const std::string plain_payload = std::format(
+        R"({{
+          "@type": "formattedText",
+          "text": "{}",
+          "entities": []
+        }})",
+        escape_json_string(text));
+    return *JsonValue::parse(plain_payload);
+  }
+
+  return *res;
+}
+
 } // namespace grm
 
