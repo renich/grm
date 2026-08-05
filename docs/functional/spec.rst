@@ -9,6 +9,7 @@ grm Functional Specification
    specs/message-crud-and-export
    specs/file-uploads-and-downloads
    specs/forum-topics-crud
+   specs/rich-text-emojis-and-branding
 
 Overview
 ========
@@ -25,3 +26,6 @@ Core Functional Requirements
 * **[FUNC-007]**: File & Media Upload Dispatch (Documents, Images, Video, Audio).
 * **[FUNC-008]**: File & Media Attachment Download Engine (Single & Bulk Download per Chat/Topic).
 * **[FUNC-009]**: Supergroup Forum Topics CRUD (Create Topic, Read List/Info, Update Edit/Close/Reopen/Pin, Delete Topic).
+* **[FUNC-010]**: Telegram Rich Text Entity Formatting (Markdown V2 / HTML via TDLib ``parseTextEntities``).
+* **[FUNC-011]**: Supergroup Forum Topic Custom Emoji Icons (``-e | --emoji``).
+* **[FUNC-012]**: Project Branding & Visual Logo Assets (Crystal Shard / Facet Visual Identity).

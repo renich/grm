@@ -11,6 +11,7 @@ grm Project Roadmap
    roadmaps/phase-4-forum-topics
    roadmaps/phase-5-output-formatter-and-llm-modes
    roadmaps/phase-6-full-crud-and-downloads
+   roadmaps/phase-7-rich-text-emojis-and-branding
 
 Executive Summary
 =================
@@ -26,4 +27,5 @@ Phase Breakdown
 * **Phase 4 (Forum Topics)**: Supergroup Forum Topics Discovery & Thread-Scoped Messaging. *(Completed & Deployed)*
 * **Phase 5 (Human & LLM Formatter Engine)**: ANSI Terminal Styling, Type Humanization, Markdown/JSON LLM Formats, and TTY Auto-Detection. *(Completed & Deployed)*
 * **Phase 6 (Full CRUD & File Download Engine)**: Full CRUD operations across Chats, Groups, Channels, Forum Topics, Messages, and Single/Bulk File Attachment Downloading. *(Completed & Deployed)*
-* **Phase 7 (TUI Interface)**: Ncurses/FTXUI Terminal User Interface for Live Chat Monitoring. *(In Planning & Specification)*
+* **Phase 7 (Rich Text, Topic Emojis & Branding)**: Telegram Rich Text Entities, Supergroup Custom Topic Emojis, and Crystal Shard Visual Brand Assets. *(Completed & Deployed)*
+* **Phase 8 (TUI Interface)**: Ncurses/FTXUI Terminal User Interface for Live Chat Monitoring. *(In Planning & Specification)*
