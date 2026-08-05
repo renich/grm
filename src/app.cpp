@@ -10,7 +10,7 @@ namespace grm {
 App::App(Config config, CliOptions options)
     : config_(std::move(config)), options_(std::move(options)) {}
 
-void App::print_version() { std::cout << "grm 0.5.0 (C++23 / TDLib 1.8.66)\n"; }
+void App::print_version() { std::cout << "grm (C++23 / TDLib 1.8.66)\n"; }
 
 void App::print_usage() {
   std::cout << R"(
