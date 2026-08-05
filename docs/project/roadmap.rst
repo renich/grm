@@ -25,5 +25,5 @@ Phase Breakdown
 * **Phase 3 (File Uploads)**: Local File & Media Attachment Dispatch. *(Completed & Deployed)*
 * **Phase 4 (Forum Topics)**: Supergroup Forum Topics Discovery & Thread-Scoped Messaging. *(Completed & Deployed)*
 * **Phase 5 (Human & LLM Formatter Engine)**: ANSI Terminal Styling, Type Humanization, Markdown/JSON LLM Formats, and TTY Auto-Detection. *(Completed & Deployed)*
-* **Phase 6 (Full CRUD & File Download Engine)**: Full CRUD operations across Chats, Groups, Channels, Forum Topics, Messages, and Single/Bulk File Attachment Downloading. *(In Planning & Specification)*
-* **Phase 7 (TUI Interface)**: Ncurses/FTXUI Terminal User Interface for Live Chat Monitoring.
+* **Phase 6 (Full CRUD & File Download Engine)**: Full CRUD operations across Chats, Groups, Channels, Forum Topics, Messages, and Single/Bulk File Attachment Downloading. *(Completed & Deployed)*
+* **Phase 7 (TUI Interface)**: Ncurses/FTXUI Terminal User Interface for Live Chat Monitoring. *(In Planning & Specification)*
