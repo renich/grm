@@ -42,6 +42,11 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(TDJSON REQUIRED tdjson)
 pkg_check_modules(JSONC REQUIRED json-c)
 
+link_directories(
+    ${TDJSON_LIBRARY_DIRS}
+    ${JSONC_LIBRARY_DIRS}
+)
+
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${TDJSON_INCLUDE_DIRS}
