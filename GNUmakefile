@@ -48,7 +48,7 @@ help:
 	@echo "  analyze              Run Clang scan-build static analyzer"
 	@echo "  doc-check            Verify rstcheck syntax for user guide and man page"
 	@echo "  man                  Compile reStructuredText man page to $(BUILD_DIR)/grm.1"
-	@echo "  install-hooks        Configure repository Git pre-commit hook (.githooks/pre-commit.bash)"
+	@echo "  install-hooks        Configure repository Git pre-push hook (.githooks/pre-push.bash)"
 	@echo ""
 	@echo "Installation Targets:"
 	@echo "  install              Install release binary, man page, and completions to $(PREFIX)"
@@ -92,7 +92,7 @@ doc-check:
 	$(MAKE) -C docs doc-check
 
 install-hooks:
-	chmod +x .githooks/pre-commit.bash
+	chmod +x .githooks/pre-push.bash
 	git config core.hooksPath .githooks
 
 hooks: install-hooks

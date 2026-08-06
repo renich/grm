@@ -2,8 +2,9 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# Pre-commit Hook for grm (Group & Telegram Manager CLI)
-# Enforces crstlint, make doc-check, make format, make check (CTest), and make lint
+# Pre-push Hook for grm (Group & Telegram Manager CLI)
+# Allows local WiP commits while guaranteeing remote code quality before pushing.
+# Enforces crstlint, make doc-check, make format, make check (CTest), and make lint.
 
 readonly Red='\033[0;31m'
 readonly Green='\033[0;32m'
@@ -48,4 +49,4 @@ log_stage "5/5 Running static analysis & linters (make lint)..."
 make lint || { log_fail "make lint static analysis failed."; exit 1; }
 log_pass "Static analysis passed."
 
-printf '%b[SUCCESS] All pre-commit quality checks passed! Proceeding with commit.%b\n' "$Green" "$Reset"
+printf '%b[SUCCESS] All pre-push quality checks passed! Proceeding with git push.%b\n' "$Green" "$Reset"
