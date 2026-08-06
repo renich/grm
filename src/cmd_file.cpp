@@ -211,7 +211,7 @@ App::cmd_file_get(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_file_download_all(const std::vector<std::string> &args) {
   std::vector<std::string> new_args = args;
-  new_args.push_back("--all");
+  new_args.emplace_back("--all");
   return cmd_file_get(new_args);
 }
 

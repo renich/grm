@@ -427,7 +427,9 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
 }
 
 std::expected<JsonValue, std::string>
-App::parse_formatted_text(const std::string &text, const std::string &mode) {
+App::parse_formatted_text(
+    const std::string &text,
+    const std::string &mode) { // NOLINT(bugprone-easily-swappable-parameters)
   if (text.empty()) {
     std::string empty_payload =
         R"({"@type": "formattedText", "text": "", "entities": []})";

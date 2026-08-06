@@ -66,7 +66,7 @@ std::string humanize_bytes(int64_t bytes) {
   constexpr double kMiB = 1024.0 * 1024.0;
   constexpr double kGiB = 1024.0 * 1024.0 * 1024.0;
 
-  double val = static_cast<double>(bytes);
+  auto val = static_cast<double>(bytes);
   if (val < kMiB) {
     return std::format("{:.1f} KiB", val / kKiB);
   }
@@ -105,7 +105,7 @@ std::string humanize_relative_time(int64_t timestamp_sec, int64_t now_sec) {
 std::string format_iso8601(int64_t timestamp_sec) {
   if (timestamp_sec <= 0)
     return "";
-  std::time_t t = static_cast<std::time_t>(timestamp_sec);
+  auto t = static_cast<std::time_t>(timestamp_sec);
   std::tm tm_buf{};
 #if defined(_POSIX_C_SOURCE) || defined(_GNU_SOURCE)
   gmtime_r(&t, &tm_buf);
