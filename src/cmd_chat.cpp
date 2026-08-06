@@ -46,13 +46,18 @@ App::cmd_chat_ls([[maybe_unused]] const std::vector<std::string> &args) {
         if (auto type_obj = chat_info->get_object("type")) {
           type_name = type_obj->get_type().value_or("Chat");
         }
+        int32_t unread = static_cast<int32_t>(chat_info->get_int("unread_count").value_or(0));
+        int64_t last_date = 0;
+        if (auto last_msg = chat_info->get_object("last_message")) {
+          last_date = last_msg->get_int("date").value_or(0);
+        }
         items.push_back(
-            fmt::ChatItem{.id = *cid, .type = type_name, .title = title, .unread_count = 0, .last_message_date = 0});
+            fmt::ChatItem{.id = *cid, .type = type_name, .title = title, .unread_count = unread, .last_message_date = last_date});
       }
     }
   }
 
-  fmt::Formatter::print_chats(items, options_.format, options_.color_mode);
+  fmt::Formatter::render(items, "chat.ls", options_.format, options_.color_mode);
   return 0;
 }
 

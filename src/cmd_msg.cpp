@@ -168,15 +168,25 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
       }
       std::string text = extract_message_text(m);
       if (!text.empty()) {
+        int64_t msg_date = m.get_int("date").value_or(0);
+        bool has_attach = false;
+        std::string attach_type;
+        if (auto content = m.get_object("content")) {
+          std::string type_str = content->get_type().value_or("");
+          if (type_str == "messageDocument") { has_attach = true; attach_type = "document"; }
+          else if (type_str == "messagePhoto") { has_attach = true; attach_type = "photo"; }
+          else if (type_str == "messageVideo") { has_attach = true; attach_type = "video"; }
+          else if (type_str == "messageAudio") { has_attach = true; attach_type = "audio"; }
+        }
         items.push_back(fmt::MessageItem{
             .id = id,
             .chat_id = chat_id,
-            .topic_id = 0,
-            .date = 0,
+            .topic_id = topic_id,
+            .date = msg_date,
             .sender = "",
             .text = text,
-            .has_attachment = false,
-            .attachment_type = ""});
+            .has_attachment = has_attach,
+            .attachment_type = attach_type});
         if (items.size() >= target_limit) {
           break;
         }
@@ -185,7 +195,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   }
 
 
-  fmt::Formatter::print_messages(items, options_.format, options_.color_mode);
+  fmt::Formatter::render(items, "msg.ls", options_.format, options_.color_mode);
   return 0;
 
 
@@ -394,20 +404,30 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
     std::string text = extract_message_text(m);
 
     if (!text.empty() && std::regex_search(text, search_regex)) {
+      int64_t msg_date = m.get_int("date").value_or(0);
+      bool has_attach = false;
+      std::string attach_type;
+      if (auto content = m.get_object("content")) {
+        std::string type_str = content->get_type().value_or("");
+        if (type_str == "messageDocument") { has_attach = true; attach_type = "document"; }
+        else if (type_str == "messagePhoto") { has_attach = true; attach_type = "photo"; }
+        else if (type_str == "messageVideo") { has_attach = true; attach_type = "video"; }
+        else if (type_str == "messageAudio") { has_attach = true; attach_type = "audio"; }
+      }
       items.push_back(fmt::MessageItem{
           .id = id,
           .chat_id = chat_id,
           .topic_id = 0,
-          .date = 0,
+          .date = msg_date,
           .sender = "",
           .text = text,
-          .has_attachment = false,
-          .attachment_type = ""});
+          .has_attachment = has_attach,
+          .attachment_type = attach_type});
       match_count++;
     }
   }
 
-  fmt::Formatter::print_messages(items, options_.format, options_.color_mode);
+  fmt::Formatter::render(items, "msg.search", options_.format, options_.color_mode);
   grm::log::info(std::format("Found {} matching messages.", match_count));
   return 0;
 

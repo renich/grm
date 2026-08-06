@@ -12,9 +12,8 @@ int main(int argc, char *argv[]) {
   grm::CliOptions options;
   std::vector<std::string> command_args;
 
-  const std::array<std::string_view, 5> subcommands = {
-      "login", "chat", "msg", "send", "topic"};
-
+  const std::array<std::string_view, 6> subcommands = {
+      "login", "chat", "msg", "send", "topic", "file"};
 
   for (int i = 1; i < argc; ++i) {
     std::string_view arg(argv[i]);
@@ -49,6 +48,8 @@ int main(int argc, char *argv[]) {
         options.format = grm::fmt::OutputFormat::Markdown;
       } else if (fmt_val == "json") {
         options.format = grm::fmt::OutputFormat::Json;
+      } else if (fmt_val == "jsonl" || fmt_val == "ndjson") {
+        options.format = grm::fmt::OutputFormat::JsonL;
       } else if (fmt_val == "plain") {
         options.format = grm::fmt::OutputFormat::Plain;
       }

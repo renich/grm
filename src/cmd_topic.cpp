@@ -80,14 +80,27 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
       name = t.get_string("name").value_or("General");
     }
 
+    int64_t custom_emoji_id = 0;
+    int32_t icon_color = 0;
+    if (auto info = t.get_object("info")) {
+      if (auto icon = info->get_object("icon")) {
+        if (auto custom_emoji = icon->get_object("custom_emoji")) {
+          custom_emoji_id = custom_emoji->get_int("custom_emoji_id").value_or(0);
+        }
+        if (auto col = icon->get_int("color")) {
+          icon_color = static_cast<int32_t>(*col);
+        }
+      }
+    }
+
     items.push_back(fmt::TopicItem{.id = thread_id,
                                    .name = name,
                                    .message_count = total_messages,
-                                   .custom_emoji_id = 0,
-                                   .icon_color = 0});
+                                   .custom_emoji_id = custom_emoji_id,
+                                   .icon_color = icon_color});
   }
 
-  fmt::Formatter::print_topics(items, options_.format, options_.color_mode);
+  fmt::Formatter::render(items, "topic.ls", options_.format, options_.color_mode);
   return 0;
 }
 
