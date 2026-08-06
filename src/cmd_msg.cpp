@@ -324,14 +324,51 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   int empty_retries = 0;
   const size_t target_limit = static_cast<size_t>(std::max(1, opts.limit));
 
+  int batch_count = 0;
   bool reached_since_cutoff = false;
   while (!reached_since_cutoff) {
+    if (++batch_count > 15) {
+      break;
+    }
     constexpr int fetch_limit = 100;
 
-    const std::string method_name =
-        (topic_id > 0) ? "getForumTopicHistory" : "getChatHistory";
+    std::string search_query;
+    if (opts.has_filter && !opts.filter_patterns.empty()) {
+      search_query = opts.filter_patterns[0];
+      if (search_query.starts_with("@")) {
+        search_query = search_query.substr(1);
+      }
+    }
+
+    std::string method_name;
     std::string payload;
-    if (topic_id > 0) {
+    if (opts.has_filter && !search_query.empty()) {
+      method_name = "searchChatMessages";
+      if (topic_id > 0) {
+        payload = std::format(
+            R"({{
+              "chat_id": {},
+              "query": "{}",
+              "from_message_id": {},
+              "offset": 0,
+              "limit": {},
+              "message_thread_id": {}
+            }})",
+            chat_id, escape_json_string(search_query), from_msg_id, fetch_limit,
+            topic_id);
+      } else {
+        payload = std::format(
+            R"({{
+              "chat_id": {},
+              "query": "{}",
+              "from_message_id": {},
+              "offset": 0,
+              "limit": {}
+            }})",
+            chat_id, escape_json_string(search_query), from_msg_id, fetch_limit);
+      }
+    } else if (topic_id > 0) {
+      method_name = "getForumTopicHistory";
       payload = std::format(
           R"({{
             "chat_id": {},
@@ -343,6 +380,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
           }})",
           chat_id, topic_id, topic_id, from_msg_id, fetch_limit);
     } else {
+      method_name = "getChatHistory";
       payload = std::format(
           R"({{
             "chat_id": {},
@@ -368,6 +406,37 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
     }
 
     auto batch = res->get_array("messages");
+    if (batch.empty() && method_name == "searchChatMessages") {
+      // Fallback to getChatHistory if searchChatMessages returns empty
+      if (topic_id > 0) {
+        method_name = "getForumTopicHistory";
+        payload = std::format(
+            R"({{
+              "chat_id": {},
+              "forum_topic_id": {},
+              "message_thread_id": {},
+              "from_message_id": {},
+              "offset": 0,
+              "limit": {}
+            }})",
+            chat_id, topic_id, topic_id, from_msg_id, fetch_limit);
+      } else {
+        method_name = "getChatHistory";
+        payload = std::format(
+            R"({{
+              "chat_id": {},
+              "from_message_id": {},
+              "offset": 0,
+              "limit": {},
+              "only_local": false
+            }})",
+            chat_id, from_msg_id, fetch_limit);
+      }
+      res = client_->send_request(method_name, payload, 15.0);
+      if (res) {
+        batch = res->get_array("messages");
+      }
+    }
     if (batch.empty()) {
       empty_retries++;
       if (empty_retries > 2) {
@@ -685,12 +754,12 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
   ensure_chat_loaded(chat_id);
 
   const std::string payload = std::format(
-      R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": {}}})",
-      chat_id, search_limit);
+      R"({{"chat_id": {}, "query": "{}", "from_message_id": 0, "offset": 0, "limit": {}}})",
+      chat_id, escape_json_string(query), search_limit);
 
-  auto res = client_->send_request("getChatHistory", payload, 10.0);
+  auto res = client_->send_request("searchChatMessages", payload, 15.0);
   if (!res) {
-    return std::unexpected("Failed to get chat history: " + res.error());
+    return std::unexpected("Failed to search chat messages: " + res.error());
   }
 
   auto msgs = res->get_array("messages");
