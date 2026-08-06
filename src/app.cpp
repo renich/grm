@@ -252,14 +252,11 @@ std::expected<void, std::string> App::ensure_authenticated() {
     return std::unexpected(res.error());
   }
 
-  // Block and wait up to 5 seconds for authorization state to resolve
+  // Block and wait up to 5 seconds for TDLib session database to load and reach authorizationStateReady
   {
     std::unique_lock<std::mutex> lock(auth_mutex_);
     auth_cv_.wait_for(lock, std::chrono::seconds(5), [this] {
-      return auth_state_ == "authorizationStateReady" ||
-             auth_state_ == "authorizationStateWaitPhoneNumber" ||
-             auth_state_ == "authorizationStateWaitCode" ||
-             auth_state_ == "authorizationStateWaitPassword" || is_closed_;
+      return auth_state_ == "authorizationStateReady" || is_closed_;
     });
   }
 
