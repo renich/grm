@@ -53,7 +53,7 @@ Building & Installing
    make check
    make lint
 
-   # Install binary & man page for current user (~/bin/grm and ~/.local/share/man/man1/grm.1)
+   # Install binary & man page for current user (~/.local/bin/grm and ~/.local/share/man/man1/grm.1)
    make install-user
 
 Usage Highlights

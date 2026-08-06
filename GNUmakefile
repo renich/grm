@@ -15,8 +15,8 @@ MANDIR ?= $(DATAROOTDIR)/man
 MAN1DIR ?= $(MANDIR)/man1
 BASH_COMPLETION_DIR ?= $(DATAROOTDIR)/bash-completion/completions
 
-# User Installation Directories (~/bin, ~/.local/share)
-USER_BIN ?= $(HOME)/bin
+# User Installation Directories (~/.local/bin, ~/.local/share)
+USER_BIN ?= $(HOME)/.local/bin
 USER_MAN_DIR ?= $(HOME)/.local/share/man/man1
 USER_BASH_COMPLETION_DIR ?= $(HOME)/.local/share/bash-completion/completions
 
@@ -52,9 +52,9 @@ help:
 	@echo ""
 	@echo "Installation Targets:"
 	@echo "  install              Install release binary, man page, and completions to $(PREFIX)"
-	@echo "  install-user         Install release binary, man page, and completions to $(HOME)/bin"
+	@echo "  install-user         Install release binary, man page, and completions to $(HOME)/.local"
 	@echo "  uninstall            Remove installed binary, man page, and completions from $(PREFIX)"
-	@echo "  uninstall-user       Remove installed user files from $(HOME)/bin and $(HOME)/.local"
+	@echo "  uninstall-user       Remove installed user files from $(HOME)/.local"
 	@echo "  clean                Remove build directory and documentation artifacts"
 	@echo "  distclean            Alias for clean"
 
@@ -103,9 +103,7 @@ install: release install-man install-completions
 
 install-user: release install-user-man install-user-completions
 	install -d $(USER_BIN)
-	install -d $(HOME)/.local/bin
 	install -m 0755 $(BUILD_DIR)/grm $(USER_BIN)/grm
-	install -m 0755 $(BUILD_DIR)/grm $(HOME)/.local/bin/grm
 
 install-man:
 	$(MAKE) -C docs install-man BUILD_DIR="$(abspath $(BUILD_DIR))" PREFIX="$(PREFIX)" MAN_DIR="$(MAN1DIR)" DESTDIR="$(DESTDIR)"
