@@ -20,6 +20,7 @@ void info(std::string_view msg);
 void warn(std::string_view msg);
 void error(std::string_view msg);
 void auth(std::string_view msg);
+void verbose(std::string_view msg);
 void debug(std::string_view msg);
 
 } // namespace grm::log

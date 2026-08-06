@@ -62,10 +62,18 @@ void auth(std::string_view msg) {
   }
 }
 
-void debug(std::string_view msg) {
+void verbose(std::string_view msg) {
   auto &state = get_state();
   std::scoped_lock lock(state.mutex);
   if (state.verbosity >= VerbosityLevel::Verbose) {
+    std::cout << "[VERBOSE] " << msg << '\n';
+  }
+}
+
+void debug(std::string_view msg) {
+  auto &state = get_state();
+  std::scoped_lock lock(state.mutex);
+  if (state.verbosity >= VerbosityLevel::Debug) {
     std::cout << "[DEBUG] " << msg << '\n';
   }
 }

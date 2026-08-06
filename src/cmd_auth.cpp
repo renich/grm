@@ -62,7 +62,7 @@ std::expected<int, std::string> App::cmd_login() {
 
     if (!state.empty() && state != last_state) {
       last_state = state;
-      grm::log::debug("Authorization state changed: " + state);
+      grm::log::verbose("Authorization state changed: " + state);
 
       if (state == "authorizationStateWaitTdlibParameters") {
         grm::log::info("Configuring TDLib engine parameters...");
