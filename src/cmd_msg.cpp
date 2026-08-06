@@ -298,6 +298,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   int64_t topic_id = 0;
   int64_t since_timestamp = 0;
   std::string filter_pattern;
+  bool reverse_order = false;
 
   for (size_t i = 0; i < args.size(); ++i) {
     std::string_view arg(args[i]);
@@ -336,6 +337,8 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
       filter_pattern = arg.substr(9);
     } else if (arg.starts_with("--sender=")) {
       filter_pattern = arg.substr(9);
+    } else if (arg == "-r" || arg == "--reverse") {
+      reverse_order = true;
     } else if (!chat_id_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_id_set = true;
@@ -345,7 +348,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   if (!chat_id_set) {
     return std::unexpected(
         "Usage: grm msg ls [-t|--topic <id>] [-n|--limit <N>] [--since "
-        "<duration|date>] [-f|--filter <pattern>] <chat_id>");
+        "<duration|date>] [-f|--filter <pattern>] [-r|--reverse] <chat_id>");
   }
 
   std::regex filter_regex;
@@ -486,6 +489,10 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
         }
       }
     }
+  }
+
+  if (!reverse_order) {
+    std::reverse(items.begin(), items.end());
   }
 
   fmt::Formatter::render(

@@ -111,11 +111,11 @@ grm chat delete *CHAT_ID*
 msg
 ---
 
-grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] [-f *PATTERN*] *CHAT_ID*
-   List recent messages from a chat or forum topic.
+grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] [-f *PATTERN*] [-r] *CHAT_ID*
+   List messages from a chat or forum topic in chronological order (oldest first at top, newest at bottom).
 
    -n, --limit *N*
-      Maximum number of messages to display (default: 20, or 1000 when ``--since`` is passed).
+      Maximum number of messages to display (default: 20).
 
    -t, --topic *TOPIC_ID*
       Filter messages by forum topic ID.
@@ -125,6 +125,9 @@ grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] [-f *PATTERN*] *CHAT_ID*
 
    -f, --filter, --sender *PATTERN*
       Filter messages by sender username, display name, or handle (case-insensitive substring or regex).
+
+   -r, --reverse
+      Display messages in reverse-chronological order (newest first at top).
 
 grm msg export [-f csv|json] [-o *FILE*] [-t *TOPIC_ID*] *CHAT_ID*
    Export chat history to CSV or JSON file.
