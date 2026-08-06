@@ -29,7 +29,10 @@ Why grm?
 Dependencies
 ------------
 
-**grm** requires the following build toolchain and dynamic C++ libraries:
+User / Build Dependencies
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To build and run **grm**, end users need the following C++ libraries and build toolchain:
 
 =================== ================== =========================================================
 Dependency          Minimum Version    Purpose
@@ -39,13 +42,11 @@ Dependency          Minimum Version    Purpose
 ``cmake``           ``>= 3.25``        Cross-platform build system generator
 ``ninja-build``     ``>= 1.10``        Fast build execution engine
 ``gcc-c++`` / ``clang`` ``C++23``     C++23 compiler suite (ISO/IEC 14882:2023)
-``clang-tools-extra`` ``>= 16.0``     Static analysis (``clang-tidy``) and formatter
-``rstcheck``        ``>= 6.0``         reStructuredText syntax validator
 ``python3-docutils`` ``>= 0.18``      reStructuredText man page compiler (``rst2man``)
 =================== ================== =========================================================
 
-Installing Dependencies (Fedora Linux / RHEL)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing User Dependencies (Fedora Linux / RHEL)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
@@ -55,10 +56,29 @@ Installing Dependencies (Fedora Linux / RHEL)
        cmake \
        ninja-build \
        gcc-c++ \
-       clang-tools-extra \
-       rstcheck \
        python3-docutils \
        git
+
+Developer & Quality Toolchain Dependencies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Contributors running static analysis (``make lint``), code formatting (``make format``), or doc validation (``make doc-check``) also require:
+
+===================== ================== =========================================================
+Dependency            Minimum Version    Purpose
+===================== ================== =========================================================
+``clang-tools-extra`` ``>= 16.0``        Static analysis (``clang-tidy``) and formatter
+``rstcheck``          ``>= 6.0``         reStructuredText syntax validator
+===================== ================== =========================================================
+
+Installing Developer Dependencies (Fedora Linux / RHEL)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+   sudo dnf -y install \
+       clang-tools-extra \
+       rstcheck
 
 Quick Start
 -----------
@@ -78,8 +98,10 @@ Building from Source
    # Build optimized release binary
    make release
 
-   # Run automated test suite & static analysis
+   # Run automated test suite
    make check
+
+   # (Optional for developers) Run linters & static analysis
    make lint
 
 Installing Locally (Non-Root User / No Sudo Required)

@@ -291,8 +291,8 @@ To register the repository pre-push quality automation hook (runs ``crstlint``, 
 Installation & Setup
 ====================
 
-Dependencies
-------------
+User / Build Dependencies
+-------------------------
 
 **grm** requires the following build toolchain and C++ libraries:
 
@@ -301,8 +301,15 @@ Dependencies
 * **cmake** (>= 3.25): Build system generator
 * **ninja-build** (>= 1.10): Fast build execution engine
 * **gcc-c++** / **clang**: C++23 compiler suite
-* **clang-tools-extra** (>= 16.0): ``clang-tidy`` static analyzer and formatter
-* **rstcheck** (>= 6.0) & **python3-docutils**: reStructuredText validator and man page compiler (``rst2man``)
+* **python3-docutils**: reStructuredText man page compiler (``rst2man``)
+
+Developer Toolchain Dependencies
+--------------------------------
+
+Contributors running static analysis or documentation validation also require:
+
+* **clang-tools-extra** (>= 16.0): ``clang-tidy`` static analyzer and ``clang-format``
+* **rstcheck** (>= 6.0): reStructuredText syntax validator
 
 Local User Installation (Non-Root / No Sudo Required)
 ------------------------------------------------------
