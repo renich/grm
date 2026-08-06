@@ -55,10 +55,10 @@ Config::load(const std::filesystem::path &custom_path) {
   std::filesystem::path active_cfg;
   if (!custom_path.empty()) {
     active_cfg = custom_path;
+  } else if (std::filesystem::exists(grm_cfg)) {
+    active_cfg = grm_cfg;
   } else if (std::filesystem::exists(tgcli_cfg)) {
     active_cfg = tgcli_cfg;
-  } else {
-    active_cfg = grm_cfg;
   }
 
   if (std::filesystem::exists(active_cfg)) {

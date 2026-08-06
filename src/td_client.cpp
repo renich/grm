@@ -69,15 +69,12 @@ void TdClient::send_async(const std::string &type,
   if (client_id_ < 0)
     return;
 
-  auto parsed = JsonValue::parse(payload_json);
   json_object *raw_obj = nullptr;
-  bool created_new = false;
-
+  auto parsed = JsonValue::parse(payload_json);
   if (parsed && parsed->is_object()) {
-    raw_obj = parsed->raw();
+    raw_obj = json_tokener_parse(std::string(payload_json).c_str());
   } else {
     raw_obj = json_object_new_object();
-    created_new = true;
   }
 
   json_object_object_add(raw_obj, "@type",
@@ -86,10 +83,7 @@ void TdClient::send_async(const std::string &type,
   const char *str =
       json_object_to_json_string_ext(raw_obj, JSON_C_TO_STRING_PLAIN);
   td_send(client_id_, str);
-
-  if (created_new) {
-    json_object_put(raw_obj);
-  }
+  json_object_put(raw_obj);
 }
 
 std::expected<JsonValue, std::string>
