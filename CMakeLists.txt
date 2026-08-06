@@ -161,7 +161,7 @@ add_executable(test_cli_routing
     src/downloader.cpp
     src/formatter.cpp
 )
-target_link_libraries(test_cli_routing PRIVATE ${TDJSON_LIB} ${JSONC_LIBRARIES})
+target_link_libraries(test_cli_routing PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
 add_test(NAME test_cli_routing COMMAND test_cli_routing)
 
 add_executable(test_downloader
