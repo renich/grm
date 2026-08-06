@@ -1,5 +1,6 @@
 #include "grm/formatter.hpp"
 #include "grm/json_utils.hpp"
+#include "grm/logger.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -314,7 +315,7 @@ static std::string escape_markdown_table_cell(std::string_view text) {
 
 void Formatter::print_messages(const std::vector<MessageItem> &messages,
                                OutputFormat format, ColorMode color_mode,
-                               std::ostream &out) {
+                               std::ostream &out, bool verbose) {
   const bool is_tty =
       (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
   const OutputFormat fmt = resolve_format(format, is_tty);
@@ -383,19 +384,30 @@ void Formatter::print_messages(const std::vector<MessageItem> &messages,
       sender_part = std::format("<{}> ", m.sender);
     }
     const std::string prefix_plain =
-        std::format("[MsgID {} | {}] {}: ", m.id, date_str, sender_part);
+        verbose ? std::format("[MsgID {} | {}] {}: ", m.id, date_str, sender_part)
+                : std::format("({}) {}: ", date_str, sender_part);
     const std::string indent(prefix_plain.size(), ' ');
 
     if (use_color) {
-      out << std::format("{}[MsgID {}]{} {}({}){} {}{}{}: {}\n", COLOR_CYAN, m.id,
-                         COLOR_RESET, COLOR_DIM, date_str, COLOR_RESET,
-                         COLOR_YELLOW, sender_part, COLOR_RESET,
-                         lines[0]);
+      if (verbose) {
+        out << std::format("{}[MsgID {}]{} {}({}){} {}{}{}: {}\n", COLOR_CYAN,
+                           m.id, COLOR_RESET, COLOR_DIM, date_str, COLOR_RESET,
+                           COLOR_YELLOW, sender_part, COLOR_RESET, lines[0]);
+      } else {
+        out << std::format("{}({}){} {}{}{}: {}\n", COLOR_DIM, date_str,
+                           COLOR_RESET, COLOR_YELLOW, sender_part, COLOR_RESET,
+                           lines[0]);
+      }
       for (size_t i = 1; i < lines.size(); ++i) {
         out << std::format("{}{}\n", indent, lines[i]);
       }
     } else {
-      out << std::format("[MsgID {} | {}] {}{}\n", m.id, date_str, sender_part, lines[0]);
+      if (verbose) {
+        out << std::format("[MsgID {} | {}] {}{}\n", m.id, date_str,
+                           sender_part, lines[0]);
+      } else {
+        out << std::format("({}) {}{}\n", date_str, sender_part, lines[0]);
+      }
       for (size_t i = 1; i < lines.size(); ++i) {
         out << std::format("{}{}\n", indent, lines[i]);
       }
@@ -442,7 +454,7 @@ void Formatter::print_error(const ErrorPayload &err, OutputFormat format,
 
 void Formatter::render(const RenderablePayload &payload,
                        std::string_view /*command_name*/, OutputFormat format,
-                       ColorMode color_mode, std::ostream &out) {
+                       ColorMode color_mode, std::ostream &out, bool verbose) {
   std::visit(
       [&](const auto &data) {
         using T = std::decay_t<decltype(data)>;
@@ -451,7 +463,7 @@ void Formatter::render(const RenderablePayload &payload,
         } else if constexpr (std::is_same_v<T, std::vector<TopicItem>>) {
           print_topics(data, format, color_mode, out);
         } else if constexpr (std::is_same_v<T, std::vector<MessageItem>>) {
-          print_messages(data, format, color_mode, out);
+          print_messages(data, format, color_mode, out, verbose);
         } else if constexpr (std::is_same_v<T, ErrorPayload>) {
           print_error(data, format, color_mode, out);
         }

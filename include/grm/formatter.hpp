@@ -85,7 +85,8 @@ public:
   static void print_messages(const std::vector<MessageItem> &messages,
                              OutputFormat format = OutputFormat::Auto,
                              ColorMode color_mode = ColorMode::Auto,
-                             std::ostream &out = std::cout);
+                             std::ostream &out = std::cout,
+                             bool verbose = false);
 
   static void print_error(const ErrorPayload &err,
                           OutputFormat format = OutputFormat::Auto,
@@ -96,7 +97,8 @@ public:
                      std::string_view command_name,
                      OutputFormat format = OutputFormat::Auto,
                      ColorMode color_mode = ColorMode::Auto,
-                     std::ostream &out = std::cout);
+                     std::ostream &out = std::cout,
+                     bool verbose = false);
 };
 
 } // namespace grm::fmt

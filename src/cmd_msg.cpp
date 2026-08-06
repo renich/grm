@@ -9,6 +9,7 @@
 #include <chrono>
 #include <filesystem>
 #include <format>
+#include <fstream>
 #include <iostream>
 #include <regex>
 #include <thread>
@@ -268,7 +269,9 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
     }
   }
 
-  fmt::Formatter::render(items, "msg.ls", options_.format, options_.color_mode);
+  fmt::Formatter::render(
+      items, "msg.ls", options_.format, options_.color_mode, std::cout,
+      (options_.verbosity >= log::VerbosityLevel::Verbose));
   return 0;
 }
 
@@ -310,13 +313,8 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
   }
 
   if (!chat_id_set) {
-    return std::unexpected(
-        "Usage: grm msg export <chat_id> [-f|--format csv|json] [-o|--output "
-        "<file>] [-n|--limit <N>]");
-  }
-
-  if (out_path.empty()) {
-    out_path = std::format("chat_{}_export.{}", chat_id, format_type);
+    return std::unexpected("Usage: grm msg export [-f json|markdown] [-o file] "
+                           "[-n limit] <chat_id>");
   }
 
   if (auto res = ensure_authenticated(); !res) {
@@ -325,22 +323,24 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
 
   ensure_chat_loaded(chat_id);
 
-  std::vector<MessageRecord> records;
+  std::vector<fmt::MessageItem> items;
   int64_t from_msg_id = 0;
   int empty_retries = 0;
-  const size_t target_export_limit =
-      static_cast<size_t>(std::max(1, export_limit));
 
-  while (records.size() < target_export_limit) {
-    auto fetch_limit = static_cast<int>(
-        std::min<size_t>(target_export_limit - records.size(), 100));
+  while (items.size() < static_cast<size_t>(export_limit)) {
     const std::string payload = std::format(
-        R"({{"chat_id": {}, "from_message_id": {}, "offset": 0, "limit": {}}})",
-        chat_id, from_msg_id, fetch_limit);
+        R"({{
+          "chat_id": {},
+          "from_message_id": {},
+          "offset": 0,
+          "limit": 100,
+          "only_local": false
+        }})",
+        chat_id, from_msg_id);
 
     auto res = client_->send_request("getChatHistory", payload, 10.0);
     if (!res) {
-      if (records.empty()) {
+      if (items.empty()) {
         return std::unexpected("Failed to get chat history: " + res.error());
       }
       break;
@@ -358,42 +358,48 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
 
     empty_retries = 0;
     for (const auto &m : batch) {
-      MessageRecord rec;
-      rec.id = m.get_int("id").value_or(0);
-      if (rec.id != 0) {
-        from_msg_id = rec.id;
+      auto id = m.get_int("id").value_or(0);
+      if (id != 0) {
+        from_msg_id = id;
       }
-      rec.chat_id = chat_id;
-      rec.date = m.get_int("date").value_or(0);
-      rec.sender = "0";
-      if (auto sender_obj = m.get_object("sender_id")) {
-        if (auto uid = sender_obj->get_int("user_id")) {
-          rec.sender = std::to_string(*uid);
-        } else if (auto cid = sender_obj->get_int("chat_id")) {
-          rec.sender = std::to_string(*cid);
+      std::string text = extract_message_text(m);
+      if (!text.empty()) {
+        int64_t msg_date = m.get_int("date").value_or(0);
+        items.push_back(fmt::MessageItem{.id = id,
+                                         .chat_id = chat_id,
+                                         .topic_id = 0,
+                                         .date = msg_date,
+                                         .sender = resolve_sender_name(m),
+                                         .text = text,
+                                         .has_attachment = false,
+                                         .attachment_type = ""});
+        if (items.size() >= static_cast<size_t>(export_limit)) {
+          break;
         }
-      } else if (auto raw_sender = m.get_int("sender_id")) {
-        rec.sender = std::to_string(*raw_sender);
       }
-      rec.text = extract_message_text(m);
-      records.push_back(rec);
     }
   }
 
-  std::expected<void, std::string> export_res;
-  if (format_type == "json") {
-    export_res = Exporter::to_json(records, out_path);
-  } else {
-    export_res = Exporter::to_csv(records, out_path);
+  std::ofstream out_file;
+  std::ostream *out_stream = &std::cout;
+  if (!out_path.empty()) {
+    out_file.open(out_path);
+    if (!out_file.is_open()) {
+      return std::unexpected("Failed to open output file: " +
+                             out_path.string());
+    }
+    out_stream = &out_file;
   }
 
-  if (!export_res) {
-    return std::unexpected(export_res.error());
+  fmt::OutputFormat format = fmt::OutputFormat::Json;
+  if (format_type == "markdown") {
+    format = fmt::OutputFormat::Markdown;
   }
 
-  grm::log::info(std::format("Successfully exported {} messages to {}",
-                             records.size(), out_path.string()));
-
+  fmt::Formatter::render(items, "msg.export", format, options_.color_mode,
+                         *out_stream,
+                         (options_.verbosity >= log::VerbosityLevel::Verbose));
+  grm::log::info(std::format("Exported {} messages.", items.size()));
   return 0;
 }
 
@@ -499,7 +505,8 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
   }
 
   fmt::Formatter::render(items, "msg.search", options_.format,
-                         options_.color_mode);
+                         options_.color_mode, std::cout,
+                         (options_.verbosity >= log::VerbosityLevel::Verbose));
   grm::log::info(std::format("Found {} matching messages.", match_count));
   return 0;
 }
