@@ -1,8 +1,8 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 IFS=$'\n\t'
 
-# extract-changelog.bash — Extract release notes for a version from CHANGELOG.rst
+# extract-changelog.bash — Extract and convert release notes from CHANGELOG.rst to Markdown
 # Usage: ./scripts/extract-changelog.bash [version]
 
 readonly VERSION="${1:-0.5.0}"
@@ -14,31 +14,6 @@ if [[ ! -f "$CHANGELOG_FILE" ]]; then
   exit 1
 fi
 
-python3 -c "
-import sys, re
-
-version = sys.argv[1]
-with open('CHANGELOG.rst', 'r') as f:
-    lines = f.readlines()
-
-capturing = False
-notes = []
-
-pattern = re.compile(rf'^\[{re.escape(version)}\]')
-
-for line in lines:
-    if pattern.search(line):
-        capturing = True
-        notes.append(line)
-        continue
-    if capturing:
-        if re.match(r'^\[\d+\.\d+\.\d+\]', line) or line.startswith('[Unreleased]'):
-            break
-        notes.append(line)
-
-output = ''.join(notes).strip()
-if output:
-    print(output)
-else:
-    print(f'Release {version} for grm (Group & Telegram Manager CLI).')
-" "$CLEAN_VER"
+sed -n "/^\[${CLEAN_VER}\]/,/^\[[0-9]/p" "$CHANGELOG_FILE" \
+  | sed '/^\[/d; /^=/d; s/^\.\. rubric:: \(.*\)/### \1/; s/``/`/g' \
+  | sed '$d'
