@@ -9,6 +9,9 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 [Unreleased]
 ============
 
+[0.5.1] — 2026-08-06
+====================
+
 .. rubric:: Added
 
 * Custom Fedora OCI container image (``Containerfile.ci``) pre-baking C++23 build dependencies, documentation validators (``rstcheck``, ``python3-docutils``), and TDLib 1.8.66 libraries/headers for zero-delay CI execution.
