@@ -10,7 +10,7 @@
 namespace grm {
 
 struct ListOptions {
-  int limit{100};
+  int limit{20};
   int64_t since_timestamp{0};
   std::vector<std::string> filter_patterns;
   bool reverse_order{false};

@@ -354,7 +354,11 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
           chat_id, from_msg_id, fetch_limit);
     }
 
-    auto res = client_->send_request(method_name, payload, 10.0);
+    auto res = client_->send_request(method_name, payload, 15.0);
+    if (!res && from_msg_id == 0 && items.empty()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(300));
+      res = client_->send_request(method_name, payload, 15.0);
+    }
 
     if (!res) {
       if (items.empty()) {
@@ -428,6 +432,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
                                          .has_attachment = has_attach,
                                          .attachment_type = attach_type});
         if (opts.since_timestamp == 0 && items.size() >= target_limit) {
+          reached_since_cutoff = true;
           break;
         }
       }
@@ -447,7 +452,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
       });
   items.erase(last, items.end());
 
-  if (opts.since_timestamp > 0 && items.size() > target_limit) {
+  if (items.size() > target_limit) {
     items.resize(target_limit);
   }
 
