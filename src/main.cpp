@@ -53,6 +53,24 @@ int main(int argc, char *argv[]) {
       }
     } else if (arg == "--no-color") {
       options.color_mode = grm::fmt::ColorMode::Never;
+    } else if ((arg == "-N" || arg == "--name-format") && i + 1 < argc) {
+      std::string_view nf_val(argv[++i]);
+      if (nf_val == "fullname" || nf_val == "full_name" || nf_val == "full") {
+        options.name_format = grm::NameFormat::Fullname;
+      } else {
+        options.name_format = grm::NameFormat::Username;
+      }
+    } else if (arg.starts_with("--name-format=")) {
+      std::string_view nf_val = arg.substr(14);
+      if (nf_val == "fullname" || nf_val == "full_name" || nf_val == "full") {
+        options.name_format = grm::NameFormat::Fullname;
+      } else {
+        options.name_format = grm::NameFormat::Username;
+      }
+    } else if (arg == "-u" || arg == "--username") {
+      options.name_format = grm::NameFormat::Username;
+    } else if (arg == "--full-name" || arg == "--fullname") {
+      options.name_format = grm::NameFormat::Fullname;
     } else {
       command_args.emplace_back(arg);
     }
@@ -74,6 +92,11 @@ int main(int argc, char *argv[]) {
   if (options.color_mode == grm::fmt::ColorMode::Auto &&
       cfg.default_color_mode != grm::fmt::ColorMode::Auto) {
     options.color_mode = cfg.default_color_mode;
+  }
+  // Default name format from config
+  if (options.name_format == grm::NameFormat::Username &&
+      cfg.default_name_format != grm::NameFormat::Username) {
+    options.name_format = cfg.default_name_format;
   }
 
   grm::App app(cfg, options);

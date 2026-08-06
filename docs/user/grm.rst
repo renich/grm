@@ -63,6 +63,15 @@ Global Options
 -F, --format <fmt>
    Set output format: ``human``, ``markdown``, ``json``, or ``plain`` (default: ``auto``).
 
+-N, --name-format <fmt>
+   Set sender name display format: ``username`` (default, e.g. ``@username``) or ``fullname`` (e.g. ``First Last``).
+
+-u, --username
+   Shortcut to set sender name format to ``username``.
+
+--full-name
+   Shortcut to set sender name format to ``fullname``.
+
 --color <mode>
    Control ANSI color output: ``auto``, ``always``, or ``never`` (or ``--no-color``).
 
@@ -114,10 +123,10 @@ grm chat unpin <chat_id> [<message_id>]
 grm chat delete <chat_id>
    Delete chat history or leave group.
 
-Message Operations
-------------------
+Message Lifecycle
+-----------------
 
-grm msg ls [-n|--limit <N>] [-t|--topic <id>] <chat_id>
+grm msg ls [-n|--limit <N>] [-t|--topic <id>] [-S|--since <duration|date>] <chat_id>
    List recent messages from a chat or forum topic.
 
    -n, --limit <N>
@@ -125,6 +134,9 @@ grm msg ls [-n|--limit <N>] [-t|--topic <id>] <chat_id>
 
    -t, --topic <id>
       Filter messages by forum topic ID.
+
+   -S, --since <duration|date>
+      Filter messages since relative duration (e.g. ``1d``, ``2h``, ``30m``), ISO date (``YYYY-MM-DD``), or Unix timestamp.
 
 grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <chat_id>
    Export chat or topic history to a CSV or JSON file.
@@ -138,7 +150,7 @@ grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <ch
    -t, --topic <id>
       Target specific forum topic ID.
 
-grm msg search [-q|--query "<query>"] [-n|--limit <N>] [-t|--topic <id>] <chat_id>
+grm msg search [-q|--query "<query>"] [-n|--limit <N>] [-t|--topic <id>] [-S|--since <duration|date>] <chat_id>
    Search message history using query pattern or regex.
 
    -q, --query "<query>"
@@ -149,6 +161,9 @@ grm msg search [-q|--query "<query>"] [-n|--limit <N>] [-t|--topic <id>] <chat_i
 
    -t, --topic <id>
       Target specific forum topic ID.
+
+   -S, --since <duration|date>
+      Filter messages since relative duration (e.g. ``1d``, ``2h``, ``30m``), ISO date (``YYYY-MM-DD``), or Unix timestamp.
 
 grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"]
    Send a text message, document, or media file attachment. Supports Telegram Rich Text Markdown V2 formatting.

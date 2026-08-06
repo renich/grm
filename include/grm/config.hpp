@@ -8,6 +8,8 @@
 
 namespace grm {
 
+enum class NameFormat : std::uint8_t { Username, Fullname };
+
 struct CliOptions {
   std::string phone;
   std::string code;
@@ -15,6 +17,7 @@ struct CliOptions {
   log::VerbosityLevel verbosity{log::VerbosityLevel::Normal};
   fmt::OutputFormat format{fmt::OutputFormat::Auto};
   fmt::ColorMode color_mode{fmt::ColorMode::Auto};
+  NameFormat name_format{NameFormat::Username};
   bool use_test_dc{false};
   bool help{false};
   bool version{false};
@@ -27,6 +30,7 @@ struct Config {
   std::filesystem::path db_dir;
   fmt::OutputFormat default_format{fmt::OutputFormat::Auto};
   fmt::ColorMode default_color_mode{fmt::ColorMode::Auto};
+  NameFormat default_name_format{NameFormat::Username};
 
   [[nodiscard]] static std::expected<Config, std::string>
   load(const std::filesystem::path &custom_path = {});

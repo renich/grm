@@ -48,6 +48,15 @@ GLOBAL OPTIONS
 -F, --format *FMT*
    Set output format: ``human``, ``markdown``, ``json``, or ``plain`` (default: ``auto``).
 
+-N, --name-format *FMT*
+   Set sender name display format: ``username`` (default, e.g. ``@username``) or ``fullname`` (e.g. ``First Last``).
+
+-u, --username
+   Shortcut to set sender name format to ``username``.
+
+--full-name
+   Shortcut to set sender name format to ``fullname``.
+
 --color *MODE*
    Control ANSI color output: ``auto``, ``always``, or ``never`` (or ``--no-color``).
 
@@ -90,8 +99,8 @@ grm chat set-title *CHAT_ID* "*TITLE*"
 grm chat set-desc *CHAT_ID* "*DESCRIPTION*"
    Update supergroup or channel description.
 
-grm chat pin *CHAT_ID* *MESSAGE_ID*
-   Pin message in a chat or supergroup.
+grm chat pin *CHAT_ID* *MESSAGE_ID* [--notify]
+   Pin a message in group or channel.
 
 grm chat unpin *CHAT_ID* [*MESSAGE_ID*]
    Unpin a specific message or all pinned messages.
@@ -102,7 +111,7 @@ grm chat delete *CHAT_ID*
 msg
 ---
 
-grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] *CHAT_ID*
+grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] *CHAT_ID*
    List recent messages from a chat or forum topic.
 
    -n, --limit *N*
@@ -110,6 +119,9 @@ grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] *CHAT_ID*
 
    -t, --topic *TOPIC_ID*
       Filter messages by forum topic ID.
+
+   -S, --since *SINCE*
+      Filter messages since duration (e.g. ``1d``, ``2h``), ISO date (``YYYY-MM-DD``), or timestamp.
 
 grm msg export [-f csv|json] [-o *FILE*] [-t *TOPIC_ID*] *CHAT_ID*
    Export chat history to CSV or JSON file.
@@ -123,7 +135,7 @@ grm msg export [-f csv|json] [-o *FILE*] [-t *TOPIC_ID*] *CHAT_ID*
    -t, --topic *TOPIC_ID*
       Target specific forum topic ID.
 
-grm msg search [-q "*QUERY*"] [-n *LIMIT*] [-t *TOPIC_ID*] *CHAT_ID*
+grm msg search [-q "*QUERY*"] [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] *CHAT_ID*
    Search message history using pattern or regex filter.
 
    -q, --query "*QUERY*"
@@ -134,6 +146,9 @@ grm msg search [-q "*QUERY*"] [-n *LIMIT*] [-t *TOPIC_ID*] *CHAT_ID*
 
    -t, --topic *TOPIC_ID*
       Target specific forum topic ID.
+
+   -S, --since *SINCE*
+      Filter messages since duration (e.g. ``1d``, ``2h``), ISO date (``YYYY-MM-DD``), or timestamp.
 
 grm msg send [-a *FILE*] [-m] [-C "*CAPTION*"] [-t *TOPIC_ID*] *CHAT_ID* ["*MESSAGE*"]
    Send text message, document, or media attachment. Supports Telegram Rich Text Markdown V2 formatting.

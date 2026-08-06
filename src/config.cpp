@@ -31,6 +31,13 @@ static fmt::ColorMode parse_color_str(std::string_view str) {
   return fmt::ColorMode::Auto;
 }
 
+static NameFormat parse_name_format_str(std::string_view str) {
+  if (str == "fullname" || str == "full_name" || str == "full") {
+    return NameFormat::Fullname;
+  }
+  return NameFormat::Username;
+}
+
 std::expected<Config, std::string>
 Config::load(const std::filesystem::path &custom_path) {
   Config cfg;
@@ -90,11 +97,16 @@ Config::load(const std::filesystem::path &custom_path) {
         if (auto color_str = parsed->get_string("color")) {
           cfg.default_color_mode = parse_color_str(*color_str);
         }
+        if (auto name_fmt_str = parsed->get_string("sender_name_format")) {
+          cfg.default_name_format = parse_name_format_str(*name_fmt_str);
+        } else if (auto legacy_name_fmt = parsed->get_string("name_format")) {
+          cfg.default_name_format = parse_name_format_str(*legacy_name_fmt);
+        }
       }
     }
   }
 
-  // Environment variable overrides (GRM_FORMAT, GRM_COLOR)
+  // Environment variable overrides (GRM_FORMAT, GRM_COLOR, GRM_NAME_FORMAT)
   if (const char *env_fmt = std::getenv("GRM_FORMAT")) {
     if (env_fmt[0] != '\0') {
       cfg.default_format = parse_format_str(env_fmt);
@@ -103,6 +115,15 @@ Config::load(const std::filesystem::path &custom_path) {
   if (const char *env_color = std::getenv("GRM_COLOR")) {
     if (env_color[0] != '\0') {
       cfg.default_color_mode = parse_color_str(env_color);
+    }
+  }
+  if (const char *env_name = std::getenv("GRM_SENDER_NAME_FORMAT")) {
+    if (env_name[0] != '\0') {
+      cfg.default_name_format = parse_name_format_str(env_name);
+    }
+  } else if (const char *env_name2 = std::getenv("GRM_NAME_FORMAT")) {
+    if (env_name2[0] != '\0') {
+      cfg.default_name_format = parse_name_format_str(env_name2);
     }
   }
 

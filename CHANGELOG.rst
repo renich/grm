@@ -11,12 +11,16 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 
 .. rubric:: Added
 
-* Automatic sender name resolution (user display names, ``@username``, or chat titles) for message list and search commands (``grm msg ls``, ``grm msg search``) across all output formats (Human, Plain, Markdown, JSON, JSONL).
+* Sender name format configuration (``sender_name_format``: ``username`` | ``fullname``) defaulting to ``username`` (with fallback to display name).
+* CLI flags ``-N | --name-format <username|fullname>``, ``-u | --username``, and ``--full-name`` for name format selection.
+* Message date range filtering via ``-S | --since <duration|date>`` flag in ``grm msg ls`` and ``grm msg search`` (supporting relative durations like ``1d``, ``2h``, ISO dates, and Unix timestamps).
+* Automatic sender name resolution for message list and search commands across all output formats.
 * Dynamic RPATH configuration linking against local ``libtdjson.so.1.8.66`` in ``~/.local/lib``.
 
 .. rubric:: Changed
 
 * Upgraded TDLib compatibility layer to support TDLib 1.8.66 / MTProto Layer 228 API specifications.
+* Gated ``[MsgID <id>]`` display prefix in message list output to verbose (``-v`` / ``--verbose``) mode.
 * Flattened ``setTdlibParameters`` request payload structure for modern TDLib release standards.
 
 [0.5.0] — 2026-08-05
