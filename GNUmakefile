@@ -103,7 +103,9 @@ install: release install-man install-completions
 
 install-user: release install-user-man install-user-completions
 	install -d $(USER_BIN)
+	install -d $(HOME)/.local/bin
 	install -m 0755 $(BUILD_DIR)/grm $(USER_BIN)/grm
+	install -m 0755 $(BUILD_DIR)/grm $(HOME)/.local/bin/grm
 
 install-man:
 	$(MAKE) -C docs install-man BUILD_DIR="$(abspath $(BUILD_DIR))" PREFIX="$(PREFIX)" MAN_DIR="$(MAN1DIR)" DESTDIR="$(DESTDIR)"
