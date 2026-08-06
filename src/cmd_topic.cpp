@@ -46,16 +46,21 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
 
   ensure_chat_loaded(chat_id);
 
+  std::string topic_query;
+  if (opts.has_filter && !opts.filter_patterns.empty()) {
+    topic_query = opts.filter_patterns[0];
+  }
+
   const std::string payload = std::format(
       R"({{
         "chat_id": {},
-        "query": "",
+        "query": "{}",
         "offset_date": 0,
         "offset_message_id": 0,
         "offset_message_thread_id": 0,
         "limit": 100
       }})",
-      chat_id);
+      chat_id, escape_json_string(topic_query));
 
   auto res = client_->send_request("getForumTopics", payload, 10.0);
   if (!res) {

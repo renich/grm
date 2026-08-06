@@ -31,23 +31,49 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
-  auto load_res = client_->send_request("loadChats", R"({"limit": 100})", 5.0);
-  if (!load_res) {
-    grm::log::debug("loadChats: " + load_res.error());
+  std::string chat_query;
+  if (opts.has_filter && !opts.filter_patterns.empty()) {
+    chat_query = opts.filter_patterns[0];
   }
 
-  auto chats_res = client_->send_request("getChats", R"({"limit": 100})", 10.0);
-  if (!chats_res) {
-    return std::unexpected("Failed to get chats: " + chats_res.error());
+  std::vector<int64_t> target_chat_ids;
+  if (!chat_query.empty()) {
+    const std::string search_req = std::format(
+        R"({{"query": "{}", "limit": 100}})", escape_json_string(chat_query));
+    if (auto search_res = client_->send_request("searchChats", search_req, 5.0)) {
+      auto found_ids = search_res->get_array("chat_ids");
+      for (const auto &val : found_ids) {
+        if (auto cid = val.as_int64()) {
+          target_chat_ids.push_back(*cid);
+        }
+      }
+    }
   }
 
-  auto chat_ids = chats_res->get_array("chat_ids");
+  if (target_chat_ids.empty()) {
+    auto load_res = client_->send_request("loadChats", R"({"limit": 100})", 5.0);
+    if (!load_res) {
+      grm::log::debug("loadChats: " + load_res.error());
+    }
+
+    auto chats_res = client_->send_request("getChats", R"({"limit": 100})", 10.0);
+    if (!chats_res) {
+      return std::unexpected("Failed to get chats: " + chats_res.error());
+    }
+
+    auto chat_ids = chats_res->get_array("chat_ids");
+    for (const auto &id_val : chat_ids) {
+      if (auto cid = id_val.as_int64()) {
+        target_chat_ids.push_back(*cid);
+      }
+    }
+  }
+
   std::vector<fmt::ChatItem> items;
-  items.reserve(chat_ids.size());
+  items.reserve(target_chat_ids.size());
 
-  for (const auto &id_val : chat_ids) {
-    if (auto cid = id_val.as_int64()) {
-      const std::string chat_req = std::format(R"({{"chat_id": {}}})", *cid);
+  for (const int64_t cid : target_chat_ids) {
+    const std::string chat_req = std::format(R"({{"chat_id": {}}})", cid);
       auto chat_info = client_->send_request("getChat", chat_req, 3.0);
       if (chat_info) {
         std::string title = chat_info->get_string("title").value_or("Private");
@@ -66,11 +92,11 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
           continue;
         }
 
-        if (!opts.matches_filter_multi({title, type_name, std::to_string(*cid)})) {
+        if (!opts.matches_filter_multi({title, type_name, std::to_string(cid)})) {
           continue;
         }
 
-        items.push_back(fmt::ChatItem{.id = *cid,
+        items.push_back(fmt::ChatItem{.id = cid,
                                       .type = type_name,
                                       .title = title,
                                       .unread_count = unread,
@@ -79,7 +105,6 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
           break;
         }
       }
-    }
   }
 
   if (opts.reverse_order) {
