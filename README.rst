@@ -24,18 +24,36 @@ Why grm?
 * **Supergroup & Forum Topic First**: Complete lifecycle management for Telegram Supergroups, Forum Topics, custom emoji icons, and thread messages.
 * **File Upload & Download Engine**: Streamlined document, photo, video, and media extractions with MIME detection and progress tracking.
 
-Quick Start
------------
+Dependencies
+------------
 
-Prerequisites (Fedora Linux)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**grm** requires the following build toolchain and dynamic C++ libraries:
+
+=================== ================== =========================================================
+Dependency          Minimum Version    Purpose
+=================== ================== =========================================================
+``tdlib-devel``     ``>= 1.8.0``       Telegram C++ JSON interface library (``libtdjson``)
+``json-c-devel``    ``>= 0.15``        C JSON parser and object serialization engine
+``cmake``           ``>= 3.25``        Cross-platform build system generator
+``ninja-build``     ``>= 1.10``        Fast build execution engine
+``gcc-c++`` / ``clang`` ``C++23``     C++23 compiler suite (ISO/IEC 14882:2023)
+``clang-tools-extra`` ``>= 16.0``     Static analysis (``clang-tidy``) and formatter
+``rstcheck``        ``>= 6.0``         reStructuredText syntax validator
+``python3-docutils`` ``>= 0.18``      reStructuredText man page compiler (``rst2man``)
+=================== ================== =========================================================
+
+Installing Dependencies (Fedora Linux / RHEL)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
-   sudo dnf install tdlib-devel json-c-devel cmake ninja-build gcc-c++ clang-tools-extra
+   sudo dnf install tdlib-devel json-c-devel cmake ninja-build gcc-c++ clang-tools-extra rstcheck python3-docutils git
 
-Building & Installing
-~~~~~~~~~~~~~~~~~~~~~
+Quick Start
+-----------
+
+Building from Source
+~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -49,12 +67,35 @@ Building & Installing
    # Build optimized release binary
    make release
 
-   # Run test suite & linters
+   # Run automated test suite & static analysis
    make check
    make lint
 
-   # Install binary & man page for current user (~/.local/bin/grm and ~/.local/share/man/man1/grm.1)
+Installing Locally (Non-Root User / No Sudo Required)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Per **FHS 3.0** and the **XDG Base Directory Specification**, install **grm** into your user profile without root privileges:
+
+.. code-block:: bash
+
+   # Installs binary to ~/.local/bin/grm, man page to ~/.local/share/man/man1/grm.1, and completions
    make install-user
+
+   # Ensure ~/.local/bin is in your PATH (e.g. in ~/.bashrc or ~/.bash_profile):
+   export PATH="$HOME/.local/bin:$PATH"
+
+Installing System-Wide (Requires Sudo)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To install **grm** system-wide for all users:
+
+.. code-block:: bash
+
+   # Installs binary to /usr/local/bin/grm and man page to /usr/local/share/man/man1/grm.1
+   sudo make install
+
+   # Or specify a custom PREFIX:
+   make release && sudo make install PREFIX=/usr
 
 Usage Highlights
 ----------------

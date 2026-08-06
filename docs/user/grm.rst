@@ -286,6 +286,44 @@ To register the repository pre-push quality automation hook (runs ``crstlint``, 
 
    make install-hooks
 
+Installation & Setup
+====================
+
+Dependencies
+------------
+
+**grm** requires the following build toolchain and C++ libraries:
+
+* **tdlib-devel** (>= 1.8.0): Telegram C++ JSON interface library (``libtdjson``)
+* **json-c-devel** (>= 0.15): JSON parser and serialization engine
+* **cmake** (>= 3.25): Build system generator
+* **ninja-build** (>= 1.10): Fast build execution engine
+* **gcc-c++** / **clang**: C++23 compiler suite
+* **clang-tools-extra** (>= 16.0): ``clang-tidy`` static analyzer and formatter
+* **rstcheck** (>= 6.0) & **python3-docutils**: reStructuredText validator and man page compiler (``rst2man``)
+
+Local User Installation (Non-Root / No Sudo Required)
+------------------------------------------------------
+
+Per **FHS 3.0** and the **XDG Base Directory Specification**, install **grm** into your user profile without root privileges:
+
+.. code-block:: bash
+
+   # Installs binary to ~/.local/bin/grm and man page to ~/.local/share/man/man1/grm.1
+   make install-user
+
+   # Ensure ~/.local/bin is present in your PATH:
+   export PATH="$HOME/.local/bin:$PATH"
+
+System Installation (Requires Sudo)
+-----------------------------------
+
+To install **grm** system-wide for all users:
+
+.. code-block:: bash
+
+   make release && sudo make install
+
 Files
 =====
 
