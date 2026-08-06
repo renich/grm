@@ -198,37 +198,7 @@ std::expected<void, std::string> App::init_tdlib() {
             update_auth_state(*sttype, *sttype == "authorizationStateClosed");
 
             if (*sttype == "authorizationStateWaitTdlibParameters") {
-              const auto db_path = options_.use_test_dc
-                                       ? config_.config_dir / "tdlib_test_db"
-                                       : config_.db_dir;
-              if (options_.use_test_dc) {
-                grm::log::info(
-                    "Connecting to Telegram Test Data Center (Test DC)...");
-              }
-
-              const std::string params = std::format(
-                  R"({{
-                    "parameters": {{
-                      "use_test_dc": {},
-                      "database_directory": "{}",
-                      "files_directory": "{}/files",
-                      "database_encryption_key": "",
-                      "use_file_database": true,
-                      "use_chat_info_database": true,
-                      "use_message_database": true,
-                      "use_secret_chats": true,
-                      "api_id": {},
-                      "api_hash": "{}",
-                      "system_language_code": "en",
-                      "device_model": "Desktop",
-                      "system_version": "Linux x86_64",
-                      "application_version": "5.12.0"
-                    }}
-                  }})",
-                  options_.use_test_dc ? "true" : "false", db_path.string(),
-                  db_path.string(), config_.api_id, config_.api_hash);
-
-              client_->send_async("setTdlibParameters", params);
+              send_tdlib_parameters();
             } else if (*sttype == "authorizationStateWaitEncryptionKey") {
               client_->send_async("checkDatabaseEncryptionKey",
                                   R"({"encryption_key": ""})");
@@ -247,6 +217,42 @@ std::expected<void, std::string> App::init_tdlib() {
   client_->send_async("getAuthorizationState", "{}");
 
   return {};
+}
+
+void App::send_tdlib_parameters() {
+  if (!client_)
+    return;
+
+  const auto db_path = options_.use_test_dc
+                           ? config_.config_dir / "tdlib_test_db"
+                           : config_.db_dir;
+  if (options_.use_test_dc) {
+    grm::log::info("Connecting to Telegram Test Data Center (Test DC)...");
+  }
+
+  const std::string params = std::format(
+      R"({{
+        "parameters": {{
+          "use_test_dc": {},
+          "database_directory": "{}",
+          "files_directory": "{}/files",
+          "database_encryption_key": "",
+          "use_file_database": true,
+          "use_chat_info_database": true,
+          "use_message_database": true,
+          "use_secret_chats": true,
+          "api_id": {},
+          "api_hash": "{}",
+          "system_language_code": "en",
+          "device_model": "Desktop",
+          "system_version": "Linux x86_64",
+          "application_version": "5.12.0"
+        }}
+      }})",
+      options_.use_test_dc ? "true" : "false", db_path.string(),
+      db_path.string(), config_.api_id, config_.api_hash);
+
+  client_->send_async("setTdlibParameters", params);
 }
 
 std::expected<void, std::string> App::ensure_authenticated() {

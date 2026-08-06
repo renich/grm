@@ -66,6 +66,7 @@ std::expected<int, std::string> App::cmd_login() {
 
       if (state == "authorizationStateWaitTdlibParameters") {
         grm::log::info("Configuring TDLib engine parameters...");
+        send_tdlib_parameters();
       } else if (state == "authorizationStateWaitPhoneNumber") {
         std::string phone = options_.phone;
         if (phone.empty()) {
