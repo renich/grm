@@ -96,7 +96,17 @@ std::expected<int, std::string> App::cmd_login() {
         auto res = client_->send_request("setAuthenticationPhoneNumber",
                                          payload, 15.0);
         if (!res) {
-          grm::log::error("Failed to set phone number: " + res.error());
+          if (res.error().find("406") != std::string::npos ||
+              res.error().find("UPDATE_APP_TO_LOGIN") != std::string::npos) {
+            grm::log::error(
+                "Telegram API security restriction [406 UPDATE_APP_TO_LOGIN].");
+            grm::log::info(
+                "Telegram does not allow SMS auth for custom API_IDs.");
+            grm::log::info(
+                "Please make sure your phone number (+523335765013) is logged into an official Telegram client (phone/desktop), then retry.");
+          } else {
+            grm::log::error("Failed to set phone number: " + res.error());
+          }
           options_.phone.clear(); // Clear invalid option
           last_state.clear();
         } else {

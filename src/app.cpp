@@ -244,8 +244,8 @@ void App::send_tdlib_parameters() {
           "api_id": {},
           "api_hash": "{}",
           "system_language_code": "en",
-          "device_model": "PC 64bit",
-          "system_version": "Linux",
+          "device_model": "grm",
+          "system_version": "Linux x86_64",
           "application_version": "1.0.0"
         }}
       }})",
