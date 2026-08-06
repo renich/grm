@@ -2,6 +2,10 @@
 # Compliant with Podman and OCI standards
 FROM registry.fedoraproject.org/fedora:latest
 
+# Set environment variables for pkg-config and dynamic linker
+ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:${PKG_CONFIG_PATH}
+ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH}
+
 # Install Fedora build dependencies and documentation validation tools
 RUN dnf -y install \
     json-c-devel \

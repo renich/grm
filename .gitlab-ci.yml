@@ -5,6 +5,10 @@ default:
   interruptible: true
   before_script: []
 
+variables:
+  PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig"
+  LD_LIBRARY_PATH: "/usr/local/lib:/usr/local/lib64"
+
 workflow:
   name: "Pipeline: $CI_COMMIT_REF_NAME"
   auto_cancel:
