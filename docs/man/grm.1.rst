@@ -124,7 +124,7 @@ grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] [-f *PATTERN*] [-r] *CHAT_I
       Filter messages since natural human/systemd duration (e.g. ``"1 day ago"``, ``"3 days ago"``, ``"1 month ago"``, ``"2h"``, ``"yesterday"``), ISO date (``YYYY-MM-DD``), or timestamp.
 
    -f, --filter, --sender *PATTERN*
-      Filter messages by sender username, display name, or handle (case-insensitive substring or regex).
+      Filter messages by sender username, display name, or handle (case-insensitive substring or regex). Can be passed multiple times (e.g. ``--filter="renichbon" --filter="k_brown"``) to match any specified sender.
 
    -r, --reverse
       Display messages in reverse-chronological order (newest first at top).

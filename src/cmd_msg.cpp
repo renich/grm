@@ -297,7 +297,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   bool chat_id_set = false;
   int64_t topic_id = 0;
   int64_t since_timestamp = 0;
-  std::string filter_pattern;
+  std::vector<std::string> filter_patterns;
   bool reverse_order = false;
 
   for (size_t i = 0; i < args.size(); ++i) {
@@ -332,11 +332,11 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
       }
     } else if ((arg == "-f" || arg == "--filter" || arg == "--sender") &&
                i + 1 < args.size()) {
-      filter_pattern = args[++i];
+      filter_patterns.push_back(args[++i]);
     } else if (arg.starts_with("--filter=")) {
-      filter_pattern = arg.substr(9);
+      filter_patterns.push_back(std::string(arg.substr(9)));
     } else if (arg.starts_with("--sender=")) {
-      filter_pattern = arg.substr(9);
+      filter_patterns.push_back(std::string(arg.substr(9)));
     } else if (arg == "-r" || arg == "--reverse") {
       reverse_order = true;
     } else if (!chat_id_set && parse_int64(arg).has_value()) {
@@ -348,14 +348,21 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   if (!chat_id_set) {
     return std::unexpected(
         "Usage: grm msg ls [-t|--topic <id>] [-n|--limit <N>] [--since "
-        "<duration|date>] [-f|--filter <pattern>] [-r|--reverse] <chat_id>");
+        "<duration|date>] [-f|--filter <pattern>]... [-r|--reverse] <chat_id>");
   }
 
   std::regex filter_regex;
   bool has_filter = false;
-  if (!filter_pattern.empty()) {
+  if (!filter_patterns.empty()) {
+    std::string combined;
+    for (size_t i = 0; i < filter_patterns.size(); ++i) {
+      if (i > 0) {
+        combined += "|";
+      }
+      combined += std::format("({})", filter_patterns[i]);
+    }
     try {
-      filter_regex = std::regex(filter_pattern, std::regex::icase);
+      filter_regex = std::regex(combined, std::regex::icase);
       has_filter = true;
     } catch (const std::regex_error &e) {
       return std::unexpected("Invalid filter pattern: " +
@@ -695,7 +702,7 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
   int search_limit = 100;
 
   int64_t since_timestamp = 0;
-  std::string filter_pattern;
+  std::vector<std::string> filter_patterns;
 
   for (size_t i = 0; i < args.size(); ++i) {
     std::string_view arg(args[i]);
@@ -725,11 +732,11 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
       }
     } else if ((arg == "-f" || arg == "--filter" || arg == "--sender") &&
                i + 1 < args.size()) {
-      filter_pattern = args[++i];
+      filter_patterns.push_back(args[++i]);
     } else if (arg.starts_with("--filter=")) {
-      filter_pattern = arg.substr(9);
+      filter_patterns.push_back(std::string(arg.substr(9)));
     } else if (arg.starts_with("--sender=")) {
-      filter_pattern = arg.substr(9);
+      filter_patterns.push_back(std::string(arg.substr(9)));
     } else if (!chat_id_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_id_set = true;
@@ -741,14 +748,21 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
   if (!chat_id_set || query.empty()) {
     return std::unexpected(
         "Usage: grm msg search <chat_id> [-q|--query \"<query>\"] [-n|--limit "
-        "<N>] [--since <duration|date>] [-f|--filter <pattern>]");
+        "<N>] [--since <duration|date>] [-f|--filter <pattern>]...");
   }
 
   std::regex filter_regex;
   bool has_filter = false;
-  if (!filter_pattern.empty()) {
+  if (!filter_patterns.empty()) {
+    std::string combined;
+    for (size_t i = 0; i < filter_patterns.size(); ++i) {
+      if (i > 0) {
+        combined += "|";
+      }
+      combined += std::format("({})", filter_patterns[i]);
+    }
     try {
-      filter_regex = std::regex(filter_pattern, std::regex::icase);
+      filter_regex = std::regex(combined, std::regex::icase);
       has_filter = true;
     } catch (const std::regex_error &e) {
       return std::unexpected("Invalid filter pattern: " +

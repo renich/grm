@@ -139,7 +139,7 @@ grm msg ls [-n|--limit <N>] [-t|--topic <id>] [-S|--since <duration|date>] [-f|-
       Filter messages since natural human/systemd duration (e.g. ``"1 day ago"``, ``"3 days ago"``, ``"1 month ago"``, ``"2h"``, ``"30m"``, ``"yesterday"``, ``"today"``), ISO date (``YYYY-MM-DD``), or Unix timestamp.
 
    -f, --filter, --sender <pattern>
-      Filter messages by sender username, display name, or handle (case-insensitive substring or regex).
+      Filter messages by sender username, display name, or handle (case-insensitive substring or regex). Can be passed multiple times (e.g. ``--filter="renichbon" --filter="k_brown"``) to match any specified sender.
 
    -r, --reverse
       Display messages in reverse-chronological order (newest first at top).
