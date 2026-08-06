@@ -130,6 +130,10 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
     }
   }
 
+  if (opts.reverse_order) {
+    std::reverse(items.begin(), items.end());
+  }
+
   fmt::Formatter::render(items, "topic.ls", options_.format,
                          options_.color_mode);
   return 0;

@@ -82,6 +82,10 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
     }
   }
 
+  if (opts.reverse_order) {
+    std::reverse(items.begin(), items.end());
+  }
+
   fmt::Formatter::render(items, "chat.ls", options_.format,
                          options_.color_mode);
   return 0;
