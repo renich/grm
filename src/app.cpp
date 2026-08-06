@@ -245,8 +245,8 @@ void App::send_tdlib_parameters() {
           "api_hash": "{}",
           "system_language_code": "en",
           "device_model": "Desktop",
-          "system_version": "Linux x86_64",
-          "application_version": "5.12.0"
+          "system_version": "Linux",
+          "application_version": "1.0"
         }}
       }})",
       options_.use_test_dc ? "true" : "false", db_path.string(),
