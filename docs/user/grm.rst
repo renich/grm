@@ -55,6 +55,9 @@ Global Options
 -c, --config <file>
    Specify alternative path to configuration file (default: ``~/.config/grm/grm.conf``).
 
+-T, --test-dc
+   Connect to Telegram Test Data Center (DC) environment.
+
 -F, --format <fmt>
    Set output format: ``human``, ``markdown``, ``json``, or ``plain`` (default: ``auto``).
 
@@ -79,11 +82,17 @@ grm login [-p|--phone <num>] [-k|--code <code>]
 Chat & Group Management
 -----------------------
 
-grm chat ls
+grm chat ls [-n|--limit <N>]
    List active chats, supergroups, channels, and private conversations.
 
-grm chat create <group|channel> [--private|--public] "<title>"
-   Create a new group or channel.
+   -n, --limit <N>
+      Maximum number of chats to list (default: 100).
+
+grm chat create group [--private|--public] "<title>"
+   Create a new basic group or supergroup.
+
+grm chat create channel [--private|--public] "<title>" ["<description>"]
+   Create a new broadcast channel.
 
 grm chat info <chat_id>
    Display detailed JSON metadata for a specific chat or group.
@@ -110,7 +119,7 @@ grm msg ls [-n|--limit <N>] [-t|--topic <id>] <chat_id>
    List recent messages from a chat or forum topic.
 
    -n, --limit <N>
-      Maximum number of messages to display (default: 50).
+      Maximum number of messages to display (default: 20).
 
    -t, --topic <id>
       Filter messages by forum topic ID.
@@ -124,11 +133,23 @@ grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <ch
    -o, --output <file>
       Output target file path.
 
+   -t, --topic <id>
+      Target specific forum topic ID.
+
 grm msg search [-q|--query "<query>"] [-n|--limit <N>] [-t|--topic <id>] <chat_id>
    Search message history using query pattern or regex.
 
+   -q, --query "<query>"
+      Regex search pattern.
+
+   -n, --limit <N>
+      Maximum matching messages to return.
+
+   -t, --topic <id>
+      Target specific forum topic ID.
+
 grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"]
-   Send a text message, document, or media file attachment.
+   Send a text message, document, or media file attachment. Supports Telegram Rich Text Markdown V2 formatting.
 
    -a, --attach <file>
       Path to local file attachment (repeatable).
@@ -138,6 +159,9 @@ grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--top
 
    -C, --caption "<text>"
       Caption text for file attachment.
+
+   -t, --topic <id>
+      Target specific forum topic ID.
 
 grm msg info <chat_id> <message_id>
    View detailed message JSON metadata.
@@ -154,17 +178,29 @@ grm msg delete [--for-everyone] <chat_id> <message_ids...>
 Forum Topic Management
 ----------------------
 
-grm topic ls <supergroup_id>
+grm topic ls [-n|--limit <N>] <supergroup_id>
    List active forum topics in a Telegram supergroup.
 
-grm topic create <supergroup_id> "<topic_name>"
-   Create a new forum topic in a supergroup.
+   -n, --limit <N>
+      Maximum topics to list (default: 100).
+
+grm topic create [-e|--emoji <id>] [--icon-color <color>] <supergroup_id> "<topic_name>"
+   Create a new forum topic in a supergroup with optional custom emoji icon.
+
+   -e, --emoji, --icon <id>
+      Custom Telegram emoji icon identifier.
+
+   --icon-color <color>
+      RGB icon color hex integer (e.g. 0x6FB9F0).
 
 grm topic info <supergroup_id> <topic_id>
    View detailed metadata for a forum topic.
 
-grm topic edit <supergroup_id> <topic_id> "<new_name>"
-   Rename an existing forum topic.
+grm topic edit [-e|--emoji <id>] <supergroup_id> <topic_id> ["<new_name>"]
+   Rename an existing forum topic or change its custom emoji icon.
+
+   -e, --emoji, --icon <id>
+      Custom Telegram emoji icon identifier.
 
 grm topic close <supergroup_id> <topic_id>
    Close a forum topic.
@@ -193,6 +229,12 @@ grm file download-all [-o|--output <dir>] [-t|--topic <id>] [-n|--limit <N>] [--
    -o, --output <dir>
       Destination directory path.
 
+   -t, --topic <id>
+      Target specific forum topic ID.
+
+   -n, --limit <N>
+      Maximum messages to scan (default: 100).
+
    --type <type>
       Filter media type: ``photo``, ``video``, ``doc``, ``audio``, or ``all``.
 
@@ -205,11 +247,11 @@ Examples
 
       grm chat ls
 
-2. Create a new forum topic in supergroup:
+2. Create a new forum topic with custom emoji icon in supergroup:
 
    .. code-block:: bash
 
-      grm topic create -1003750297693 "DevOps Operations"
+      grm topic create -e 5368560552786271734 -1003750297693 "DevOps Operations"
 
 3. Send document attachment to topic:
 

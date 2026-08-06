@@ -22,6 +22,8 @@ Global Options:
   -v, --verbose         Enable verbose TDLib state output
   -d, --debug           Enable debug tracing
   -q, --quiet           Suppress informational messages
+  -c, --config <file>   Custom configuration file path
+  -T, --test-dc         Connect to Telegram Test Data Center environment
   -F, --format <fmt>    Output format: human, markdown, json, plain (default: auto)
   --color <mode>        Color mode: auto, always, never (or --no-color)
 
@@ -71,6 +73,7 @@ Subcommands:
   grm chat delete <chat_id>                                          Delete or leave chat
 
 Options:
+  -n, --limit <N>                                                    Maximum chats to list (default: 100)
   -h, --help                                                         Show this help screen
 )" << '\n';
 }
@@ -94,6 +97,7 @@ Options:
   -m, --media                                                       Send attachment(s) as compressed media (photo/video/audio)
   -C, --caption "<text>"                                            Caption text for attachments
   -t, --topic <id>                                                  Target specific forum topic thread ID
+  -n, --limit <N>                                                   Maximum messages to fetch or search
   -h, --help                                                        Show this help screen
 )" << '\n';
 }
@@ -104,8 +108,8 @@ void App::print_topic_help() {
 Supergroup forum topic lifecycle management.
 
 Subcommands:
-  grm topic ls <supergroup_id>                                           List active forum topics
-  grm topic create [-e|--emoji <id>] <supergroup_id> "<topic_name>"      Create new forum topic with optional custom emoji icon
+  grm topic ls [-n|--limit <N>] <supergroup_id>                         List active forum topics
+  grm topic create [-e|--emoji <id>] [--icon-color <color>] <supergroup_id> "<topic_name>" Create new forum topic
   grm topic info <supergroup_id> <topic_id>                              View topic metadata
   grm topic edit [-e|--emoji <id>] <supergroup_id> <topic_id> ["<name>"] Edit topic title or custom emoji icon
   grm topic close <supergroup_id> <topic_id>                             Close forum topic
@@ -115,6 +119,9 @@ Subcommands:
   grm topic delete <supergroup_id> <topic_id>                            Delete topic and history
 
 Options:
+  -e, --emoji, --icon <id>                                               Custom Telegram emoji icon ID
+  --icon-color <color>                                                   RGB icon color (e.g. 0x6FB9F0)
+  -n, --limit <N>                                                        Maximum topics to list (default: 100)
   -h, --help                                                             Show this help screen
 )" << '\n';
 }

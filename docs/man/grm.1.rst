@@ -2,16 +2,14 @@
 grm
 ===
 
---------------------------------------------
-Group & Telegram Manager CLI (C++23 / TDLib)
---------------------------------------------
+-------------------------------
+Group & Telegram Manager CLI
+-------------------------------
 
-:Authors: Rénich Bon Ćirić <renich@evalinux.com> & Antigravity AI (Google DeepMind)
-:Date: 2026-08-04
-
+:Author: Rénich Bon Ćirić <renich@evalinux.com>
+:Date: 2026-08-05
 :Manual section: 1
 :Manual group: User Commands
-
 
 SYNOPSIS
 ========
@@ -27,7 +25,7 @@ GLOBAL OPTIONS
 ==============
 
 -h, --help
-   Display command help message and exit.
+   Display command or subcommand help message and exit.
 
 -V, --version
    Output version and build information.
@@ -42,13 +40,16 @@ GLOBAL OPTIONS
    Suppress non-error messages.
 
 -c, --config *FILE*
-   Path to config file (default: ``~/.config/grm/grm.conf``).
+   Specify custom path to configuration file (default: ``~/.config/grm/grm.conf``).
+
+-T, --test-dc
+   Connect to Telegram Test Data Center (DC) environment.
 
 -F, --format *FMT*
-   Output format: ``human``, ``markdown``, ``json``, or ``plain``.
+   Set output format: ``human``, ``markdown``, ``json``, or ``plain`` (default: ``auto``).
 
 --color *MODE*
-   Color mode: ``auto``, ``always``, or ``never``.
+   Control ANSI color output: ``auto``, ``always``, or ``never`` (or ``--no-color``).
 
 COMMANDS
 ========
@@ -57,97 +58,178 @@ login
 -----
 
 grm login [-p *PHONE*] [-k *CODE*]
-   Authenticate session with Telegram servers.
+   Authenticate Telegram session.
+
+   -p, --phone *PHONE*
+      Pre-fill international phone number (e.g. ``+523330000000``).
+
+   -k, --code *CODE*
+      Pre-fill authentication code for non-interactive logins.
 
 chat
 ----
 
-grm chat ls
-   List active conversations, groups, channels.
+grm chat ls [-n *LIMIT*]
+   List active conversations, groups, channels, and private chats.
 
-grm chat create <group|channel> [--private|--public] "*TITLE*"
-   Create group or channel.
+   -n, --limit *N*
+      Maximum number of chats to display (default: 100).
+
+grm chat create group [--private|--public] "*TITLE*"
+   Create a new basic group or supergroup.
+
+grm chat create channel [--private|--public] "*TITLE*" ["*DESCRIPTION*"]
+   Create a new broadcast channel.
 
 grm chat info *CHAT_ID*
-   Display chat metadata in JSON format.
+   Display detailed chat or supergroup metadata.
 
 grm chat set-title *CHAT_ID* "*TITLE*"
-   Change chat title.
+   Update group or channel title.
 
 grm chat set-desc *CHAT_ID* "*DESCRIPTION*"
-   Change supergroup/channel description.
+   Update supergroup or channel description.
 
 grm chat pin *CHAT_ID* *MESSAGE_ID*
-   Pin message in chat.
+   Pin message in a chat or supergroup.
 
 grm chat unpin *CHAT_ID* [*MESSAGE_ID*]
-   Unpin message.
+   Unpin a specific message or all pinned messages.
 
 grm chat delete *CHAT_ID*
-   Delete chat history or leave group.
+   Delete chat history or leave group/channel.
 
 msg
 ---
 
 grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] *CHAT_ID*
-   List chat or forum topic history.
+   List recent messages from a chat or forum topic.
+
+   -n, --limit *N*
+      Maximum number of messages to display (default: 20).
+
+   -t, --topic *TOPIC_ID*
+      Filter messages by forum topic ID.
 
 grm msg export [-f csv|json] [-o *FILE*] [-t *TOPIC_ID*] *CHAT_ID*
-   Export chat history to file.
+   Export chat history to CSV or JSON file.
+
+   -f, --format *FMT*
+      Export format: ``csv`` or ``json``.
+
+   -o, --output *FILE*
+      Output target file path.
+
+   -t, --topic *TOPIC_ID*
+      Target specific forum topic ID.
 
 grm msg search [-q "*QUERY*"] [-n *LIMIT*] [-t *TOPIC_ID*] *CHAT_ID*
-   Search chat history.
+   Search message history using pattern or regex filter.
+
+   -q, --query "*QUERY*"
+      Regex search pattern.
+
+   -n, --limit *N*
+      Maximum matching messages to return.
+
+   -t, --topic *TOPIC_ID*
+      Target specific forum topic ID.
 
 grm msg send [-a *FILE*] [-m] [-C "*CAPTION*"] [-t *TOPIC_ID*] *CHAT_ID* ["*MESSAGE*"]
-   Send message or file attachment.
+   Send text message, document, or media attachment. Supports Telegram Rich Text Markdown V2 formatting.
+
+   -a, --attach *FILE*
+      Path to local file attachment (repeatable).
+
+   -m, --media
+      Send attachment as compressed media (photo/video/audio).
+
+   -C, --caption "*CAPTION*"
+      Caption text for file attachment.
+
+   -t, --topic *TOPIC_ID*
+      Target specific forum topic ID.
 
 grm msg info *CHAT_ID* *MESSAGE_ID*
-   View message metadata.
+   View message metadata in JSON format.
 
 grm msg edit [-t *TOPIC_ID*] *CHAT_ID* *MESSAGE_ID* "*TEXT*"
-   Edit text message.
+   Edit content of a sent text message.
 
 grm msg delete [--for-everyone] *CHAT_ID* *MESSAGE_IDS...*
-   Delete messages.
+   Delete one or more messages.
+
+   -e, --for-everyone
+      Delete message for all chat participants.
 
 topic
 -----
 
-grm topic ls *SUPERGROUP_ID*
-   List active forum topics.
+grm topic ls [-n *LIMIT*] *SUPERGROUP_ID*
+   List active forum topics in a supergroup.
 
-grm topic create *SUPERGROUP_ID* "*TOPIC_NAME*"
-   Create new forum topic.
+   -n, --limit *N*
+      Maximum number of topics to display (default: 100).
+
+grm topic create [-e *CUSTOM_EMOJI_ID*] [--icon-color *COLOR*] *SUPERGROUP_ID* "*TOPIC_NAME*"
+   Create a new forum topic in a supergroup with optional custom emoji icon.
+
+   -e, --emoji, --icon *ID*
+      Custom Telegram emoji icon identifier.
+
+   --icon-color *COLOR*
+      RGB icon color hex integer (e.g. 0x6FB9F0).
 
 grm topic info *SUPERGROUP_ID* *TOPIC_ID*
-   View topic metadata.
+   View detailed metadata for a forum topic.
 
-grm topic edit *SUPERGROUP_ID* *TOPIC_ID* "*NEW_NAME*"
-   Rename topic.
+grm topic edit [-e *CUSTOM_EMOJI_ID*] *SUPERGROUP_ID* *TOPIC_ID* ["*NEW_NAME*"]
+   Rename an existing forum topic or change its custom emoji icon.
+
+   -e, --emoji, --icon *ID*
+      Custom Telegram emoji icon identifier.
 
 grm topic close *SUPERGROUP_ID* *TOPIC_ID*
-   Close topic.
+   Close a forum topic.
 
 grm topic reopen *SUPERGROUP_ID* *TOPIC_ID*
-   Reopen topic.
+   Reopen a closed forum topic.
 
 grm topic pin *SUPERGROUP_ID* *TOPIC_ID*
-   Pin topic.
+   Pin a forum topic.
 
 grm topic unpin *SUPERGROUP_ID* *TOPIC_ID*
-   Unpin topic.
+   Unpin a forum topic.
 
 grm topic delete *SUPERGROUP_ID* *TOPIC_ID*
-   Delete topic.
+   Delete a forum topic and its message history.
 
 file
 ----
 
 grm file get [-o *OUTPUT*] [-t *TOPIC_ID*] *CHAT_ID* *MESSAGE_IDS...*
-   Download attachments by message ID.
+   Download specific attachment files by message ID.
+
+   -o, --output *OUTPUT*
+      Output directory or destination file path.
+
+   -t, --topic *TOPIC_ID*
+      Target specific forum topic ID.
 
 grm file download-all [-o *DIR*] [-t *TOPIC_ID*] [-n *LIMIT*] [--type photo|video|doc|audio|all] *CHAT_ID*
-   Bulk download media attachments.
+   Bulk download attachment media files from a chat or topic.
+
+   -o, --output *DIR*
+      Destination directory path.
+
+   -t, --topic *TOPIC_ID*
+      Target specific forum topic ID.
+
+   -n, --limit *LIMIT*
+      Maximum messages to scan (default: 100).
+
+   --type *TYPE*
+      Filter media type: ``photo``, ``video``, ``doc``, ``audio``, or ``all``.
 
 EXIT STATUS
 ===========
