@@ -11,18 +11,8 @@ int main(int argc, char *argv[]) {
   grm::CliOptions options;
   std::vector<std::string> command_args;
 
-  const std::array<std::string_view, 6> subcommands = {
-      "login", "chat", "msg", "send", "topic", "file"};
-
   for (int i = 1; i < argc; ++i) {
     std::string_view arg(argv[i]);
-
-    if (std::ranges::find(subcommands, arg) != subcommands.end()) {
-      for (; i < argc; ++i) {
-        command_args.emplace_back(argv[i]);
-      }
-      break;
-    }
 
     if (arg == "-h" || arg == "--help") {
       options.help = true;

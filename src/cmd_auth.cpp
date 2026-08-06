@@ -34,6 +34,12 @@ std::string read_secure_password(std::string_view prompt) {
 } // namespace
 
 std::expected<int, std::string> App::cmd_login() {
+  if (config_.api_id == 0 || config_.api_hash.empty()) {
+    return std::unexpected(
+        "Missing Telegram API credentials. Please set 'api_id' and 'api_hash' in "
+        "~/.config/grm/config.json (or pass via -c/--config).");
+  }
+
   if (auto res = init_tdlib(); !res) {
     return std::unexpected(res.error());
   }
@@ -56,8 +62,11 @@ std::expected<int, std::string> App::cmd_login() {
 
     if (!state.empty() && state != last_state) {
       last_state = state;
+      grm::log::debug("Authorization state changed: " + state);
 
-      if (state == "authorizationStateWaitPhoneNumber") {
+      if (state == "authorizationStateWaitTdlibParameters") {
+        grm::log::info("Configuring TDLib engine parameters...");
+      } else if (state == "authorizationStateWaitPhoneNumber") {
         std::string phone = options_.phone;
         if (phone.empty()) {
           std::cout << "[AUTH] Enter your Telegram phone number (e.g. "
