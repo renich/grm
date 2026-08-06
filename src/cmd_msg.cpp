@@ -169,7 +169,14 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
       std::string text = extract_message_text(m);
       if (!text.empty()) {
         items.push_back(fmt::MessageItem{
-            .id = id, .chat_id = chat_id, .date = 0, .sender = "", .text = text});
+            .id = id,
+            .chat_id = chat_id,
+            .topic_id = 0,
+            .date = 0,
+            .sender = "",
+            .text = text,
+            .has_attachment = false,
+            .attachment_type = ""});
         if (items.size() >= target_limit) {
           break;
         }
@@ -388,7 +395,14 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
 
     if (!text.empty() && std::regex_search(text, search_regex)) {
       items.push_back(fmt::MessageItem{
-          .id = id, .chat_id = chat_id, .date = 0, .sender = "", .text = text});
+          .id = id,
+          .chat_id = chat_id,
+          .topic_id = 0,
+          .date = 0,
+          .sender = "",
+          .text = text,
+          .has_attachment = false,
+          .attachment_type = ""});
       match_count++;
     }
   }

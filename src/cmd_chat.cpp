@@ -47,7 +47,7 @@ App::cmd_chat_ls([[maybe_unused]] const std::vector<std::string> &args) {
           type_name = type_obj->get_type().value_or("Chat");
         }
         items.push_back(
-            fmt::ChatItem{.id = *cid, .type = type_name, .title = title});
+            fmt::ChatItem{.id = *cid, .type = type_name, .title = title, .unread_count = 0, .last_message_date = 0});
       }
     }
   }

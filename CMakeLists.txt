@@ -140,10 +140,38 @@ add_executable(test_formatter
 target_link_libraries(test_formatter PRIVATE ${JSONC_LIBRARIES})
 add_test(NAME test_formatter COMMAND test_formatter)
 
+add_executable(test_render_engine
+    tests/test_render_engine.cpp
+    src/formatter.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_render_engine PRIVATE ${JSONC_LIBRARIES})
+add_test(NAME test_render_engine COMMAND test_render_engine)
+
 add_executable(test_cli_options
     tests/test_cli_options.cpp
 )
 add_test(NAME test_cli_options COMMAND test_cli_options)
+
+add_executable(test_cli_routing
+    tests/test_cli_routing.cpp
+    src/app.cpp
+    src/config.cpp
+    src/logger.cpp
+    src/json_utils.cpp
+    src/td_client.cpp
+    src/cmd_auth.cpp
+    src/cmd_chat.cpp
+    src/cmd_msg.cpp
+    src/cmd_topic.cpp
+    src/cmd_file.cpp
+    src/exporter.cpp
+    src/uploader.cpp
+    src/downloader.cpp
+    src/formatter.cpp
+)
+target_link_libraries(test_cli_routing PRIVATE ${TDJSON_LIB} ${JSONC_LIBRARIES})
+add_test(NAME test_cli_routing COMMAND test_cli_routing)
 
 add_executable(test_downloader
     tests/test_downloader.cpp

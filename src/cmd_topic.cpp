@@ -82,7 +82,9 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
 
     items.push_back(fmt::TopicItem{.id = thread_id,
                                    .name = name,
-                                   .message_count = total_messages});
+                                   .message_count = total_messages,
+                                   .custom_emoji_id = 0,
+                                   .icon_color = 0});
   }
 
   fmt::Formatter::print_topics(items, options_.format, options_.color_mode);
