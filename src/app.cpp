@@ -220,9 +220,9 @@ std::expected<void, std::string> App::init_tdlib() {
                       "api_id": {},
                       "api_hash": "{}",
                       "system_language_code": "en",
-                      "device_model": "grm CLI",
+                      "device_model": "Desktop",
                       "system_version": "Linux x86_64",
-                      "application_version": "10.9.1"
+                      "application_version": "5.12.0"
                     }}
                   }})",
                   options_.use_test_dc ? "true" : "false", db_path.string(),
