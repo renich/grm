@@ -1,4 +1,5 @@
 #include "grm/command_registry.hpp"
+#include "grm/app.hpp"
 #include <algorithm>
 #include <format>
 #include <iostream>
@@ -7,197 +8,12 @@
 namespace grm {
 
 CommandRegistry::CommandRegistry() {
-  // Global Options
-  std::vector<OptionSpec> global_opts = {
-      {"-h", "--help", "", "Show command or subcommand help message and exit", {}},
-      {"-V", "--version", "", "Display version and build environment information", {}},
-      {"-v", "--verbose", "", "Enable verbose TDLib log output to stdout", {}},
-      {"-d", "--debug", "", "Enable low-level debug tracing and JSON payload dumps", {}},
-      {"-q", "--quiet", "", "Suppress non-error informational messages", {}},
-      {"-c", "--config", "<file>", "Path to custom configuration file", {}},
-      {"-T", "--test-dc", "", "Connect to Telegram Test Data Center environment", {}},
-      {"-F", "--format", "<fmt>", "Set output format: human, markdown, json, plain (default: auto)", {"human", "markdown", "json", "plain"}},
-      {"", "--color", "<mode>", "Set ANSI color mode: auto, always, never (or --no-color)", {"auto", "always", "never"}}
-  };
-
-  // 1. login
-  commands_.push_back(CommandSpec{
-      "login",
-      "Authenticate Telegram account with TDLib",
-      {
-          SubcommandSpec{"login", "[-p|--phone <number>] [-k|--code <code>]", "Authenticate Telegram session interactively or non-interactively", {
-              OptionSpec{"-p", "--phone", "<number>", "International phone number (e.g. +523330000000)", {}},
-              OptionSpec{"-k", "--code", "<code>", "Authentication code received via Telegram or SMS", {}},
-              OptionSpec{"-h", "--help", "", "Show login help message", {}}
-          }}
-      },
-      global_opts
-  });
-
-  // 2. chat
-  commands_.push_back(CommandSpec{
-      "chat",
-      "Manage Telegram chats, groups, and channels",
-      {
-          SubcommandSpec{"ls", "[-n|--limit <N>] [-S|--since <time>] [-f|--filter <pattern>]", "List active conversations, groups, channels, and private chats", {
-              OptionSpec{"-n", "--limit", "<N>", "Maximum number of chats to display (default: 100)", {}},
-              OptionSpec{"-S", "--since", "<time>", "Filter chats active since duration (e.g. '1 day ago')", {}},
-              OptionSpec{"-f", "--filter", "<pattern>", "Filter chats by title or ID pattern filter", {}},
-              OptionSpec{"-h", "--help", "", "Show list help message", {}}
-          }},
-          SubcommandSpec{"create", "<group|channel> [--private|--public] \"<title>\"", "Create a new basic group, supergroup, or broadcast channel", {
-              OptionSpec{"", "--private", "", "Create as a private chat/channel", {}},
-              OptionSpec{"", "--public", "", "Create as a public chat/channel", {}},
-              OptionSpec{"-h", "--help", "", "Show create help message", {}}
-          }},
-          SubcommandSpec{"info", "<chat_id>", "Display detailed chat or supergroup metadata", {
-              OptionSpec{"-h", "--help", "", "Show info help message", {}}
-          }},
-          SubcommandSpec{"set-title", "<chat_id> \"<title>\"", "Update group or channel title", {
-              OptionSpec{"-h", "--help", "", "Show set-title help message", {}}
-          }},
-          SubcommandSpec{"set-desc", "<chat_id> \"<description>\"", "Update group or channel description", {
-              OptionSpec{"-h", "--help", "", "Show set-desc help message", {}}
-          }},
-          SubcommandSpec{"pin", "<chat_id>", "Pin chat to top of chat list", {
-              OptionSpec{"-h", "--help", "", "Show pin help message", {}}
-          }},
-          SubcommandSpec{"unpin", "<chat_id>", "Unpin chat from chat list", {
-              OptionSpec{"-h", "--help", "", "Show unpin help message", {}}
-          }},
-          SubcommandSpec{"delete", "<chat_id>", "Delete chat history or leave group/channel", {
-              OptionSpec{"-h", "--help", "", "Show delete help message", {}}
-          }}
-      },
-      global_opts
-  });
-
-  // 3. msg
-  commands_.push_back(CommandSpec{
-      "msg",
-      "Inspect, send, edit, search, pin, and export messages",
-      {
-          SubcommandSpec{"ls", "[-t|--topic <id>] [-n|--limit <N>] <chat_id>", "List recent messages from chat or topic thread", {
-              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
-              OptionSpec{"-n", "--limit", "<N>", "Maximum messages to fetch (default: 20)", {}},
-              OptionSpec{"-S", "--since", "<time>", "Filter messages since duration or ISO date", {}},
-              OptionSpec{"-f", "--filter", "<pattern>", "Filter messages by regex pattern filter", {}},
-              OptionSpec{"-r", "--reverse", "", "Display messages in reverse chronological order", {}},
-              OptionSpec{"-h", "--help", "", "Show message list help message", {}}
-          }},
-          SubcommandSpec{"send", "[-a|--attach <file>] [-m|--media] [-C|--caption \"<text>\"] [-t|--topic <id>] <chat_id> [\"<message>\"]", "Send text message or file attachment(s)", {
-              OptionSpec{"-a", "--attach", "<file>", "Attach file or document path to message", {}},
-              OptionSpec{"-m", "--media", "", "Send attachment as inline visual media", {}},
-              OptionSpec{"-C", "--caption", "<text>", "Set caption for file attachment", {}},
-              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
-              OptionSpec{"-h", "--help", "", "Show send help message", {}}
-          }},
-          SubcommandSpec{"info", "<chat_id> <message_id>", "View message details and metadata", {
-              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
-              OptionSpec{"-h", "--help", "", "Show info help message", {}}
-          }},
-          SubcommandSpec{"edit", "[-t|--topic <id>] <chat_id> <message_id> \"<new_text>\"", "Edit previously sent text message content", {
-              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
-              OptionSpec{"-h", "--help", "", "Show edit help message", {}}
-          }},
-          SubcommandSpec{"search", "[-t|--topic <id>] [-q|--query \"<query>\"] [-n|--limit <N>] <chat_id>", "Search chat history using query pattern filter", {
-              OptionSpec{"-q", "--query", "<query>", "Search query substring or regex pattern", {}},
-              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
-              OptionSpec{"-n", "--limit", "<N>", "Maximum search results to return", {}},
-              OptionSpec{"-h", "--help", "", "Show search help message", {}}
-          }},
-          SubcommandSpec{"export", "[-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <chat_id>", "Export chat history to CSV or JSON file", {
-              OptionSpec{"-f", "--format", "<fmt>", "Export format: csv or json (default: json)", {"csv", "json"}},
-              OptionSpec{"-o", "--output", "<file>", "Destination export filepath", {}},
-              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
-              OptionSpec{"-n", "--limit", "<N>", "Maximum messages to export", {}},
-              OptionSpec{"-h", "--help", "", "Show export help message", {}}
-          }},
-          SubcommandSpec{"pin", "[-t|--topic <id>] <chat_id> <message_id>", "Pin message in chat or topic", {
-              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
-              OptionSpec{"-h", "--help", "", "Show pin help message", {}}
-          }},
-          SubcommandSpec{"unpin", "[-a|--all] <chat_id> [<message_ids...>]", "Unpin message(s) or unpin all pinned messages in chat", {
-              OptionSpec{"-a", "--all", "", "Unpin all pinned messages in chat", {}},
-              OptionSpec{"-h", "--help", "", "Show unpin help message", {}}
-          }},
-          SubcommandSpec{"delete", "[-e|--for-everyone] <chat_id> <message_ids...>", "Delete message(s) from chat", {
-              OptionSpec{"-e", "--for-everyone", "", "Delete message for all members", {}},
-              OptionSpec{"-h", "--help", "", "Show delete help message", {}}
-          }}
-      },
-      global_opts
-  });
-
-  // 4. topic
-  commands_.push_back(CommandSpec{
-      "topic",
-      "Manage supergroup forum topics",
-      {
-          SubcommandSpec{"ls", "[-n|--limit <N>] <supergroup_id>", "List forum topics in supergroup", {
-              OptionSpec{"-n", "--limit", "<N>", "Maximum topics to display (default: 100)", {}},
-              OptionSpec{"-h", "--help", "", "Show topic list help message", {}}
-          }},
-          SubcommandSpec{"create", "[-e|--emoji <id>] <supergroup_id> \"<name>\"", "Create a new forum topic in supergroup", {
-              OptionSpec{"-e", "--emoji", "<id>", "Custom Telegram emoji icon ID", {}},
-              OptionSpec{"", "--icon-color", "<color>", "RGB icon color (e.g. 0x6FB9F0)", {}},
-              OptionSpec{"-h", "--help", "", "Show create topic help message", {}}
-          }},
-          SubcommandSpec{"info", "<supergroup_id> <topic_id>", "View topic metadata and settings", {
-              OptionSpec{"-h", "--help", "", "Show topic info help message", {}}
-          }},
-          SubcommandSpec{"edit", "[-e|--emoji <id>] <supergroup_id> <topic_id> [\"<name>\"]", "Edit topic title or icon", {
-              OptionSpec{"-e", "--emoji", "<id>", "Custom Telegram emoji icon ID", {}},
-              OptionSpec{"-h", "--help", "", "Show edit topic help message", {}}
-          }},
-          SubcommandSpec{"close", "<supergroup_id> <topic_id>", "Close forum topic thread", {
-              OptionSpec{"-h", "--help", "", "Show close help message", {}}
-          }},
-          SubcommandSpec{"reopen", "<supergroup_id> <topic_id>", "Reopen closed forum topic thread", {
-              OptionSpec{"-h", "--help", "", "Show reopen help message", {}}
-          }},
-          SubcommandSpec{"pin", "<supergroup_id> <topic_id>", "Pin topic to top of topic list", {
-              OptionSpec{"-h", "--help", "", "Show pin help message", {}}
-          }},
-          SubcommandSpec{"unpin", "<supergroup_id> <topic_id>", "Unpin topic from topic list", {
-              OptionSpec{"-h", "--help", "", "Show unpin help message", {}}
-          }},
-          SubcommandSpec{"delete", "<supergroup_id> <topic_id>", "Delete topic and message thread history", {
-              OptionSpec{"-h", "--help", "", "Show delete topic help message", {}}
-          }}
-      },
-      global_opts
-  });
-
-  // 5. file
-  commands_.push_back(CommandSpec{
-      "file",
-      "Download attachments and media files",
-      {
-          SubcommandSpec{"get", "[-a|-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]", "Download media and file attachments from chats and topics", {
-              OptionSpec{"-a", "--all", "", "Bulk download all attachment files in chat or topic", {}},
-              OptionSpec{"-A", "", "", "Bulk download all attachment files in chat or topic (alias for -a)", {}},
-              OptionSpec{"-o", "--output", "<dir|file>", "Destination output directory or filepath", {}},
-              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
-              OptionSpec{"-n", "--limit", "<N>", "Maximum messages to fetch or search", {}},
-              OptionSpec{"", "--type", "<type>", "Filter media type for bulk download (photo, video, doc, audio, all)", {"photo", "video", "doc", "audio", "all"}},
-              OptionSpec{"-h", "--help", "", "Show file get help message", {}}
-          }}
-      },
-      global_opts
-  });
-
-  // 6. completion
-  commands_.push_back(CommandSpec{
-      "completion",
-      "Generate shell autocompletion script for bash, zsh, or fish",
-      {
-          SubcommandSpec{"bash", "", "Output context-aware Bash autocompletion script", {}},
-          SubcommandSpec{"zsh", "", "Output Zsh autocompletion function script", {}},
-          SubcommandSpec{"fish", "", "Output Fish autocompletion definitions", {}}
-      },
-      global_opts
-  });
+  commands_.push_back(get_login_spec());
+  commands_.push_back(get_chat_spec());
+  commands_.push_back(get_msg_spec());
+  commands_.push_back(get_topic_spec());
+  commands_.push_back(get_file_spec());
+  commands_.push_back(get_completion_spec());
 }
 
 const CommandRegistry &CommandRegistry::get_instance() {
@@ -207,24 +23,26 @@ const CommandRegistry &CommandRegistry::get_instance() {
 
 std::string CommandRegistry::render_global_help() const {
   std::stringstream ss;
-  ss << "grm - Group & Telegram Manager CLI (C++23 / TDLib)\n\n"
+  ss << "Usage: grm [OPTION]... [COMMAND] [ARGS]...\n"
+     << "Group & Telegram Manager CLI (C++23 / TDLib)\n\n"
      << "Global Options:\n"
-     << "  -h, --help            Show this help screen\n"
-     << "  -V, --version         Display version and build info\n"
+     << "  -h, --help            Show summary help screen\n"
+     << "      --help=all        Show exhaustive help for all commands and subcommands\n"
+     << "  -V, --version         Display version and build environment info\n"
      << "  -v, --verbose         Enable verbose TDLib state output\n"
      << "  -d, --debug           Enable debug tracing\n"
-     << "  -q, --quiet           Suppress informational messages\n"
-     << "  -c, --config <file>   Custom configuration file path\n"
+     << "  -q, --quiet           Suppress non-error informational messages\n"
+     << "  -c, --config <file>   Path to custom configuration file\n"
      << "  -T, --test-dc         Connect to Telegram Test Data Center environment\n"
      << "  -F, --format <fmt>    Output format: human, markdown, json, plain (default: auto)\n"
-     << "  --color <mode>        Color mode: auto, always, never (or --no-color)\n\n"
+     << "      --color <mode>    Set ANSI color mode: auto, always, never (or --no-color)\n\n"
      << "Commands:\n";
 
   for (const auto &cmd : commands_) {
-    ss << std::format("  grm {:<18} {}\n", cmd.name, cmd.description);
+    ss << std::format("  {:<21} {}\n", cmd.name, cmd.description);
   }
 
-  ss << "\nRun 'grm <command> --help' for details on subcommands.\n";
+  ss << "\nRun 'grm <command> --help' or 'grm --help=all' for details.\n";
   return ss.str();
 }
 
@@ -242,7 +60,7 @@ std::string CommandRegistry::render_command_help(const std::string &cmd_name) co
 
   for (const auto &sub : it->subcommands) {
     std::string line = std::format("grm {} {} {}", it->name, sub.name, sub.synopsis);
-    ss << std::format("  {:<66} {}\n", line, sub.description);
+    ss << std::format("  {:<64} {}\n", line, sub.description);
   }
 
   ss << "\nOptions:\n";
@@ -261,7 +79,7 @@ std::string CommandRegistry::render_command_help(const std::string &cmd_name) co
         flags += " " + opt.value_hint;
       }
 
-      ss << std::format("  {:<35} {}\n", flags, opt.description);
+      ss << std::format("  {:<31} {}\n", flags, opt.description);
     }
   }
 
@@ -270,10 +88,11 @@ std::string CommandRegistry::render_command_help(const std::string &cmd_name) co
 
 std::string CommandRegistry::render_all_help() const {
   std::stringstream ss;
-  ss << "grm - Group & Telegram Manager CLI (C++23 / TDLib) - Exhaustive Master Help\n\n"
+  ss << "Usage: grm [OPTION]... [COMMAND] [ARGS]...\n"
+     << "Group & Telegram Manager CLI (C++23 / TDLib)\n\n"
      << "Global Options:\n"
-     << "  -h, --help            Show command help screen\n"
-     << "  --help=all            Show exhaustive master help for all commands and options\n"
+     << "  -h, --help            Show summary help screen\n"
+     << "      --help=all        Show exhaustive help for all commands and subcommands\n"
      << "  -V, --version         Display version and build environment info\n"
      << "  -v, --verbose         Enable verbose TDLib state output\n"
      << "  -d, --debug           Enable debug tracing\n"
@@ -281,20 +100,24 @@ std::string CommandRegistry::render_all_help() const {
      << "  -c, --config <file>   Path to custom configuration file\n"
      << "  -T, --test-dc         Connect to Telegram Test Data Center environment\n"
      << "  -F, --format <fmt>    Output format: human, markdown, json, plain (default: auto)\n"
-     << "  --color <mode>        Set ANSI color mode: auto, always, never (or --no-color)\n\n"
-     << "================================================================================\n"
-     << "EXHAUSTIVE COMMAND REFERENCE & SUBCOMMAND OPTIONS\n"
-     << "================================================================================\n\n";
+     << "      --color <mode>    Set ANSI color mode: auto, always, never (or --no-color)\n\n"
+     << "Commands:\n\n";
 
   for (const auto &cmd : commands_) {
-    ss << std::format("Command: grm {}\n{}\n", cmd.name, cmd.description);
-    ss << std::string(80, '-') << "\n\n";
+    ss << std::format("{}: {}\n", cmd.name, cmd.description);
 
     for (const auto &sub : cmd.subcommands) {
-      std::string line = std::format("grm {} {} {}", cmd.name, sub.name, sub.synopsis);
-      ss << std::format("  {:<66} {}\n", line, sub.description);
+      std::string line;
+      if (sub.synopsis.empty()) {
+        line = std::format("grm {} {}", cmd.name, sub.name);
+      } else {
+        line = std::format("grm {} {} {}", cmd.name, sub.name, sub.synopsis);
+      }
 
-      if (!sub.options.empty()) {
+      if (sub.options.empty()) {
+        ss << std::format("  {:<66} {}\n", line, sub.description);
+      } else {
+        ss << std::format("  {}\n", line);
         for (const auto &opt : sub.options) {
           std::string flags;
           if (!opt.short_flag.empty() && !opt.long_flag.empty()) {
@@ -319,14 +142,14 @@ std::string CommandRegistry::render_all_help() const {
             opt_desc += " (" + choices_str + ")";
           }
 
-          ss << std::format("      {:<33} {}\n", flags, opt_desc);
+          ss << std::format("    {:<31} {}\n", flags, opt_desc);
         }
       }
-      ss << "\n";
     }
     ss << "\n";
   }
 
+  ss << "Report bugs to: <renich@evalinux.com> or <https://gitlab.com/renich/grm/-/issues>\n";
   return ss.str();
 }
 
@@ -341,7 +164,7 @@ _grm_completions() {
   local cur prev words cword
   _init_completion || return
 
-  local global_opts="-h --help -V --version -v --verbose -d --debug -q --quiet -c --config -T --test-dc -F --format --color --no-color"
+  local global_opts="-h --help --help=all -V --version -v --verbose -d --debug -q --quiet -c --config -T --test-dc -F --format --color --no-color"
   local commands="login chat msg topic file completion"
 
   if [[ ${cword} -eq 1 ]]; then
@@ -444,7 +267,11 @@ _grm_completions() {
       fi
       ;;
     completion)
-      COMPREPLY=($(compgen -W "bash zsh fish -h --help" -- "${cur}"))
+      if [[ "${cur}" == -* ]]; then
+        COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
+      else
+        COMPREPLY=($(compgen -W "bash zsh fish" -- "${cur}"))
+      fi
       ;;
     *)
       ;;
@@ -477,6 +304,7 @@ _grm() {
 
   _arguments -s \
     '(-h --help)'{-h,--help}'[Show help screen]' \
+    '--help=all[Show exhaustive master help]' \
     '(-V --version)'{-V,--version}'[Display version information]' \
     '(-v --verbose)'{-v,--verbose}'[Enable verbose TDLib log output]' \
     '(-d --debug)'{-d,--debug}'[Enable debug tracing]' \

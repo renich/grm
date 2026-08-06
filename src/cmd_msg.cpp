@@ -17,6 +17,64 @@
 
 namespace grm {
 
+CommandSpec get_msg_spec() {
+  return CommandSpec{
+      "msg",
+      "Inspect, send, edit, search, pin, and export messages",
+      {
+          SubcommandSpec{"ls", "[-t|--topic <id>] [-n|--limit <N>] <chat_id>", "List recent messages from chat or topic thread", {
+              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
+              OptionSpec{"-n", "--limit", "<N>", "Maximum messages to fetch (default: 20)", {}},
+              OptionSpec{"-S", "--since", "<time>", "Filter messages since duration or ISO date", {}},
+              OptionSpec{"-f", "--filter", "<pattern>", "Filter messages by regex pattern filter", {}},
+              OptionSpec{"-r", "--reverse", "", "Display messages in reverse chronological order", {}},
+              OptionSpec{"-h", "--help", "", "Show message list help message", {}}
+          }},
+          SubcommandSpec{"send", "[-a|--attach <file>] [-m|--media] [-C|--caption \"<text>\"] [-t|--topic <id>] <chat_id> [\"<message>\"]", "Send text message or file attachment(s)", {
+              OptionSpec{"-a", "--attach", "<file>", "Attach file or document path to message", {}},
+              OptionSpec{"-m", "--media", "", "Send attachment as inline visual media", {}},
+              OptionSpec{"-C", "--caption", "<text>", "Set caption for file attachment", {}},
+              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
+              OptionSpec{"-h", "--help", "", "Show send help message", {}}
+          }},
+          SubcommandSpec{"info", "<chat_id> <message_id>", "View message details and metadata", {
+              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
+              OptionSpec{"-h", "--help", "", "Show info help message", {}}
+          }},
+          SubcommandSpec{"edit", "[-t|--topic <id>] <chat_id> <message_id> \"<new_text>\"", "Edit previously sent text message content", {
+              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
+              OptionSpec{"-h", "--help", "", "Show edit help message", {}}
+          }},
+          SubcommandSpec{"search", "[-t|--topic <id>] [-q|--query \"<query>\"] [-n|--limit <N>] <chat_id>", "Search chat history using query pattern filter", {
+              OptionSpec{"-q", "--query", "<query>", "Search query substring or regex pattern", {}},
+              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
+              OptionSpec{"-n", "--limit", "<N>", "Maximum search results to return", {}},
+              OptionSpec{"-h", "--help", "", "Show search help message", {}}
+          }},
+          SubcommandSpec{"export", "[-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <chat_id>", "Export chat history to CSV or JSON file", {
+              OptionSpec{"-f", "--format", "<fmt>", "Export format: csv or json (default: json)", {"csv", "json"}},
+              OptionSpec{"-o", "--output", "<file>", "Destination export filepath", {}},
+              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
+              OptionSpec{"-n", "--limit", "<N>", "Maximum messages to export", {}},
+              OptionSpec{"-h", "--help", "", "Show export help message", {}}
+          }},
+          SubcommandSpec{"pin", "[-t|--topic <id>] <chat_id> <message_id>", "Pin message in chat or topic", {
+              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
+              OptionSpec{"-h", "--help", "", "Show pin help message", {}}
+          }},
+          SubcommandSpec{"unpin", "[-a|--all] <chat_id> [<message_ids...>]", "Unpin message(s) or unpin all pinned messages in chat", {
+              OptionSpec{"-a", "--all", "", "Unpin all pinned messages in chat", {}},
+              OptionSpec{"-h", "--help", "", "Show unpin help message", {}}
+          }},
+          SubcommandSpec{"delete", "[-e|--for-everyone] <chat_id> <message_ids...>", "Delete message(s) from chat", {
+              OptionSpec{"-e", "--for-everyone", "", "Delete message for all members", {}},
+              OptionSpec{"-h", "--help", "", "Show delete help message", {}}
+          }}
+      },
+      {}
+  };
+}
+
 static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
   int64_t val = 0;
   auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), val);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "grm/command_registry.hpp"
 #include "grm/config.hpp"
 #include "grm/logger.hpp"
 #include "grm/td_client.hpp"
@@ -8,10 +9,19 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 namespace grm {
+
+// Feature module self-registration spec accessors
+CommandSpec get_login_spec();
+CommandSpec get_chat_spec();
+CommandSpec get_msg_spec();
+CommandSpec get_topic_spec();
+CommandSpec get_file_spec();
+CommandSpec get_completion_spec();
 
 struct SenderInfo {
   std::string chosen_name;

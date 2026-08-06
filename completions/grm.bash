@@ -6,7 +6,7 @@ _grm_completions() {
   local cur prev words cword
   _init_completion || return
 
-  local global_opts="-h --help -V --version -v --verbose -d --debug -q --quiet -c --config -T --test-dc -F --format --color --no-color"
+  local global_opts="-h --help --help=all -V --version -v --verbose -d --debug -q --quiet -c --config -T --test-dc -F --format --color --no-color"
   local commands="login chat msg topic file completion"
 
   if [[ ${cword} -eq 1 ]]; then
@@ -109,7 +109,11 @@ _grm_completions() {
       fi
       ;;
     completion)
-      COMPREPLY=($(compgen -W "bash zsh fish -h --help" -- "${cur}"))
+      if [[ "${cur}" == -* ]]; then
+        COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
+      else
+        COMPREPLY=($(compgen -W "bash zsh fish" -- "${cur}"))
+      fi
       ;;
     *)
       ;;

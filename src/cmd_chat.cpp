@@ -9,6 +9,45 @@
 
 namespace grm {
 
+CommandSpec get_chat_spec() {
+  return CommandSpec{
+      "chat",
+      "Manage Telegram chats, groups, and channels",
+      {
+          SubcommandSpec{"ls", "[-n|--limit <N>] [-S|--since <time>] [-f|--filter <pattern>]", "List active conversations, groups, channels, and private chats", {
+              OptionSpec{"-n", "--limit", "<N>", "Maximum number of chats to display (default: 100)", {}},
+              OptionSpec{"-S", "--since", "<time>", "Filter chats active since duration (e.g. '1 day ago')", {}},
+              OptionSpec{"-f", "--filter", "<pattern>", "Filter chats by title or ID pattern filter", {}},
+              OptionSpec{"-h", "--help", "", "Show list help message", {}}
+          }},
+          SubcommandSpec{"create", "<group|channel> [--private|--public] \"<title>\"", "Create a new basic group, supergroup, or broadcast channel", {
+              OptionSpec{"", "--private", "", "Create as a private chat/channel", {}},
+              OptionSpec{"", "--public", "", "Create as a public chat/channel", {}},
+              OptionSpec{"-h", "--help", "", "Show create help message", {}}
+          }},
+          SubcommandSpec{"info", "<chat_id>", "Display detailed chat or supergroup metadata", {
+              OptionSpec{"-h", "--help", "", "Show info help message", {}}
+          }},
+          SubcommandSpec{"set-title", "<chat_id> \"<title>\"", "Update group or channel title", {
+              OptionSpec{"-h", "--help", "", "Show set-title help message", {}}
+          }},
+          SubcommandSpec{"set-desc", "<chat_id> \"<description>\"", "Update group or channel description", {
+              OptionSpec{"-h", "--help", "", "Show set-desc help message", {}}
+          }},
+          SubcommandSpec{"pin", "<chat_id>", "Pin chat to top of chat list", {
+              OptionSpec{"-h", "--help", "", "Show pin help message", {}}
+          }},
+          SubcommandSpec{"unpin", "<chat_id>", "Unpin chat from chat list", {
+              OptionSpec{"-h", "--help", "", "Show unpin help message", {}}
+          }},
+          SubcommandSpec{"delete", "<chat_id>", "Delete chat history or leave group/channel", {
+              OptionSpec{"-h", "--help", "", "Show delete help message", {}}
+          }}
+      },
+      {}
+  };
+}
+
 static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
   int64_t val = 0;
   auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), val);

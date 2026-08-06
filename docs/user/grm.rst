@@ -388,15 +388,16 @@ Self-generating, zero-maintenance shell completion generator powered by native C
 * ``grm completion fish``: Output Fish shell completion definitions to stdout.
 * **Dynamic Completion Wrapper**: Per FreeDesktop/FHS standards, ``~/.local/share/bash-completion/completions/grm`` is installed as a lightweight 10-line wrapper script (``_grm_loader``) that dynamically executes ``grm completion bash`` on demand. You **never** need to re-install or update the completion file when subcommands or flags change in new builds of **grm**.
 
-8. Single-Source-of-Truth Command Registry (``CommandRegistry``)
------------------------------------------------------------------
+8. Modular Single-Source Command Registry (``CommandRegistry``)
+-------------------------------------------------------------------------
 
-Unified C++23 command specification architecture (``include/grm/command_registry.hpp``):
+Domain-driven, modular command specification architecture (``include/grm/command_registry.hpp``):
 
-* **Single Data Model**: Standardized ``CommandSpec``, ``SubcommandSpec``, and ``OptionSpec`` structures define command names, subcommands, synopsis, option flags, value hints, descriptions, and option value choices (e.g. ``photo|video|doc|audio|all`` for ``--type``).
+* **Modular Feature Self-Registration**: Every feature module (``src/cmd_auth.cpp``, ``src/cmd_chat.cpp``, ``src/cmd_msg.cpp``, ``src/cmd_topic.cpp``, ``src/cmd_file.cpp``, ``src/cmd_completion.cpp``) owns and exports its own ``CommandSpec`` data structure containing its subcommands, synopsis, option flags, descriptions, and allowed parameter choices (e.g. ``photo|video|doc|audio|all`` for ``--type``).
+* **Automatic Discovery & Aggregation**: ``CommandRegistry`` aggregates feature specs directly from module accessors without maintaining separate text files or duplicate registry files.
 * **Dual Automatic Rendering**:
-  * **Help Engine**: ``CommandRegistry::render_help()`` dynamically formats all CLI ``--help`` screens with consistent padding, option alignment, and usage banners, eliminating hardcoded string literals and dead code.
-  * **Completion Engine**: ``CommandRegistry::render_completion()`` automatically generates context-aware shell autocompletions for Bash, Zsh, and Fish.
+  * **Help Engine**: ``CommandRegistry::render_help()`` and ``render_all_help()`` dynamically format all CLI ``--help`` screens and exhaustive master reference manuals with consistent padding and option alignment.
+  * **Completion Engine**: ``CommandRegistry::render_completion()`` automatically generates context-aware shell autocompletions for Bash, Zsh, and Fish directly from the feature definitions.
 
 9. Attachment Types: Inline Media vs. Raw Document
 --------------------------------------------------

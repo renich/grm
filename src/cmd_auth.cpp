@@ -10,6 +10,21 @@
 
 namespace grm {
 
+CommandSpec get_login_spec() {
+  return CommandSpec{
+      "login",
+      "Authenticate Telegram account with TDLib",
+      {
+          SubcommandSpec{"login", "[-p|--phone <number>] [-k|--code <code>]", "Authenticate Telegram session interactively or non-interactively", {
+              OptionSpec{"-p", "--phone", "<number>", "International phone number (e.g. +523330000000)", {}},
+              OptionSpec{"-k", "--code", "<code>", "Authentication code received via Telegram or SMS", {}},
+              OptionSpec{"-h", "--help", "", "Show login help message", {}}
+          }}
+      },
+      {}
+  };
+}
+
 namespace {
 
 std::string read_secure_password(std::string_view prompt) {
