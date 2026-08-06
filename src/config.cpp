@@ -42,12 +42,21 @@ Config::load(const std::filesystem::path &custom_path) {
 
   const std::filesystem::path home_path(home);
 
-  const std::filesystem::path tgcli_cfg = home_path / ".tgcli" / "config.json";
-  const std::filesystem::path grm_dir = home_path / ".config" / "grm";
-  const std::filesystem::path grm_cfg = grm_dir / "config.json";
+  const char *xdg_config = std::getenv("XDG_CONFIG_HOME");
+  const char *xdg_data = std::getenv("XDG_DATA_HOME");
 
-  cfg.config_dir = grm_dir;
-  cfg.db_dir = grm_dir / "tdlib_db";
+  const std::filesystem::path config_dir =
+      xdg_config ? std::filesystem::path(xdg_config) / "grm"
+                 : home_path / ".config" / "grm";
+  const std::filesystem::path data_dir =
+      xdg_data ? std::filesystem::path(xdg_data) / "grm"
+               : home_path / ".local" / "share" / "grm";
+
+  const std::filesystem::path tgcli_cfg = home_path / ".tgcli" / "config.json";
+  const std::filesystem::path grm_cfg = config_dir / "config.json";
+
+  cfg.config_dir = config_dir;
+  cfg.db_dir = data_dir / "tdlib_db";
 
   std::filesystem::create_directories(cfg.config_dir);
   std::filesystem::create_directories(cfg.db_dir);

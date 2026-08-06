@@ -339,7 +339,7 @@ Files & Configuration (FreeDesktop XDG Standards)
 ~/.config/grm/config.json
    User configuration file containing API credentials (``api_id``, ``api_hash``) and output format defaults.
 
-~/.config/grm/tdlib_db/
+~/.local/share/grm/tdlib_db/
    Persistent TDLib database directory containing encrypted session state, authorization keys, and cache.
 
 ~/.local/bin/grm

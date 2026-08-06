@@ -80,10 +80,7 @@ std::expected<int, std::string> App::cmd_login() {
 
         const std::string payload = std::format(
             R"({{
-              "phone_number": "{}",
-              "settings": {{
-                "@type": "phoneNumberAuthenticationSettings"
-              }}
+              "phone_number": "{}"
             }})",
             escape_json_string(phone));
 
