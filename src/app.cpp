@@ -152,7 +152,6 @@ Options:
   -h, --help                                                        Show this help screen
 )" << '\n';
 }
-}
 
 std::string App::get_auth_state() const {
   std::scoped_lock lock(auth_mutex_);

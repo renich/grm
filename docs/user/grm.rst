@@ -386,15 +386,26 @@ Self-generating, zero-maintenance shell completion generator powered by native C
 * ``grm completion bash``: Output context-aware Bash completion script to stdout (supports ``source <(grm completion bash)`` and automatic installation via ``make install-user``).
 * ``grm completion zsh``: Output native Zsh completion function script with rich subcommand descriptions.
 * ``grm completion fish``: Output Fish shell completion definitions to stdout.
+* **Dynamic Completion Wrapper**: Per FreeDesktop/FHS standards, ``~/.local/share/bash-completion/completions/grm`` is installed as a lightweight 10-line wrapper script (``_grm_loader``) that dynamically executes ``grm completion bash`` on demand. You **never** need to re-install or update the completion file when subcommands or flags change in new builds of **grm**.
 * **Introspective Command Tree**: Single-source-of-truth C++ registry (``src/cmd_completion.cpp``) defining command names, subcommands, flags, option types, and completion hints so ``--help`` screens and shell completions remain 100% synchronized without manual maintenance.
 
-7. Attachment Types: Inline Media vs. Raw Document
+8. Attachment Types: Inline Media vs. Raw Document
 --------------------------------------------------
 
 Explicit distinction between visual inline media transmission and uncompressed binary document transfers:
 
 * **Inline Media (``--photo``, ``--video``, ``--animation``)**: Transmitted as compressed visual media (via ``inputMessagePhoto`` or ``inputMessageVideo``) featuring automatic inline thumbnail previews and streaming optimization.
 * **Uncompressed Document (``--file`` / ``--doc``)**: Transmitted as raw binary document attachments (via ``inputMessageDocument``) preserving byte-for-byte fidelity without compression or metadata strip.
+
+Project Roadmap & Status
+========================
+
+The following features and specifications have been implemented and verified:
+
+- [x] **Introspective Shell Completion**: Native ``grm completion <bash|zsh|fish>`` engine with dynamic loader wrapper script.
+- [x] **GNU Standard Makefile**: Default ``PREFIX ?= /usr/local`` (per GNU Coding Standards Section 7.2.5) with ``PREFIX_USER ?= $(HOME)/.local`` for non-root ``make install-user``.
+- [x] **File Engine Consolidation**: Unified ``grm file get [-a|-A|--all] <chat_id> [<message_ids...>]`` syntax.
+- [x] **Message Pin & Unpin**: Consolidated ``grm msg unpin [-a|--all] <chat_id> [<message_ids...>]``.
 
 Environment Variables
 =====================
@@ -443,11 +454,11 @@ Contributors running static analysis or documentation validation also require:
 Local User Installation (Non-Root / No Sudo Required)
 ------------------------------------------------------
 
-Per **FHS 3.0** and the **XDG Base Directory Specification**, install **grm** into your user profile without root privileges:
+Per **FHS 3.0** and the **XDG Base Directory Specification**, install **grm** into your user profile without root privileges (defaults to ``PREFIX_USER ?= ~/.local``):
 
 .. code-block:: bash
 
-   # Installs binary to ~/.local/bin/grm and man page to ~/.local/share/man/man1/grm.1
+   # Installs binary to ~/.local/bin/grm, man page to ~/.local/share/man/man1/grm.1, and completion wrapper
    make install-user
 
    # Ensure ~/.local/bin is present in your PATH:
@@ -456,7 +467,7 @@ Per **FHS 3.0** and the **XDG Base Directory Specification**, install **grm** in
 System Installation (Requires Sudo)
 -----------------------------------
 
-To install **grm** system-wide for all users:
+Per **GNU Coding Standards Section 7.2.5**, system installation defaults to ``PREFIX ?= /usr/local``:
 
 .. code-block:: bash
 
@@ -478,7 +489,7 @@ Files & Configuration (FreeDesktop XDG Standards)
    User manual page installation path.
 
 ~/.local/share/bash-completion/completions/grm
-   User Bash tab autocompletion script.
+   User Bash tab autocompletion dynamic wrapper script.
 
 See Also
 ========
