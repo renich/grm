@@ -9,6 +9,10 @@ grm — Group & Telegram Manager CLI
 
 **grm** is a high-performance, native **C++23** command-line tool for managing Telegram accounts, groups, message history, forum topics, file uploads, media streaming, and data extractions. Powered directly by Telegram's official C++ engine **TDLib** (``libtdjson``).
 
+:Primary Repository: `GitLab (gitlab.com/renich/grm) <https://gitlab.com/renich/grm>`_
+:GitHub Mirror: `GitHub (github.com/renich/grm) <https://github.com/renich/grm>`_
+:License: GPL-3.0-or-later
+
 Dual-Optimized Interface Architecture
 -------------------------------------
 
@@ -96,13 +100,17 @@ Using the ``GNUmakefile``:
    make install-user
    make install-user-man
 
-Documentation & Man Page
-------------------------
+Documentation & Technical Specifications
+-----------------------------------------
 
-- **User Guide**: Comprehensive reStructuredText documentation in ``docs/user/grm.rst``.
-- **Man Page**: Source maintained in ``docs/man/grm.1.rst``, compiled with ``rst2man`` to ``build/grm.1``.
+- **GitLab Primary Repository**: `https://gitlab.com/renich/grm <https://gitlab.com/renich/grm>`_
+- **GitHub Mirror**: `https://github.com/renich/grm <https://github.com/renich/grm>`_
+- **User Guide**: `docs/user/grm.rst <https://gitlab.com/renich/grm/-/blob/master/docs/user/grm.rst>`_
+- **Man Page**: `docs/man/grm.1.rst <https://gitlab.com/renich/grm/-/blob/master/docs/man/grm.1.rst>`_ (view locally with ``man grm``)
+- **Functional Specification**: `docs/functional/spec.rst <https://gitlab.com/renich/grm/-/blob/master/docs/functional/spec.rst>`_
+- **Project Roadmap**: `docs/project/roadmap.rst <https://gitlab.com/renich/grm/-/blob/master/docs/project/roadmap.rst>`_
 - **System Installation**: Run ``sudo make install`` to install ``grm`` to ``/usr/local/bin/grm`` and man page to ``/usr/local/share/man/man1/grm.1``.
-- **User Installation**: Run ``make install-user`` and ``make install-user-man`` to install binary to ``~/bin/grm`` and man page to ``~/.local/share/man/man1/grm.1``. View with ``man grm``.
+- **User Installation**: Run ``make install-user`` and ``make install-user-man`` to install binary to ``~/bin/grm`` and man page to ``~/.local/share/man/man1/grm.1``.
 
 Command Reference
 -----------------
