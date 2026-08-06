@@ -80,7 +80,15 @@ std::expected<int, std::string> App::cmd_login() {
 
         const std::string payload = std::format(
             R"({{
-              "phone_number": "{}"
+              "phone_number": "{}",
+              "settings": {{
+                "@type": "phoneNumberAuthenticationSettings",
+                "allow_flash_call": false,
+                "allow_missed_call": false,
+                "is_current_phone_number": false,
+                "allow_sms_retriever_api": false,
+                "firebase_notification_delivery_token": ""
+              }}
             }})",
             escape_json_string(phone));
 
