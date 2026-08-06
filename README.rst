@@ -36,7 +36,7 @@ FreeDesktop & XDG Configuration Standards
 File / Directory                                    Purpose
 =================================================== ====================================================================
 ``~/.config/grm/config.json``                       Primary configuration file containing API credentials (``api_id``, ``api_hash``)
-``~/.local/share/grm/tdlib_db/``                    Persistent TDLib session database, encryption keys, and cache
+``~/.local/lib/grm/tdlib_db/``                      Persistent TDLib session database, encryption keys, and cache
 ``~/.local/bin/grm``                                User binary installation path (non-root)
 ``~/.local/share/man/man1/grm.1``                   User manual page installation path
 ``~/.local/share/bash-completion/completions/grm``  User Bash tab autocompletion script
