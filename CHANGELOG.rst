@@ -11,6 +11,10 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 
 .. rubric:: Added
 
+* Server-side search integration across all listing commands: ``grm chat ls --filter`` (via ``searchChats``), ``grm topic ls --filter`` (via ``getForumTopics(query)``), and ``grm msg ls --filter`` / ``grm msg search`` (via ``searchChatMessages``).
+* Universal ``ListOptions`` parser with default limit 20, relative/ISO duration cutoff (``-S | --since``), multi-field regex filter (``-f | --filter``), and reverse ordering (``-r | --reverse``).
+* Relative and ISO timestamps in verbose (``-v`` / ``--verbose``) human mode, AI Markdown tables, and AI JSON envelope formats for chat and topic listings.
+* Comprehensive Planned Features & Architectural Roadmap specifications in ``docs/user/grm.rst`` and ``docs/man/grm.1.rst`` covering Chat Folder CRUD (``grm folder``), Universal Cross-Domain Search (``grm search``), Media/File Filtering by Type (``grm file``), Contact CRUD (``grm contact``), Silent & Scheduled Delivery (``grm msg send``), Audio Processing Engine with **libsox** (``grm audio``), and Inline Media vs. Raw Document Attachment modes.
 * Sender name format configuration (``sender_name_format``: ``username`` | ``fullname``) defaulting to ``username`` (with fallback to display name).
 * CLI flags ``-N | --name-format <username|fullname>``, ``-u | --username``, and ``--full-name`` for name format selection.
 * Message date range filtering via ``-S | --since <duration|date>`` flag in ``grm msg ls`` and ``grm msg search`` (supporting relative durations like ``1d``, ``2h``, ISO dates, and Unix timestamps).
@@ -22,6 +26,12 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 * Upgraded TDLib compatibility layer to support TDLib 1.8.66 / MTProto Layer 228 API specifications.
 * Gated ``[MsgID <id>]`` display prefix in message list output to verbose (``-v`` / ``--verbose``) mode.
 * Flattened ``setTdlibParameters`` request payload structure for modern TDLib release standards.
+
+.. rubric:: Fixed
+
+* Fixed deep history pagination timeouts in large channels by leveraging TDLib's server-side search index (``searchChatMessages``) with fallback to ``getChatHistory`` capped at 15 batch iterations.
+* Fixed loop termination in message listing pagination to halt immediately when target limit or since cutoff date is reached.
+* Fixed instant MTProto stream synchronization by issuing non-blocking ``openChat`` TDLib requests inside ``ensure_chat_loaded``.
 
 [0.5.0] — 2026-08-05
 ====================
