@@ -41,6 +41,8 @@ public:
   static void print_topic_help();
   static void print_file_help();
   static bool is_help_requested(const std::vector<std::string> &args);
+  [[nodiscard]] static std::expected<int64_t, std::string>
+  parse_since_timestamp(std::string_view raw_str);
 
 private:
   [[nodiscard]] std::expected<int, std::string> cmd_login();
@@ -115,8 +117,6 @@ private:
 
   [[nodiscard]] SenderInfo resolve_sender_info(const JsonValue &message_obj);
   [[nodiscard]] std::string resolve_sender_name(const JsonValue &message_obj);
-  [[nodiscard]] static std::expected<int64_t, std::string>
-  parse_since_timestamp(std::string_view raw_str);
 
   Config config_;
   CliOptions options_;

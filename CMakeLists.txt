@@ -60,6 +60,7 @@ add_executable(grm
     src/cmd_msg.cpp
     src/cmd_topic.cpp
     src/cmd_file.cpp
+    src/list_options.cpp
     src/exporter.cpp
 
 
@@ -160,6 +161,7 @@ add_executable(test_cli_routing
     src/cmd_msg.cpp
     src/cmd_topic.cpp
     src/cmd_file.cpp
+    src/list_options.cpp
     src/exporter.cpp
     src/uploader.cpp
     src/downloader.cpp

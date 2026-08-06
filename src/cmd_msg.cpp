@@ -2,6 +2,7 @@
 #include "grm/exporter.hpp"
 #include "grm/formatter.hpp"
 #include "grm/json_utils.hpp"
+#include "grm/list_options.hpp"
 #include "grm/logger.hpp"
 #include "grm/uploader.hpp"
 
@@ -292,83 +293,25 @@ App::parse_since_timestamp(std::string_view raw_str) {
 
 std::expected<int, std::string>
 App::cmd_msg_ls(const std::vector<std::string> &args) {
-  int limit = 20;
-  int64_t chat_id = 0;
-  bool chat_id_set = false;
-  int64_t topic_id = 0;
-  int64_t since_timestamp = 0;
-  std::vector<std::string> filter_patterns;
-  bool reverse_order = false;
-
-  for (size_t i = 0; i < args.size(); ++i) {
-    std::string_view arg(args[i]);
-    if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
-      if (auto lim = parse_int32(args[++i])) {
-        limit = *lim;
-      }
-    } else if (arg.starts_with("--limit=")) {
-      if (auto lim = parse_int32(arg.substr(8))) {
-        limit = *lim;
-      }
-    } else if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
-      if (auto tid = parse_int64(args[++i])) {
-        topic_id = *tid;
-      }
-    } else if (arg.starts_with("--topic=")) {
-      if (auto tid = parse_int64(arg.substr(8))) {
-        topic_id = *tid;
-      }
-    } else if ((arg == "-S" || arg == "--since") && i + 1 < args.size()) {
-      if (auto ts = parse_since_timestamp(args[++i])) {
-        since_timestamp = *ts;
-      } else {
-        return std::unexpected(ts.error());
-      }
-    } else if (arg.starts_with("--since=")) {
-      if (auto ts = parse_since_timestamp(arg.substr(8))) {
-        since_timestamp = *ts;
-      } else {
-        return std::unexpected(ts.error());
-      }
-    } else if ((arg == "-f" || arg == "--filter" || arg == "--sender") &&
-               i + 1 < args.size()) {
-      filter_patterns.push_back(args[++i]);
-    } else if (arg.starts_with("--filter=")) {
-      filter_patterns.push_back(std::string(arg.substr(9)));
-    } else if (arg.starts_with("--sender=")) {
-      filter_patterns.push_back(std::string(arg.substr(9)));
-    } else if (arg == "-r" || arg == "--reverse") {
-      reverse_order = true;
-    } else if (!chat_id_set && parse_int64(arg).has_value()) {
-      chat_id = *parse_int64(arg);
-      chat_id_set = true;
-    }
+  std::vector<std::string> positionals;
+  auto opts_res = ListOptions::parse(args, positionals);
+  if (!opts_res) {
+    return std::unexpected(opts_res.error());
   }
+  const auto &opts = *opts_res;
 
-  if (!chat_id_set) {
+  if (positionals.empty()) {
     return std::unexpected(
         "Usage: grm msg ls [-t|--topic <id>] [-n|--limit <N>] [--since "
         "<duration|date>] [-f|--filter <pattern>]... [-r|--reverse] <chat_id>");
   }
 
-  std::regex filter_regex;
-  bool has_filter = false;
-  if (!filter_patterns.empty()) {
-    std::string combined;
-    for (size_t i = 0; i < filter_patterns.size(); ++i) {
-      if (i > 0) {
-        combined += "|";
-      }
-      combined += std::format("({})", filter_patterns[i]);
-    }
-    try {
-      filter_regex = std::regex(combined, std::regex::icase);
-      has_filter = true;
-    } catch (const std::regex_error &e) {
-      return std::unexpected("Invalid filter pattern: " +
-                             std::string(e.what()));
-    }
+  auto cid_res = parse_int64(positionals[0]);
+  if (!cid_res) {
+    return std::unexpected(cid_res.error());
   }
+  const int64_t chat_id = *cid_res;
+  const int64_t topic_id = opts.topic_id;
 
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
@@ -379,7 +322,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   std::vector<fmt::MessageItem> items;
   int64_t from_msg_id = 0;
   int empty_retries = 0;
-  const size_t target_limit = static_cast<size_t>(std::max(1, limit));
+  const size_t target_limit = static_cast<size_t>(std::max(1, opts.limit));
 
   bool reached_since_cutoff = false;
   while (!reached_since_cutoff) {
@@ -439,23 +382,16 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
       }
 
       int64_t msg_date = m.get_int("date").value_or(0);
-      if (since_timestamp > 0 && msg_date < since_timestamp) {
+      if (!opts.matches_since(msg_date)) {
         reached_since_cutoff = true;
         break;
       }
 
       SenderInfo info = resolve_sender_info(m);
-      if (has_filter) {
-        bool matches_filter =
-            std::regex_search(info.chosen_name, filter_regex) ||
-            (!info.username.empty() &&
-             std::regex_search(info.username, filter_regex)) ||
-            (!info.username.empty() &&
-             std::regex_search("@" + info.username, filter_regex)) ||
-            (!info.full_name.empty() &&
-             std::regex_search(info.full_name, filter_regex)) ||
-            (info.id != 0 &&
-             std::regex_search(std::to_string(info.id), filter_regex));
+      if (opts.has_filter) {
+        bool matches_filter = opts.matches_filter_multi(
+            {info.chosen_name, info.username, "@" + info.username, info.full_name,
+             info.id != 0 ? std::to_string(info.id) : ""});
         if (!matches_filter) {
           continue;
         }
@@ -491,7 +427,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
                                          .text = text,
                                          .has_attachment = has_attach,
                                          .attachment_type = attach_type});
-        if (since_timestamp == 0 && items.size() >= target_limit) {
+        if (opts.since_timestamp == 0 && items.size() >= target_limit) {
           break;
         }
       }
@@ -511,11 +447,11 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
       });
   items.erase(last, items.end());
 
-  if (since_timestamp > 0 && items.size() > target_limit) {
+  if (opts.since_timestamp > 0 && items.size() > target_limit) {
     items.resize(target_limit);
   }
 
-  if (reverse_order) {
+  if (opts.reverse_order) {
     std::reverse(items.begin(), items.end());
   }
 

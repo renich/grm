@@ -1,6 +1,7 @@
 #include "grm/app.hpp"
 #include "grm/formatter.hpp"
 #include "grm/json_utils.hpp"
+#include "grm/list_options.hpp"
 #include "grm/logger.hpp"
 #include <charconv>
 #include <format>
@@ -18,82 +19,26 @@ static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
   return val;
 }
 
-static std::expected<int32_t, std::string> parse_int32(std::string_view str) {
-  int32_t val = 0;
-  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), val);
-  if (ec != std::errc{} || ptr != str.data() + str.size()) {
-    return std::unexpected("Invalid integer: " + std::string(str));
-  }
-  return val;
-}
-
 std::expected<int, std::string>
 App::cmd_topic_ls(const std::vector<std::string> &args) {
-  int64_t chat_id = 0;
-  bool chat_id_set = false;
-  int limit = 100;
-  int64_t since_timestamp = 0;
-  std::vector<std::string> filter_patterns;
-
-  for (size_t i = 0; i < args.size(); ++i) {
-    std::string_view arg(args[i]);
-    if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
-      if (auto lim = parse_int32(args[++i])) {
-        limit = *lim;
-      }
-    } else if (arg.starts_with("--limit=")) {
-      if (auto lim = parse_int32(arg.substr(8))) {
-        limit = *lim;
-      }
-    } else if ((arg == "-S" || arg == "--since") && i + 1 < args.size()) {
-      if (auto ts = parse_since_timestamp(args[++i])) {
-        since_timestamp = *ts;
-      } else {
-        return std::unexpected(ts.error());
-      }
-    } else if (arg.starts_with("--since=")) {
-      if (auto ts = parse_since_timestamp(arg.substr(8))) {
-        since_timestamp = *ts;
-      } else {
-        return std::unexpected(ts.error());
-      }
-    } else if ((arg == "-f" || arg == "--filter" || arg == "--sender") &&
-               i + 1 < args.size()) {
-      filter_patterns.push_back(args[++i]);
-    } else if (arg.starts_with("--filter=")) {
-      filter_patterns.push_back(std::string(arg.substr(9)));
-    } else if (arg.starts_with("--sender=")) {
-      filter_patterns.push_back(std::string(arg.substr(9)));
-    } else if (!chat_id_set && parse_int64(arg).has_value()) {
-      chat_id = *parse_int64(arg);
-      chat_id_set = true;
-    }
+  std::vector<std::string> positionals;
+  auto opts_res = ListOptions::parse(args, positionals);
+  if (!opts_res) {
+    return std::unexpected(opts_res.error());
   }
+  const auto &opts = *opts_res;
 
-  if (!chat_id_set) {
+  if (positionals.empty()) {
     return std::unexpected(
         "Usage: grm topic ls <supergroup_id> [-n|--limit <N>] [--since "
         "<duration|date>] [-f|--filter <pattern>]...");
   }
 
-  std::regex filter_regex;
-  bool has_filter = false;
-  if (!filter_patterns.empty()) {
-    std::string combined;
-    for (size_t i = 0; i < filter_patterns.size(); ++i) {
-      if (i > 0) {
-        combined += "|";
-      }
-      combined += std::format("({})", filter_patterns[i]);
-    }
-    try {
-      filter_regex = std::regex(combined, std::regex::icase);
-      has_filter = true;
-    } catch (const std::regex_error &e) {
-      return std::unexpected("Invalid filter pattern: " +
-                             std::string(e.what()));
-    }
+  auto cid_res = parse_int64(positionals[0]);
+  if (!cid_res) {
+    return std::unexpected(cid_res.error());
   }
+  const int64_t chat_id = *cid_res;
 
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
@@ -153,17 +98,12 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
       name = t.get_string("name").value_or("General");
     }
 
-    if (since_timestamp > 0 && last_message_date > 0 &&
-        last_message_date < since_timestamp) {
+    if (last_message_date > 0 && !opts.matches_since(last_message_date)) {
       continue;
     }
 
-    if (has_filter) {
-      bool matches = std::regex_search(name, filter_regex) ||
-                     std::regex_search(std::to_string(thread_id), filter_regex);
-      if (!matches) {
-        continue;
-      }
+    if (!opts.matches_filter_multi({name, std::to_string(thread_id)})) {
+      continue;
     }
 
     int64_t custom_emoji_id = 0;
@@ -185,7 +125,7 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
                                    .message_count = total_messages,
                                    .custom_emoji_id = custom_emoji_id,
                                    .icon_color = icon_color});
-    if (items.size() >= static_cast<size_t>(limit)) {
+    if (items.size() >= static_cast<size_t>(opts.limit)) {
       break;
     }
   }
