@@ -21,6 +21,15 @@ int main() {
   assert(res2.has_value());
   assert(*res2 == 0);
 
+  // Test 2b: Global version flag returns 0
+  auto res2b = app.run({"--version"});
+  assert(res2b.has_value());
+  assert(*res2b == 0);
+
+  auto res2c = app.run({"-V"});
+  assert(res2c.has_value());
+  assert(*res2c == 0);
+
   // Test 3: Chat command without subcommand returns 0 (prints chat help)
   auto res3 = app.run({"chat"});
   assert(res3.has_value());

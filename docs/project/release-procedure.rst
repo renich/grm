@@ -36,7 +36,15 @@ Before initiating a release, complete the following verification steps:
 
       make doc-check
 
-3. **Verify Clean Working Tree**:
+3. **Verify Version CLI Output**:
+   Verify that ``grm --version`` and ``grm -V`` report the exact target version matching ``CHANGELOG.rst``:
+
+   .. code-block:: bash
+
+      ./build/grm --version
+      ./build/grm -V
+
+4. **Verify Clean Working Tree**:
    Ensure no untracked files or unstaged changes remain in the repository:
 
    .. code-block:: bash
