@@ -274,6 +274,55 @@ EXIT STATUS
 2
    Invalid CLI arguments or usage syntax error.
 
+PLANNED FEATURES & ROADMAP
+==========================
+
+The following feature modules represent the planned functional roadmap for **grm**:
+
+1. Chat Folder Management (grm folder)
+--------------------------------------
+* ``grm folder ls``: List defined chat folders, included chat types, and pinned chats (TDLib ``getChatFolder``).
+* ``grm folder create <title> [--include-groups] [--include-channels] [--include-chats <ids...>]``: Create custom chat folder (TDLib ``createChatFolder``).
+* ``grm folder edit <folder_id> [--title <title>] [--add-chat <id>] [--remove-chat <id>]``: Edit folder configuration (TDLib ``editChatFolder``).
+* ``grm folder delete <folder_id>``: Remove chat folder (TDLib ``deleteChatFolder``).
+
+2. Universal Cross-Domain Search (grm search)
+---------------------------------------------
+* ``grm search chats <query>``: Global search across chats, channels, and supergroups (TDLib ``searchChats``, ``searchPublicChats``).
+* ``grm search msgs <query> [-c <chat_id>] [-t <type>]``: Search message contents, senders, and captions (TDLib ``searchMessages``, ``searchChatMessages``).
+* ``grm search users <query|phone|handle>``: Search user profiles and contacts (TDLib ``searchContacts``, ``searchUserByUsername``).
+
+3. Media & File Filtering/CRUD by Type (grm file)
+-------------------------------------------------
+* ``grm file ls <chat_id> [--type photo|video|doc|audio|voice|url|all] [-n limit]``: List media attachments filtered by type (TDLib ``SearchMessagesFilter``).
+* ``grm file download <chat_id> <file_id|msg_id> [-o <path>]``: Download specific document or media attachment.
+* ``grm file download-all <chat_id> [--type photo|video|doc|audio|all] [-o <dir>]``: Bulk download matching media attachments.
+
+4. Contact Management (grm contact)
+-----------------------------------
+* ``grm contact ls``: List saved contacts and online availability status (TDLib ``getContacts``).
+* ``grm contact info <user_id|phone|handle>``: Inspect user profile details and bio (TDLib ``getUser``, ``getUserFullInfo``).
+* ``grm contact add <phone> <first_name> [last_name] [--share-phone]``: Import or add new contact (TDLib ``addContact``, ``importContacts``).
+* ``grm contact delete <user_id>``: Remove user from contacts (TDLib ``removeContacts``).
+
+5. Silent & Scheduled Messages (grm msg)
+----------------------------------------
+* ``grm msg send <chat_id> "<message>" [--silent] [--schedule-at "<datetime|duration>"] [--send-when-online]``: Send silent notifications (TDLib ``disable_notification``), schedule delivery at date/time (TDLib ``messageSchedulingStateSendAtDate``), or deliver when online (TDLib ``messageSchedulingStateSendWhenOnline``).
+* ``grm msg scheduled ls <chat_id>``: View pending scheduled messages.
+* ``grm msg scheduled delete <chat_id> <message_id>``: Cancel pending scheduled message.
+
+6. Audio CRUD & Media Processing Engine (grm audio)
+---------------------------------------------------
+* ``grm audio send <chat_id> <file_path> [--title "<title>"] [--performer "<performer>"] [--silent]``: Send audio files with metadata (TDLib ``inputMessageAudio``).
+* ``grm audio voice <chat_id> <voice_ogg_path> [--convert] [--silent]``: Send OGG/Opus voice notes (TDLib ``inputMessageVoiceNote``).
+* **SoX / libsox Engine Integration**: Native integration with **libsox** to probe audio metadata, convert audio formats to OGG/Opus voice notes, and calculate exact amplitude waveforms.
+* ``grm audio info <file_path>``: Inspect audio duration, sample rate, channels, and codec via libsox.
+
+7. Attachment Transmission: Inline Media vs. Raw Document
+---------------------------------------------------------
+* **Inline Media (``--photo``, ``--video``, ``--animation``)**: Sent as compressed visual media (TDLib ``inputMessagePhoto``, ``inputMessageVideo``) featuring inline previews and streaming optimization.
+* **Uncompressed Document (``--file`` / ``--doc``)**: Sent as raw binary document attachments (TDLib ``inputMessageDocument``) preserving byte-for-byte fidelity without compression.
+
 ENVIRONMENT
 ===========
 

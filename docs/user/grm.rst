@@ -303,6 +303,76 @@ Examples
 
       grm file download-all -o ~/Downloads -t 2 --type photo -1003750297693
 
+Planned Features & Architectural Roadmap
+========================================
+
+The following features represent the planned functional expansion roadmap for **grm**:
+
+1. Chat Folder Management (Chat Filters & Folders CRUD)
+-------------------------------------------------------
+
+Provides full lifecycle management for Telegram chat folders and custom organization filters via TDLib's ``createChatFolder``, ``editChatFolder``, and ``deleteChatFolder`` APIs:
+
+* ``grm folder ls``: List all defined chat folders, included chat types (groups, channels, bots), excluded muted/read status, and pinned chat IDs.
+* ``grm folder create <title> [--include-groups] [--include-channels] [--include-chats <ids...>]``: Create a new custom chat folder with included/excluded filters.
+* ``grm folder edit <folder_id> [--title <title>] [--add-chat <id>] [--remove-chat <id>]``: Modify folder title or chat memberships.
+* ``grm folder delete <folder_id>``: Remove a chat folder.
+
+2. Universal Cross-Domain Search
+--------------------------------
+
+Unified server-side and local search across all Telegram entity domains:
+
+* ``grm search chats <query>``: Global search across public and private chats, supergroups, and broadcast channels via ``searchChats`` and ``searchPublicChats``.
+* ``grm search msgs <query> [-c <chat_id>] [-t <type>]``: Global or per-chat message search across text content, sender handles, and media captions via ``searchMessages`` and ``searchChatMessages``.
+* ``grm search users <query|phone|handle>``: Search users and public profiles by handle, phone number, or display name via ``searchContacts`` and ``searchUserByUsername``.
+
+3. Media & File Filtering/CRUD by Type
+--------------------------------------
+
+Granular media listing and extraction categorized by specific Telegram media filters (``SearchMessagesFilter``):
+
+* ``grm file ls <chat_id> [--type photo|video|doc|audio|voice|url|all] [-n limit]``: List media attachments in a chat or topic filtered by type (photos, videos, documents, music audio, voice notes, video notes, URLs).
+* ``grm file download <chat_id> <file_id|msg_id> [-o <path>]``: Download a specific document or media attachment by file ID or message ID.
+* ``grm file download-all <chat_id> [--type photo|video|doc|audio|all] [-o <dir>]``: Bulk download all media matching specified media types.
+
+4. Contact Management (Contacts CRUD)
+-------------------------------------
+
+Complete management for Telegram contact lists and user profiles:
+
+* ``grm contact ls``: List all saved Telegram contacts and their online availability status via ``getContacts``.
+* ``grm contact info <user_id|phone|handle>``: Inspect user profile details, bio, phone number, and restrictions via ``getUser`` and ``getUserFullInfo``.
+* ``grm contact add <phone> <first_name> [last_name] [--share-phone]``: Import or add a new user to contacts via ``addContact`` and ``importContacts``.
+* ``grm contact delete <user_id>``: Remove user from contacts list via ``removeContacts``.
+
+5. Silent & Scheduled Messages
+------------------------------
+
+Advanced message delivery controls utilizing TDLib's ``messageSendOptions``:
+
+* ``grm msg send <chat_id> "<message>" [--silent] [--schedule-at "<datetime|duration>"] [--send-when-online]``: Send silent notifications (``disable_notification: true``), schedule message delivery for a specific date/time (``messageSchedulingStateSendAtDate``), or deliver when recipient comes online (``messageSchedulingStateSendWhenOnline``).
+* ``grm msg scheduled ls <chat_id>``: List pending scheduled messages in a chat or topic thread.
+* ``grm msg scheduled delete <chat_id> <message_id>``: Cancel and delete a pending scheduled message.
+
+6. Audio CRUD & Media Processing Engine
+---------------------------------------
+
+First-class audio transmission and voice note processing:
+
+* ``grm audio send <chat_id> <file_path> [--title "<title>"] [--performer "<performer>"] [--silent]``: Send audio files (MP3, FLAC, WAV, OGG) with embedded metadata (album cover, performer, title, duration) via ``inputMessageAudio``.
+* ``grm audio voice <chat_id> <voice_ogg_path> [--convert] [--silent]``: Send voice notes (OGG/Opus format) via ``inputMessageVoiceNote``.
+* **SoX / libsox Integration**: Native integration with **libsox** (or ``sox`` CLI engine) to automatically probe audio metadata, convert arbitrary audio formats to OGG/Opus voice notes, and extract exact amplitude waveform bar arrays for TDLib voice note rendering.
+* ``grm audio info <file_path>``: Inspect audio duration, sample rate, channels, and codec details via libsox.
+
+7. Attachment Types: Inline Media vs. Raw Document
+--------------------------------------------------
+
+Explicit distinction between visual inline media transmission and uncompressed binary document transfers:
+
+* **Inline Media (``--photo``, ``--video``, ``--animation``)**: Transmitted as compressed visual media (via ``inputMessagePhoto`` or ``inputMessageVideo``) featuring automatic inline thumbnail previews and streaming optimization.
+* **Uncompressed Document (``--file`` / ``--doc``)**: Transmitted as raw binary document attachments (via ``inputMessageDocument``) preserving byte-for-byte fidelity without compression or metadata strip.
+
 Environment Variables
 =====================
 
