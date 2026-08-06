@@ -135,22 +135,23 @@ Options:
 
 void App::print_file_help() {
   std::cout
-      << R"(Usage: grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]
+      << R"(Usage: grm file get [-a|-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]
 
 Download media and file attachments from chats and topics.
 
-Commands / Flags:
+Subcommands:
   grm file get <chat_id> <message_ids...>                            Download specific attachment files by message ID
-  grm file get [-A|--all] [-o|--output <dir>] <chat_id>             Bulk download all attachment files from chat or topic
+  grm file get [-a|-A|--all] [-o|--output <dir>] <chat_id>          Bulk download all attachment files in chat or topic
 
 Options:
-  -A, --all                                                         Bulk download all attachment files in chat or topic
-  -o, --output <dir|file>                                           Output destination directory or file path
+  -a, -A, --all                                                     Bulk download all attachment files in chat or topic
+  -o, --output <dir|file>                                           Destination output directory or filepath
   -t, --topic <id>                                                  Target specific forum topic thread ID
-  -n, --limit <N>                                                   Maximum messages to scan (default: 100)
-  --type <photo|video|doc|audio|all>                                Filter attachment media type
+  -n, --limit <N>                                                   Maximum messages to fetch or search
+  --type photo|video|doc|audio|all                                  Filter media type for bulk download
   -h, --help                                                        Show this help screen
 )" << '\n';
+}
 }
 
 std::string App::get_auth_state() const {
@@ -436,8 +437,6 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
     if (sub == "get")
       return cmd_file_get(sub_opts);
-    if (sub == "download-all")
-      return cmd_file_download_all(sub_opts);
 
     print_file_help();
     return std::unexpected("Unknown file subcommand: " + sub);

@@ -86,12 +86,10 @@ _grm_completions() {
         if [[ "${cur}" == -* ]]; then
           COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
         else
-          COMPREPLY=($(compgen -W "get download-all" -- "${cur}"))
+          COMPREPLY=($(compgen -W "get" -- "${cur}"))
         fi
       elif [[ "${words[2]}" == "get" ]]; then
-        COMPREPLY=($(compgen -W "-A --all -o --output -t --topic -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "download-all" ]]; then
-        COMPREPLY=($(compgen -W "-o --output -t --topic -n --limit --type photo video doc audio all -h --help" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-a --all -A -o --output -t --topic -n --limit --type photo video doc audio all -h --help" -- "${cur}"))
       fi
       ;;
     completion)

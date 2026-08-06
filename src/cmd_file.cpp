@@ -101,52 +101,64 @@ App::cmd_file_get(const std::vector<std::string> &args) {
             "chat_id": {},
             "from_message_id": 0,
             "offset": 0,
-            "limit": {},
-            "only_local": false
+            "limit": {}
           }})",
           chat_id, std::min(100, limit));
     }
 
-    auto history_res = client_->send_request(method, req_payload, 15.0);
-    if (!history_res) {
-      return std::unexpected("Failed to scan chat history for downloads: " +
-                             history_res.error());
+    auto hist_res = client_->send_request(method, req_payload, 5.0);
+    if (!hist_res) {
+      return std::unexpected("Failed to fetch history for attachments: " +
+                             hist_res.error());
     }
 
-    auto msgs = history_res->get_array("messages");
     int downloaded_count = 0;
+    auto msgs = hist_res->get_array("messages");
+    std::filesystem::create_directories(out_dir);
 
-    for (const auto &m : msgs) {
-      auto content = m.get_object("content");
-      if (!content)
-        continue;
-
-      std::string type_str = content->get_type().value_or("");
-      if (!Downloader::matches_file_type(type_str, requested_type))
-        continue;
-
+    for (const auto &msg : msgs) {
       int32_t file_id = 0;
-      if (type_str == "messageDocument") {
-        if (auto doc = content->get_object("document")) {
-          if (auto f = doc->get_object("document")) {
-            file_id = static_cast<int32_t>(f->get_int("id").value_or(0));
+      std::string f_type = "file";
+      if (auto content = msg.get_object("content")) {
+        std::string c_type =
+            content->get_string("@type").value_or("messageText");
+        if (c_type == "messagePhoto") {
+          f_type = "photo";
+          auto sizes = content->get_array("sizes");
+          if (!sizes.empty()) {
+            if (auto photo = sizes.back().get_object("photo")) {
+              file_id = static_cast<int32_t>(photo->get_int("id").value_or(0));
+            }
           }
-        }
-      } else if (type_str == "messagePhoto") {
-        auto sizes = content->get_array("sizes");
-        if (!sizes.empty()) {
-          if (auto f = sizes.back().get_object("photo")) {
-            file_id = static_cast<int32_t>(f->get_int("id").value_or(0));
+        } else if (c_type == "messageVideo") {
+          f_type = "video";
+          if (auto video = content->get_object("video")) {
+            if (auto vf = video->get_object("video")) {
+              file_id = static_cast<int32_t>(vf->get_int("id").value_or(0));
+            }
+          }
+        } else if (c_type == "messageDocument") {
+          f_type = "doc";
+          if (auto doc = content->get_object("document")) {
+            if (auto df = doc->get_object("document")) {
+              file_id = static_cast<int32_t>(df->get_int("id").value_or(0));
+            }
+          }
+        } else if (c_type == "messageAudio") {
+          f_type = "audio";
+          if (auto audio = content->get_object("audio")) {
+            if (auto af = audio->get_object("audio")) {
+              file_id = static_cast<int32_t>(af->get_int("id").value_or(0));
+            }
           }
         }
       }
 
-      if (file_id > 0) {
-        auto dl_payload = Downloader::build_download_file_payload(file_id, 1);
+      if (file_id > 0 &&
+          (requested_type == "all" || requested_type == f_type)) {
+        auto dl_payload = Downloader::build_download_file_payload(file_id, 3);
         if (dl_payload) {
-          auto unused_dl =
-              client_->send_request("downloadFile", *dl_payload, 30.0);
-          (void)unused_dl;
+          client_->send_async("downloadFile", *dl_payload);
           downloaded_count++;
         }
       }
@@ -206,13 +218,6 @@ App::cmd_file_get(const std::vector<std::string> &args) {
   }
 
   return 0;
-}
-
-std::expected<int, std::string>
-App::cmd_file_download_all(const std::vector<std::string> &args) {
-  std::vector<std::string> new_args = args;
-  new_args.emplace_back("--all");
-  return cmd_file_get(new_args);
 }
 
 } // namespace grm
