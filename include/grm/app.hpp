@@ -8,9 +8,17 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace grm {
+
+struct SenderInfo {
+  std::string chosen_name;
+  std::string full_name;
+  std::string username;
+  int64_t id{0};
+};
 
 class App {
 public:
@@ -105,6 +113,7 @@ private:
 
   void update_auth_state(std::string state, bool closed = false);
 
+  [[nodiscard]] SenderInfo resolve_sender_info(const JsonValue &message_obj);
   [[nodiscard]] std::string resolve_sender_name(const JsonValue &message_obj);
 
   Config config_;
@@ -114,7 +123,7 @@ private:
   std::condition_variable auth_cv_;
   std::string auth_state_;
   bool is_closed_{false};
-  std::unordered_map<int64_t, std::string> sender_cache_;
+  std::unordered_map<int64_t, SenderInfo> sender_cache_;
 };
 
 } // namespace grm

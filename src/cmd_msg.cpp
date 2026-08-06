@@ -59,17 +59,17 @@ static std::string extract_message_text(const JsonValue &m) {
   return "";
 }
 
-std::string App::resolve_sender_name(const JsonValue &message_obj) {
+SenderInfo App::resolve_sender_info(const JsonValue &message_obj) {
   auto sender_obj = message_obj.get_object("sender_id");
   if (!sender_obj) {
-    return "";
+    return SenderInfo{};
   }
 
   std::string type_str = sender_obj->get_type().value_or("");
   if (type_str == "messageSenderUser") {
     int64_t user_id = sender_obj->get_int("user_id").value_or(0);
     if (user_id == 0) {
-      return "";
+      return SenderInfo{};
     }
 
     if (auto it = sender_cache_.find(user_id); it != sender_cache_.end()) {
@@ -79,7 +79,10 @@ std::string App::resolve_sender_name(const JsonValue &message_obj) {
     std::string payload = std::format(R"({{"user_id": {}}})", user_id);
     auto res = client_->send_request("getUser", payload, 5.0);
     if (!res) {
-      std::string fallback = std::format("User {}", user_id);
+      SenderInfo fallback{.chosen_name = std::format("User {}", user_id),
+                          .full_name = "",
+                          .username = "",
+                          .id = user_id};
       sender_cache_[user_id] = fallback;
       return fallback;
     }
@@ -87,6 +90,17 @@ std::string App::resolve_sender_name(const JsonValue &message_obj) {
     std::string first_name = res->get_string("first_name").value_or("");
     std::string last_name = res->get_string("last_name").value_or("");
     std::string username = res->get_string("username").value_or("");
+    if (username.empty()) {
+      if (auto usernames_obj = res->get_object("usernames")) {
+        username = usernames_obj->get_string("editable_username").value_or("");
+        if (username.empty()) {
+          auto active = usernames_obj->get_array("active_usernames");
+          if (!active.empty()) {
+            username = active[0].as_string().value_or("");
+          }
+        }
+      }
+    }
 
     std::string full_name = first_name;
     if (!last_name.empty()) {
@@ -115,12 +129,16 @@ std::string App::resolve_sender_name(const JsonValue &message_obj) {
       }
     }
 
-    sender_cache_[user_id] = chosen_name;
-    return chosen_name;
+    SenderInfo info{.chosen_name = chosen_name,
+                    .full_name = full_name,
+                    .username = username,
+                    .id = user_id};
+    sender_cache_[user_id] = info;
+    return info;
   } else if (type_str == "messageSenderChat") {
     int64_t sender_chat_id = sender_obj->get_int("chat_id").value_or(0);
     if (sender_chat_id == 0) {
-      return "";
+      return SenderInfo{};
     }
 
     if (auto it = sender_cache_.find(sender_chat_id);
@@ -131,7 +149,10 @@ std::string App::resolve_sender_name(const JsonValue &message_obj) {
     std::string payload = std::format(R"({{"chat_id": {}}})", sender_chat_id);
     auto res = client_->send_request("getChat", payload, 5.0);
     if (!res) {
-      std::string fallback = std::format("Chat {}", sender_chat_id);
+      SenderInfo fallback{.chosen_name = std::format("Chat {}", sender_chat_id),
+                          .full_name = "",
+                          .username = "",
+                          .id = sender_chat_id};
       sender_cache_[sender_chat_id] = fallback;
       return fallback;
     }
@@ -139,11 +160,19 @@ std::string App::resolve_sender_name(const JsonValue &message_obj) {
     std::string title = res->get_string("title").value_or("");
     std::string name =
         title.empty() ? std::format("Chat {}", sender_chat_id) : title;
-    sender_cache_[sender_chat_id] = name;
-    return name;
+    SenderInfo info{.chosen_name = name,
+                    .full_name = name,
+                    .username = "",
+                    .id = sender_chat_id};
+    sender_cache_[sender_chat_id] = info;
+    return info;
   }
 
-  return "";
+  return SenderInfo{};
+}
+
+std::string App::resolve_sender_name(const JsonValue &message_obj) {
+  return resolve_sender_info(message_obj).chosen_name;
 }
 
 static std::expected<int64_t, std::string>
@@ -264,7 +293,6 @@ parse_since_timestamp(std::string_view raw_str) {
 std::expected<int, std::string>
 App::cmd_msg_ls(const std::vector<std::string> &args) {
   int limit = 20;
-  bool limit_set_by_user = false;
   int64_t chat_id = 0;
   bool chat_id_set = false;
   int64_t topic_id = 0;
@@ -276,12 +304,10 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
     if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
       if (auto lim = parse_int32(args[++i])) {
         limit = *lim;
-        limit_set_by_user = true;
       }
     } else if (arg.starts_with("--limit=")) {
       if (auto lim = parse_int32(arg.substr(8))) {
         limit = *lim;
-        limit_set_by_user = true;
       }
     } else if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
       if (auto tid = parse_int64(args[++i])) {
@@ -320,10 +346,6 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
     return std::unexpected(
         "Usage: grm msg ls [-t|--topic <id>] [-n|--limit <N>] [--since "
         "<duration|date>] [-f|--filter <pattern>] <chat_id>");
-  }
-
-  if (since_timestamp > 0 && !limit_set_by_user) {
-    limit = 1000;
   }
 
   std::regex filter_regex;
@@ -412,12 +434,24 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
         break;
       }
 
-      std::string sender_name = resolve_sender_name(m);
+      SenderInfo info = resolve_sender_info(m);
       if (has_filter) {
-        if (!std::regex_search(sender_name, filter_regex)) {
+        bool matches_filter =
+            std::regex_search(info.chosen_name, filter_regex) ||
+            (!info.username.empty() &&
+             std::regex_search(info.username, filter_regex)) ||
+            (!info.username.empty() &&
+             std::regex_search("@" + info.username, filter_regex)) ||
+            (!info.full_name.empty() &&
+             std::regex_search(info.full_name, filter_regex)) ||
+            (info.id != 0 &&
+             std::regex_search(std::to_string(info.id), filter_regex));
+        if (!matches_filter) {
           continue;
         }
       }
+
+      std::string sender_name = info.chosen_name;
 
       std::string text = extract_message_text(m);
       if (!text.empty()) {
@@ -692,12 +726,24 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
       continue;
     }
 
-    std::string sender_name = resolve_sender_name(m);
+    SenderInfo info = resolve_sender_info(m);
     if (has_filter) {
-      if (!std::regex_search(sender_name, filter_regex)) {
+      bool matches_filter =
+          std::regex_search(info.chosen_name, filter_regex) ||
+          (!info.username.empty() &&
+           std::regex_search(info.username, filter_regex)) ||
+          (!info.username.empty() &&
+           std::regex_search("@" + info.username, filter_regex)) ||
+          (!info.full_name.empty() &&
+           std::regex_search(info.full_name, filter_regex)) ||
+          (info.id != 0 &&
+           std::regex_search(std::to_string(info.id), filter_regex));
+      if (!matches_filter) {
         continue;
       }
     }
+
+    std::string sender_name = info.chosen_name;
 
     std::string text = extract_message_text(m);
 
