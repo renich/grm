@@ -93,11 +93,17 @@ grm login [-p|--phone <num>] [-k|--code <code>]
 Chat & Group Management
 -----------------------
 
-grm chat ls [-n|--limit <N>]
+grm chat ls [-n|--limit <N>] [-S|--since <duration|date>] [-f|--filter <pattern>]
    List active chats, supergroups, channels, and private conversations.
 
    -n, --limit <N>
       Maximum number of chats to list (default: 100).
+
+   -S, --since <duration|date>
+      Filter chats active since natural duration (e.g. ``"1 day ago"``, ``"3 days ago"``, ``"2h"``), ISO date, or timestamp.
+
+   -f, --filter <pattern>
+      Filter chats by title, type, or ID (case-insensitive substring or regex). Can be passed multiple times.
 
 grm chat create group [--private|--public] "<title>"
    Create a new basic group or supergroup.
@@ -204,11 +210,17 @@ grm msg delete [--for-everyone] <chat_id> <message_ids...>
 Forum Topic Management
 ----------------------
 
-grm topic ls [-n|--limit <N>] <supergroup_id>
+grm topic ls [-n|--limit <N>] [-S|--since <duration|date>] [-f|--filter <pattern>] <supergroup_id>
    List active forum topics in a Telegram supergroup.
 
    -n, --limit <N>
       Maximum topics to list (default: 100).
+
+   -S, --since <duration|date>
+      Filter topics active since natural duration (e.g. ``"1 day ago"``, ``"3 days ago"``, ``"2h"``), ISO date, or timestamp.
+
+   -f, --filter <pattern>
+      Filter topics by name or thread ID (case-insensitive substring or regex). Can be passed multiple times.
 
 grm topic create [-e|--emoji <id>] [--icon-color <color>] <supergroup_id> "<topic_name>"
    Create a new forum topic in a supergroup with optional custom emoji icon.

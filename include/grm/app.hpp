@@ -115,6 +115,8 @@ private:
 
   [[nodiscard]] SenderInfo resolve_sender_info(const JsonValue &message_obj);
   [[nodiscard]] std::string resolve_sender_name(const JsonValue &message_obj);
+  [[nodiscard]] static std::expected<int64_t, std::string>
+  parse_since_timestamp(std::string_view raw_str);
 
   Config config_;
   CliOptions options_;

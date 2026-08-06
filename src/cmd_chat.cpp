@@ -4,6 +4,7 @@
 #include <charconv>
 #include <format>
 #include <iostream>
+#include <regex>
 
 namespace grm {
 
@@ -16,8 +17,72 @@ static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
   return val;
 }
 
+static std::expected<int32_t, std::string> parse_int32(std::string_view str) {
+  int32_t val = 0;
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), val);
+  if (ec != std::errc{} || ptr != str.data() + str.size()) {
+    return std::unexpected("Invalid integer: " + std::string(str));
+  }
+  return val;
+}
+
 std::expected<int, std::string>
-App::cmd_chat_ls([[maybe_unused]] const std::vector<std::string> &args) {
+App::cmd_chat_ls(const std::vector<std::string> &args) {
+  int limit = 100;
+  int64_t since_timestamp = 0;
+  std::vector<std::string> filter_patterns;
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
+    if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
+      if (auto lim = parse_int32(args[++i])) {
+        limit = *lim;
+      }
+    } else if (arg.starts_with("--limit=")) {
+      if (auto lim = parse_int32(arg.substr(8))) {
+        limit = *lim;
+      }
+    } else if ((arg == "-S" || arg == "--since") && i + 1 < args.size()) {
+      if (auto ts = parse_since_timestamp(args[++i])) {
+        since_timestamp = *ts;
+      } else {
+        return std::unexpected(ts.error());
+      }
+    } else if (arg.starts_with("--since=")) {
+      if (auto ts = parse_since_timestamp(arg.substr(8))) {
+        since_timestamp = *ts;
+      } else {
+        return std::unexpected(ts.error());
+      }
+    } else if ((arg == "-f" || arg == "--filter" || arg == "--sender") &&
+               i + 1 < args.size()) {
+      filter_patterns.push_back(args[++i]);
+    } else if (arg.starts_with("--filter=")) {
+      filter_patterns.push_back(std::string(arg.substr(9)));
+    } else if (arg.starts_with("--sender=")) {
+      filter_patterns.push_back(std::string(arg.substr(9)));
+    }
+  }
+
+  std::regex filter_regex;
+  bool has_filter = false;
+  if (!filter_patterns.empty()) {
+    std::string combined;
+    for (size_t i = 0; i < filter_patterns.size(); ++i) {
+      if (i > 0) {
+        combined += "|";
+      }
+      combined += std::format("({})", filter_patterns[i]);
+    }
+    try {
+      filter_regex = std::regex(combined, std::regex::icase);
+      has_filter = true;
+    } catch (const std::regex_error &e) {
+      return std::unexpected("Invalid filter pattern: " +
+                             std::string(e.what()));
+    }
+  }
+
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
   }
@@ -52,11 +117,28 @@ App::cmd_chat_ls([[maybe_unused]] const std::vector<std::string> &args) {
         if (auto last_msg = chat_info->get_object("last_message")) {
           last_date = last_msg->get_int("date").value_or(0);
         }
+
+        if (since_timestamp > 0 && last_date < since_timestamp) {
+          continue;
+        }
+
+        if (has_filter) {
+          bool matches = std::regex_search(title, filter_regex) ||
+                         std::regex_search(type_name, filter_regex) ||
+                         std::regex_search(std::to_string(*cid), filter_regex);
+          if (!matches) {
+            continue;
+          }
+        }
+
         items.push_back(fmt::ChatItem{.id = *cid,
                                       .type = type_name,
                                       .title = title,
                                       .unread_count = unread,
                                       .last_message_date = last_date});
+        if (items.size() >= static_cast<size_t>(limit)) {
+          break;
+        }
       }
     }
   }

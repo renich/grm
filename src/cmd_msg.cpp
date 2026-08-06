@@ -175,8 +175,8 @@ std::string App::resolve_sender_name(const JsonValue &message_obj) {
   return resolve_sender_info(message_obj).chosen_name;
 }
 
-static std::expected<int64_t, std::string>
-parse_since_timestamp(std::string_view raw_str) {
+std::expected<int64_t, std::string>
+App::parse_since_timestamp(std::string_view raw_str) {
   if (raw_str.empty()) {
     return std::unexpected("Empty since duration/date string");
   }

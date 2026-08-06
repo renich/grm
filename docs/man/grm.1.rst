@@ -78,11 +78,17 @@ grm login [-p *PHONE*] [-k *CODE*]
 chat
 ----
 
-grm chat ls [-n *LIMIT*]
+grm chat ls [-n *LIMIT*] [-S *SINCE*] [-f *PATTERN*]
    List active conversations, groups, channels, and private chats.
 
    -n, --limit *N*
       Maximum number of chats to display (default: 100).
+
+   -S, --since *SINCE*
+      Filter chats active since natural duration (e.g. ``"1 day ago"``, ``"3 days ago"``, ``"2h"``), ISO date, or timestamp.
+
+   -f, --filter *PATTERN*
+      Filter chats by title, type, or ID (case-insensitive substring or regex). Can be passed multiple times.
 
 grm chat create group [--private|--public] "*TITLE*"
    Create a new basic group or supergroup.
@@ -189,11 +195,17 @@ grm msg delete [--for-everyone] *CHAT_ID* *MESSAGE_IDS...*
 topic
 -----
 
-grm topic ls [-n *LIMIT*] *SUPERGROUP_ID*
+grm topic ls [-n *LIMIT*] [-S *SINCE*] [-f *PATTERN*] *SUPERGROUP_ID*
    List active forum topics in a supergroup.
 
    -n, --limit *N*
       Maximum number of topics to display (default: 100).
+
+   -S, --since *SINCE*
+      Filter topics active since natural duration (e.g. ``"1 day ago"``, ``"3 days ago"``, ``"2h"``), ISO date, or timestamp.
+
+   -f, --filter *PATTERN*
+      Filter topics by name or thread ID (case-insensitive substring or regex). Can be passed multiple times.
 
 grm topic create [-e *CUSTOM_EMOJI_ID*] [--icon-color *COLOR*] *SUPERGROUP_ID* "*TOPIC_NAME*"
    Create a new forum topic in a supergroup with optional custom emoji icon.
