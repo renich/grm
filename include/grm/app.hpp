@@ -105,6 +105,8 @@ private:
 
   void update_auth_state(std::string state, bool closed = false);
 
+  [[nodiscard]] std::string resolve_sender_name(const JsonValue &message_obj);
+
   Config config_;
   CliOptions options_;
   std::unique_ptr<TdClient> client_;
@@ -112,6 +114,7 @@ private:
   std::condition_variable auth_cv_;
   std::string auth_state_;
   bool is_closed_{false};
+  std::unordered_map<int64_t, std::string> sender_cache_;
 };
 
 } // namespace grm

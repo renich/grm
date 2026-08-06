@@ -58,6 +58,77 @@ static std::string extract_message_text(const JsonValue &m) {
   return "";
 }
 
+std::string App::resolve_sender_name(const JsonValue &message_obj) {
+  auto sender_obj = message_obj.get_object("sender_id");
+  if (!sender_obj) {
+    return "";
+  }
+
+  std::string type_str = sender_obj->get_type().value_or("");
+  if (type_str == "messageSenderUser") {
+    int64_t user_id = sender_obj->get_int("user_id").value_or(0);
+    if (user_id == 0) {
+      return "";
+    }
+
+    if (auto it = sender_cache_.find(user_id); it != sender_cache_.end()) {
+      return it->second;
+    }
+
+    std::string payload = std::format(R"({{"user_id": {}}})", user_id);
+    auto res = client_->send_request("getUser", payload, 5.0);
+    if (!res) {
+      std::string fallback = std::format("User {}", user_id);
+      sender_cache_[user_id] = fallback;
+      return fallback;
+    }
+
+    std::string first_name = res->get_string("first_name").value_or("");
+    std::string last_name = res->get_string("last_name").value_or("");
+    std::string username = res->get_string("username").value_or("");
+
+    std::string name = first_name;
+    if (!last_name.empty()) {
+      if (!name.empty()) {
+        name += " ";
+      }
+      name += last_name;
+    }
+    if (name.empty()) {
+      name =
+          username.empty() ? std::format("User {}", user_id) : ("@" + username);
+    }
+    sender_cache_[user_id] = name;
+    return name;
+  } else if (type_str == "messageSenderChat") {
+    int64_t sender_chat_id = sender_obj->get_int("chat_id").value_or(0);
+    if (sender_chat_id == 0) {
+      return "";
+    }
+
+    if (auto it = sender_cache_.find(sender_chat_id);
+        it != sender_cache_.end()) {
+      return it->second;
+    }
+
+    std::string payload = std::format(R"({{"chat_id": {}}})", sender_chat_id);
+    auto res = client_->send_request("getChat", payload, 5.0);
+    if (!res) {
+      std::string fallback = std::format("Chat {}", sender_chat_id);
+      sender_cache_[sender_chat_id] = fallback;
+      return fallback;
+    }
+
+    std::string title = res->get_string("title").value_or("");
+    std::string name =
+        title.empty() ? std::format("Chat {}", sender_chat_id) : title;
+    sender_cache_[sender_chat_id] = name;
+    return name;
+  }
+
+  return "";
+}
+
 std::expected<int, std::string>
 App::cmd_msg_ls(const std::vector<std::string> &args) {
   int limit = 20;
@@ -186,7 +257,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
                                          .chat_id = chat_id,
                                          .topic_id = topic_id,
                                          .date = msg_date,
-                                         .sender = "",
+                                         .sender = resolve_sender_name(m),
                                          .text = text,
                                          .has_attachment = has_attach,
                                          .attachment_type = attach_type});
@@ -419,7 +490,7 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
                                        .chat_id = chat_id,
                                        .topic_id = 0,
                                        .date = msg_date,
-                                       .sender = "",
+                                       .sender = resolve_sender_name(m),
                                        .text = text,
                                        .has_attachment = has_attach,
                                        .attachment_type = attach_type});

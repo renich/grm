@@ -378,19 +378,24 @@ void Formatter::print_messages(const std::vector<MessageItem> &messages,
     }
 
     const std::string date_str = humanize_relative_time(m.date);
+    std::string sender_part;
+    if (!m.sender.empty()) {
+      sender_part = std::format("<{}> ", m.sender);
+    }
     const std::string prefix_plain =
-        std::format("[MsgID {} | {}]: ", m.id, date_str);
+        std::format("[MsgID {} | {}] {}: ", m.id, date_str, sender_part);
     const std::string indent(prefix_plain.size(), ' ');
 
     if (use_color) {
-      out << std::format("{}[MsgID {}]{} {}({}){}: {}\n", COLOR_CYAN, m.id,
+      out << std::format("{}[MsgID {}]{} {}({}){} {}{}{}: {}\n", COLOR_CYAN, m.id,
                          COLOR_RESET, COLOR_DIM, date_str, COLOR_RESET,
+                         COLOR_YELLOW, sender_part, COLOR_RESET,
                          lines[0]);
       for (size_t i = 1; i < lines.size(); ++i) {
         out << std::format("{}{}\n", indent, lines[i]);
       }
     } else {
-      out << std::format("[MsgID {} | {}]: {}\n", m.id, date_str, lines[0]);
+      out << std::format("[MsgID {} | {}] {}{}\n", m.id, date_str, sender_part, lines[0]);
       for (size_t i = 1; i < lines.size(); ++i) {
         out << std::format("{}{}\n", indent, lines[i]);
       }
