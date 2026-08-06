@@ -61,7 +61,8 @@ std::expected<int, std::string> App::cmd_login() {
         std::string phone = options_.phone;
         if (phone.empty()) {
           std::cout << "[AUTH] Enter your Telegram phone number (e.g. "
-                       "+521234567890): ";
+                       "+521234567890): "
+                    << std::flush;
           std::cin >> phone;
         } else {
           grm::log::auth("Using pre-filled phone number: " + phone);
@@ -95,7 +96,8 @@ std::expected<int, std::string> App::cmd_login() {
         std::string code = options_.code;
         if (code.empty()) {
           std::cout << "[AUTH] Enter authentication code (or type 'resend' for "
-                       "SMS): ";
+                       "SMS): "
+                    << std::flush;
           std::cin >> code;
         } else {
           grm::log::auth("Using pre-filled code.");
