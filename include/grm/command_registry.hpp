@@ -36,6 +36,10 @@ public:
   [[nodiscard]] std::string render_all_help() const;
   [[nodiscard]] std::string render_completion(const std::string &shell) const;
 
+  [[nodiscard]] std::string render_global_help_json(bool pretty = false) const;
+  [[nodiscard]] std::string render_command_help_json(const std::string &cmd_name, bool pretty = false) const;
+  [[nodiscard]] std::string render_all_help_json(bool pretty = false) const;
+
   [[nodiscard]] const std::vector<CommandSpec> &commands() const { return commands_; }
 
 private:

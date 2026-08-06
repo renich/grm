@@ -20,6 +20,8 @@ struct CliOptions {
   NameFormat name_format{NameFormat::Username};
   bool use_test_dc{false};
   bool help{false};
+  bool help_all{false};
+  bool pretty{false};
   bool version{false};
 };
 

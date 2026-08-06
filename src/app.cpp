@@ -13,8 +13,12 @@ App::App(Config config, CliOptions options)
 
 void App::print_version() { std::cout << "grm 0.5.1\n"; }
 
-void App::print_usage() {
-  std::cout << CommandRegistry::get_instance().render_global_help();
+void App::print_usage(fmt::OutputFormat format) {
+  if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
+    std::cout << CommandRegistry::get_instance().render_global_help_json();
+  } else {
+    std::cout << CommandRegistry::get_instance().render_global_help();
+  }
 }
 
 bool App::is_help_requested(const std::vector<std::string> &args) {
@@ -23,24 +27,44 @@ bool App::is_help_requested(const std::vector<std::string> &args) {
   });
 }
 
-void App::print_login_help() {
-  std::cout << CommandRegistry::get_instance().render_command_help("login");
+void App::print_login_help(fmt::OutputFormat format) {
+  if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
+    std::cout << CommandRegistry::get_instance().render_command_help_json("login");
+  } else {
+    std::cout << CommandRegistry::get_instance().render_command_help("login");
+  }
 }
 
-void App::print_chat_help() {
-  std::cout << CommandRegistry::get_instance().render_command_help("chat");
+void App::print_chat_help(fmt::OutputFormat format) {
+  if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
+    std::cout << CommandRegistry::get_instance().render_command_help_json("chat");
+  } else {
+    std::cout << CommandRegistry::get_instance().render_command_help("chat");
+  }
 }
 
-void App::print_msg_help() {
-  std::cout << CommandRegistry::get_instance().render_command_help("msg");
+void App::print_msg_help(fmt::OutputFormat format) {
+  if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
+    std::cout << CommandRegistry::get_instance().render_command_help_json("msg");
+  } else {
+    std::cout << CommandRegistry::get_instance().render_command_help("msg");
+  }
 }
 
-void App::print_topic_help() {
-  std::cout << CommandRegistry::get_instance().render_command_help("topic");
+void App::print_topic_help(fmt::OutputFormat format) {
+  if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
+    std::cout << CommandRegistry::get_instance().render_command_help_json("topic");
+  } else {
+    std::cout << CommandRegistry::get_instance().render_command_help("topic");
+  }
 }
 
-void App::print_file_help() {
-  std::cout << CommandRegistry::get_instance().render_command_help("file");
+void App::print_file_help(fmt::OutputFormat format) {
+  if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
+    std::cout << CommandRegistry::get_instance().render_command_help_json("file");
+  } else {
+    std::cout << CommandRegistry::get_instance().render_command_help("file");
+  }
 }
 
 std::string App::get_auth_state() const {
@@ -203,7 +227,7 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
   }
 
   if (args.empty()) {
-    print_usage();
+    print_usage(options_.format);
     return 0;
   }
 
@@ -211,14 +235,18 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
         return arg == "--help=all";
       }) ||
       (args.size() >= 2 && (args[0] == "--help" || args[0] == "help") && args[1] == "all")) {
-    std::cout << CommandRegistry::get_instance().render_all_help();
+    if (options_.format == fmt::OutputFormat::Json || options_.format == fmt::OutputFormat::JsonL) {
+      std::cout << CommandRegistry::get_instance().render_all_help_json();
+    } else {
+      std::cout << CommandRegistry::get_instance().render_all_help();
+    }
     return 0;
   }
 
   const std::string &cmd = args[0];
 
   if (cmd == "-h" || cmd == "--help" || cmd == "help") {
-    print_usage();
+    print_usage(options_.format);
     return 0;
   }
 
@@ -226,7 +254,7 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
 
   if (cmd == "login") {
     if (is_help_requested(sub_args)) {
-      print_login_help();
+      print_login_help(options_.format);
       return 0;
     }
     for (size_t i = 0; i < sub_args.size(); ++i) {
@@ -243,7 +271,7 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
 
   if (cmd == "chat") {
     if (sub_args.empty() || is_help_requested(sub_args)) {
-      print_chat_help();
+      print_chat_help(options_.format);
       return 0;
     }
     const std::string &sub = sub_args[0];
@@ -265,13 +293,13 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     if (sub == "delete")
       return cmd_chat_delete(sub_opts);
 
-    print_chat_help();
+    print_chat_help(options_.format);
     return std::unexpected("Unknown chat subcommand: " + sub);
   }
 
   if (cmd == "msg") {
     if (sub_args.empty() || is_help_requested(sub_args)) {
-      print_msg_help();
+      print_msg_help(options_.format);
       return 0;
     }
     const std::string &sub = sub_args[0];
@@ -291,13 +319,13 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     if (sub == "delete")
       return cmd_msg_delete(sub_opts);
 
-    print_msg_help();
+    print_msg_help(options_.format);
     return std::unexpected("Unknown msg subcommand: " + sub);
   }
 
   if (cmd == "topic") {
     if (sub_args.empty() || is_help_requested(sub_args)) {
-      print_topic_help();
+      print_topic_help(options_.format);
       return 0;
     }
     const std::string &sub = sub_args[0];
@@ -321,13 +349,13 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     if (sub == "delete")
       return cmd_topic_delete(sub_opts);
 
-    print_topic_help();
+    print_topic_help(options_.format);
     return std::unexpected("Unknown topic subcommand: " + sub);
   }
 
   if (cmd == "file") {
     if (sub_args.empty() || is_help_requested(sub_args)) {
-      print_file_help();
+      print_file_help(options_.format);
       return 0;
     }
     const std::string &sub = sub_args[0];
@@ -335,7 +363,7 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     if (sub == "get")
       return cmd_file_get(sub_opts);
 
-    print_file_help();
+    print_file_help(options_.format);
     return std::unexpected("Unknown file subcommand: " + sub);
   }
 

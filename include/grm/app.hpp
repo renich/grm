@@ -43,13 +43,13 @@ public:
   [[nodiscard]] std::expected<int, std::string>
   run(const std::vector<std::string> &args);
 
-  static void print_usage();
+  static void print_usage(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void print_version();
-  static void print_login_help();
-  static void print_chat_help();
-  static void print_msg_help();
-  static void print_topic_help();
-  static void print_file_help();
+  static void print_login_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void print_chat_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void print_msg_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void print_topic_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void print_file_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static bool is_help_requested(const std::vector<std::string> &args);
   [[nodiscard]] static std::expected<int64_t, std::string>
   parse_since_timestamp(std::string_view raw_str);

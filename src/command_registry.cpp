@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <format>
 #include <iostream>
+#include <json-c/json.h>
 #include <sstream>
 
 namespace grm {
@@ -23,8 +24,8 @@ const CommandRegistry &CommandRegistry::get_instance() {
 
 std::string CommandRegistry::render_global_help() const {
   std::stringstream ss;
-  ss << "Usage: grm [OPTION]... [COMMAND] [ARGS]...\n"
-     << "Group & Telegram Manager CLI (C++23 / TDLib)\n\n"
+  ss << "grm: Telegram CLI client v0.5.1\n\n"
+     << "Usage: grm [OPTION]... [COMMAND] [ARGS]...\n\n"
      << "Global Options:\n"
      << "  -h, --help            Show summary help screen\n"
      << "      --help=all        Show exhaustive help for all commands and subcommands\n"
@@ -88,8 +89,8 @@ std::string CommandRegistry::render_command_help(const std::string &cmd_name) co
 
 std::string CommandRegistry::render_all_help() const {
   std::stringstream ss;
-  ss << "Usage: grm [OPTION]... [COMMAND] [ARGS]...\n"
-     << "Group & Telegram Manager CLI (C++23 / TDLib)\n\n"
+  ss << "grm: Telegram CLI client v0.5.1\n\n"
+     << "Usage: grm [OPTION]... [COMMAND] [ARGS]...\n\n"
      << "Global Options:\n"
      << "  -h, --help            Show summary help screen\n"
      << "      --help=all        Show exhaustive help for all commands and subcommands\n"
@@ -103,10 +104,12 @@ std::string CommandRegistry::render_all_help() const {
      << "      --color <mode>    Set ANSI color mode: auto, always, never (or --no-color)\n\n"
      << "Commands:\n\n";
 
-  for (const auto &cmd : commands_) {
+  for (size_t c_idx = 0; c_idx < commands_.size(); ++c_idx) {
+    const auto &cmd = commands_[c_idx];
     ss << std::format("{}: {}\n", cmd.name, cmd.description);
 
-    for (const auto &sub : cmd.subcommands) {
+    for (size_t s_idx = 0; s_idx < cmd.subcommands.size(); ++s_idx) {
+      const auto &sub = cmd.subcommands[s_idx];
       std::string line;
       if (sub.synopsis.empty()) {
         line = std::format("grm {} {}", cmd.name, sub.name);
@@ -114,43 +117,211 @@ std::string CommandRegistry::render_all_help() const {
         line = std::format("grm {} {} {}", cmd.name, sub.name, sub.synopsis);
       }
 
-      if (sub.options.empty()) {
-        ss << std::format("  {:<66} {}\n", line, sub.description);
-      } else {
-        ss << std::format("  {}\n", line);
-        for (const auto &opt : sub.options) {
-          std::string flags;
-          if (!opt.short_flag.empty() && !opt.long_flag.empty()) {
-            flags = std::format("{}, {}", opt.short_flag, opt.long_flag);
-          } else if (!opt.short_flag.empty()) {
-            flags = opt.short_flag;
-          } else {
-            flags = opt.long_flag;
-          }
-
-          if (!opt.value_hint.empty()) {
-            flags += " " + opt.value_hint;
-          }
-
-          std::string opt_desc = opt.description;
-          if (!opt.choices.empty()) {
-            std::string choices_str;
-            for (size_t i = 0; i < opt.choices.size(); ++i) {
-              if (i > 0) choices_str += "|";
-              choices_str += opt.choices[i];
-            }
-            opt_desc += " (" + choices_str + ")";
-          }
-
-          ss << std::format("    {:<31} {}\n", flags, opt_desc);
+      ss << std::format("  {}\n", line);
+      for (const auto &opt : sub.options) {
+        std::string flags;
+        if (!opt.short_flag.empty() && !opt.long_flag.empty()) {
+          flags = std::format("{}, {}", opt.short_flag, opt.long_flag);
+        } else if (!opt.short_flag.empty()) {
+          flags = opt.short_flag;
+        } else {
+          flags = opt.long_flag;
         }
+
+        if (!opt.value_hint.empty()) {
+          flags += " " + opt.value_hint;
+        }
+
+        std::string opt_desc = opt.description;
+        if (!opt.choices.empty()) {
+          std::string choices_str;
+          for (size_t i = 0; i < opt.choices.size(); ++i) {
+            if (i > 0) choices_str += "|";
+            choices_str += opt.choices[i];
+          }
+          opt_desc += " (" + choices_str + ")";
+        }
+
+        ss << std::format("    {:<32} {}\n", flags, opt_desc);
       }
+
+      ss << "\n";
     }
-    ss << "\n";
+
+    if (c_idx + 1 < commands_.size()) {
+      ss << "\n";
+    }
   }
 
-  ss << "Report bugs to: <renich@evalinux.com> or <https://gitlab.com/renich/grm/-/issues>\n";
   return ss.str();
+}
+
+std::string CommandRegistry::render_global_help_json(bool pretty) const {
+  json_object *root = json_object_new_object();
+  json_object_object_add(root, "program", json_object_new_string("grm"));
+  json_object_object_add(root, "description", json_object_new_string("Telegram CLI client"));
+  json_object_object_add(root, "version", json_object_new_string("0.5.1"));
+
+  json_object *global_opts_arr = json_object_new_array();
+  const std::vector<OptionSpec> global_opts = {
+      {"-h", "--help", "", "Show summary help screen", {}},
+      {"-H", "--help=all", "", "Show exhaustive help for all commands and subcommands", {}},
+      {"-V", "--version", "", "Display version and build environment info", {}},
+      {"-v", "--verbose", "", "Enable verbose TDLib state output", {}},
+      {"-d", "--debug", "", "Enable debug tracing", {}},
+      {"-q", "--quiet", "", "Suppress non-error informational messages", {}},
+      {"-c", "--config", "<file>", "Path to custom configuration file", {}},
+      {"-T", "--test-dc", "", "Connect to Telegram Test Data Center environment", {}},
+      {"-F", "--format", "<fmt>", "Output format: human, markdown, json, plain (default: auto)", {"human", "markdown", "json", "plain"}},
+      {"-p", "--pretty", "", "Pretty-print JSON output formatting (with -F json)", {}},
+      {"", "--color", "<mode>", "Set ANSI color mode: auto, always, never (or --no-color)", {"auto", "always", "never"}}
+  };
+
+  for (const auto &opt : global_opts) {
+    json_object *o = json_object_new_object();
+    json_object_object_add(o, "short_flag", json_object_new_string(opt.short_flag.c_str()));
+    json_object_object_add(o, "long_flag", json_object_new_string(opt.long_flag.c_str()));
+    json_object_object_add(o, "value_hint", json_object_new_string(opt.value_hint.c_str()));
+    json_object_object_add(o, "description", json_object_new_string(opt.description.c_str()));
+    json_object_array_add(global_opts_arr, o);
+  }
+  json_object_object_add(root, "global_options", global_opts_arr);
+
+  json_object *cmds_arr = json_object_new_array();
+  for (const auto &cmd : commands_) {
+    json_object *c = json_object_new_object();
+    json_object_object_add(c, "name", json_object_new_string(cmd.name.c_str()));
+    json_object_object_add(c, "description", json_object_new_string(cmd.description.c_str()));
+    json_object_array_add(cmds_arr, c);
+  }
+  json_object_object_add(root, "commands", cmds_arr);
+
+  int flags = pretty ? (JSON_C_TO_STRING_PRETTY | JSON_C_TO_STRING_SPACED) : JSON_C_TO_STRING_PLAIN;
+  std::string result = json_object_to_json_string_ext(root, flags);
+  json_object_put(root);
+  return result + "\n";
+}
+
+std::string CommandRegistry::render_command_help_json(const std::string &cmd_name, bool pretty) const {
+  auto it = std::ranges::find_if(commands_, [&](const CommandSpec &c) {
+    return c.name == cmd_name;
+  });
+
+  if (it == commands_.end()) {
+    return render_global_help_json(pretty);
+  }
+
+  json_object *root = json_object_new_object();
+  json_object_object_add(root, "program", json_object_new_string("grm"));
+  json_object_object_add(root, "command", json_object_new_string(it->name.c_str()));
+  json_object_object_add(root, "description", json_object_new_string(it->description.c_str()));
+
+  json_object *subs_arr = json_object_new_array();
+  for (const auto &sub : it->subcommands) {
+    json_object *s = json_object_new_object();
+    json_object_object_add(s, "name", json_object_new_string(sub.name.c_str()));
+    json_object_object_add(s, "synopsis", json_object_new_string(sub.synopsis.c_str()));
+    json_object_object_add(s, "description", json_object_new_string(sub.description.c_str()));
+
+    json_object *opts_arr = json_object_new_array();
+    for (const auto &opt : sub.options) {
+      json_object *o = json_object_new_object();
+      json_object_object_add(o, "short_flag", json_object_new_string(opt.short_flag.c_str()));
+      json_object_object_add(o, "long_flag", json_object_new_string(opt.long_flag.c_str()));
+      json_object_object_add(o, "value_hint", json_object_new_string(opt.value_hint.c_str()));
+      json_object_object_add(o, "description", json_object_new_string(opt.description.c_str()));
+
+      json_object *choices_arr = json_object_new_array();
+      for (const auto &choice : opt.choices) {
+        json_object_array_add(choices_arr, json_object_new_string(choice.c_str()));
+      }
+      json_object_object_add(o, "choices", choices_arr);
+
+      json_object_array_add(opts_arr, o);
+    }
+    json_object_object_add(s, "options", opts_arr);
+    json_object_array_add(subs_arr, s);
+  }
+  json_object_object_add(root, "subcommands", subs_arr);
+
+  int flags = pretty ? (JSON_C_TO_STRING_PRETTY | JSON_C_TO_STRING_SPACED) : JSON_C_TO_STRING_PLAIN;
+  std::string result = json_object_to_json_string_ext(root, flags);
+  json_object_put(root);
+  return result + "\n";
+}
+
+std::string CommandRegistry::render_all_help_json(bool pretty) const {
+  json_object *root = json_object_new_object();
+  json_object_object_add(root, "program", json_object_new_string("grm"));
+  json_object_object_add(root, "description", json_object_new_string("Telegram CLI client"));
+  json_object_object_add(root, "version", json_object_new_string("0.5.1"));
+
+  json_object *global_opts_arr = json_object_new_array();
+  const std::vector<OptionSpec> global_opts = {
+      {"-h", "--help", "", "Show summary help screen", {}},
+      {"-H", "--help=all", "", "Show exhaustive help for all commands and subcommands", {}},
+      {"-V", "--version", "", "Display version and build environment info", {}},
+      {"-v", "--verbose", "", "Enable verbose TDLib state output", {}},
+      {"-d", "--debug", "", "Enable debug tracing", {}},
+      {"-q", "--quiet", "", "Suppress non-error informational messages", {}},
+      {"-c", "--config", "<file>", "Path to custom configuration file", {}},
+      {"-T", "--test-dc", "", "Connect to Telegram Test Data Center environment", {}},
+      {"-F", "--format", "<fmt>", "Output format: human, markdown, json, plain (default: auto)", {"human", "markdown", "json", "plain"}},
+      {"-p", "--pretty", "", "Pretty-print JSON output formatting (with -F json)", {}},
+      {"", "--color", "<mode>", "Set ANSI color mode: auto, always, never (or --no-color)", {"auto", "always", "never"}}
+  };
+
+  for (const auto &opt : global_opts) {
+    json_object *o = json_object_new_object();
+    json_object_object_add(o, "short_flag", json_object_new_string(opt.short_flag.c_str()));
+    json_object_object_add(o, "long_flag", json_object_new_string(opt.long_flag.c_str()));
+    json_object_object_add(o, "value_hint", json_object_new_string(opt.value_hint.c_str()));
+    json_object_object_add(o, "description", json_object_new_string(opt.description.c_str()));
+    json_object_array_add(global_opts_arr, o);
+  }
+  json_object_object_add(root, "global_options", global_opts_arr);
+
+  json_object *cmds_arr = json_object_new_array();
+  for (const auto &cmd : commands_) {
+    json_object *c = json_object_new_object();
+    json_object_object_add(c, "name", json_object_new_string(cmd.name.c_str()));
+    json_object_object_add(c, "description", json_object_new_string(cmd.description.c_str()));
+
+    json_object *subs_arr = json_object_new_array();
+    for (const auto &sub : cmd.subcommands) {
+      json_object *s = json_object_new_object();
+      json_object_object_add(s, "name", json_object_new_string(sub.name.c_str()));
+      json_object_object_add(s, "synopsis", json_object_new_string(sub.synopsis.c_str()));
+      json_object_object_add(s, "description", json_object_new_string(sub.description.c_str()));
+
+      json_object *opts_arr = json_object_new_array();
+      for (const auto &opt : sub.options) {
+        json_object *o = json_object_new_object();
+        json_object_object_add(o, "short_flag", json_object_new_string(opt.short_flag.c_str()));
+        json_object_object_add(o, "long_flag", json_object_new_string(opt.long_flag.c_str()));
+        json_object_object_add(o, "value_hint", json_object_new_string(opt.value_hint.c_str()));
+        json_object_object_add(o, "description", json_object_new_string(opt.description.c_str()));
+
+        json_object *choices_arr = json_object_new_array();
+        for (const auto &choice : opt.choices) {
+          json_object_array_add(choices_arr, json_object_new_string(choice.c_str()));
+        }
+        json_object_object_add(o, "choices", choices_arr);
+
+        json_object_array_add(opts_arr, o);
+      }
+      json_object_object_add(s, "options", opts_arr);
+      json_object_array_add(subs_arr, s);
+    }
+    json_object_object_add(c, "subcommands", subs_arr);
+    json_object_array_add(cmds_arr, c);
+  }
+  json_object_object_add(root, "commands", cmds_arr);
+
+  int flags = pretty ? (JSON_C_TO_STRING_PRETTY | JSON_C_TO_STRING_SPACED) : JSON_C_TO_STRING_PLAIN;
+  std::string result = json_object_to_json_string_ext(root, flags);
+  json_object_put(root);
+  return result + "\n";
 }
 
 std::string CommandRegistry::render_completion(const std::string &shell) const {

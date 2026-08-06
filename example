@@ -1,0 +1,108 @@
+$ grm --help=all
+grm: Telegram CLI client v0.5.1
+
+Usage: grm [OPTION]... [COMMAND] [ARGS]...
+
+Global Options:
+  -h, --help            Show summary help screen
+      --help=all        Show exhaustive help for all commands and subcommands
+  -V, --version         Display version and build environment info
+  -v, --verbose         Enable verbose TDLib state output
+  -d, --debug           Enable debug tracing
+  -q, --quiet           Suppress non-error informational messages
+  -c, --config <file>   Path to custom configuration file
+  -T, --test-dc         Connect to Telegram Test Data Center environment
+  -F, --format <fmt>    Output format: human, markdown, json, plain (default: auto)
+      --color <mode>    Set ANSI color mode: auto, always, never (or --no-color)
+
+Commands:
+
+login: Authenticate Telegram account with TDLib
+  grm login login [-p|--phone <number>] [-k|--code <code>]
+    -p, --phone <number>            International phone number (e.g. +523330000000)
+    -k, --code <code>               Authentication code received via Telegram or SMS
+    -h, --help                      Show login help message
+
+chat: Manage Telegram chats, groups, and channels
+  grm chat ls [-n|--limit <N>] [-S|--since <time>] [-f|--filter <pattern>]
+    -n, --limit <N>                 Maximum number of chats to display (default: 100)
+    -S, --since <time>              Filter chats active since duration (e.g. '1 day ago')
+    -f, --filter <pattern>          Filter chats by title or ID pattern filter
+    -h, --help                      Show list help message
+
+  grm chat create <group|channel> [--private|--public] "<title>"
+    --private                       Create as a private chat/channel
+    --public                        Create as a public chat/channel
+    -h, --help                      Show create help message
+
+  grm chat info <chat_id>
+    -h, --help                      Show info help message
+
+  grm chat set-title <chat_id> "<title>"
+    -h, --help                      Show set-title help message
+
+  grm chat set-desc <chat_id> "<description>"
+    -h, --help                      Show set-desc help message
+
+  grm chat pin <chat_id>
+    -h, --help                      Show pin help message
+
+  grm chat unpin <chat_id>
+    -h, --help                      Show unpin help message
+
+  grm chat delete <chat_id>
+    -h, --help                      Show delete help message
+
+
+msg: Inspect, send, edit, search, pin, and export messages
+  grm msg ls [-t|--topic <id>] [-n|--limit <N>] <chat_id>
+    -t, --topic <id>                Target specific forum topic thread ID
+    -n, --limit <N>                 Maximum messages to fetch (default: 20)
+    -S, --since <time>              Filter messages since duration or ISO date
+    -f, --filter <pattern>          Filter messages by regex pattern filter
+    -r, --reverse                   Display messages in reverse chronological order
+    -h, --help                      Show message list help message
+
+  grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"]
+    -a, --attach <file>             Attach file or document path to message
+    -m, --media                     Send attachment as inline visual media
+    -C, --caption <text>            Set caption for file attachment
+    -t, --topic <id>                Target specific forum topic thread ID
+    -h, --help                      Show send help message
+
+  grm msg info <chat_id> <message_id>
+    -t, --topic <id>                Target specific forum topic thread ID
+    -h, --help                      Show info help message
+
+  grm msg edit [-t|--topic <id>] <chat_id> <message_id> "<new_text>"
+    -t, --topic <id>                Target specific forum topic thread ID
+    -h, --help                      Show edit help message
+
+  grm msg search [-t|--topic <id>] [-q|--query "<query>"] [-n|--limit <N>] <chat_id>
+    -q, --query <query>             Search query substring or regex pattern
+    -t, --topic <id>                Target specific forum topic thread ID
+    -n, --limit <N>                 Maximum search results to return
+    -h, --help                      Show search help message
+
+  grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <chat_id>
+    -f, --format <fmt>              Export format: csv or json (default: json) (csv|json)
+    -o, --output <file>             Destination export filepath
+    -t, --topic <id>                Target specific forum topic thread ID
+    -n, --limit <N>                 Maximum messages to export
+    -h, --help                      Show export help message
+
+  grm msg pin [-t|--topic <id>] <chat_id> <message_id>
+    -t, --topic <id>                Target specific forum topic thread ID
+    -h, --help                      Show pin help message
+
+  grm msg unpin [-a|--all] <chat_id> [<message_ids...>]
+    -a, --all                       Unpin all pinned messages in chat
+    -h, --help                      Show unpin help message
+
+  grm msg delete [-e|--for-everyone] <chat_id> <message_ids...>
+    -e, --for-everyone              Delete message for all members
+    -h, --help                      Show delete help message
+
+...
+
+

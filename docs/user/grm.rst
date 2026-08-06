@@ -42,6 +42,9 @@ Global Options
 -h, --help
    Show command or subcommand help message and exit.
 
+-H, --help=all
+   Show exhaustive help screen for all commands and subcommands.
+
 -V, --version
    Display version, git commit, and build environment information.
 
@@ -55,13 +58,16 @@ Global Options
    Suppress informational messages and output only errors or data.
 
 -c, --config <file>
-   Specify alternative path to configuration file (default: ``~/.config/grm/grm.conf``).
+   Specify alternative path to configuration file (default: ``~/.config/grm/config.json``).
 
 -T, --test-dc
    Connect to Telegram Test Data Center (DC) environment.
 
 -F, --format <fmt>
-   Set output format: ``human``, ``markdown``, ``json``, or ``plain`` (default: ``auto``).
+   Set output format: ``human``, ``markdown``, ``json``, or ``plain`` (default: ``auto``). Note: JSON format outputs compact single-line JSON by default.
+
+-p, -P, --pretty
+   Pretty-print JSON output with multi-line indentation and spacing (when used with ``-F json``).
 
 -N, --name-format <fmt>
    Set sender name display format: ``username`` (default, e.g. ``@username``) or ``fullname`` (e.g. ``First Last``).

@@ -17,6 +17,11 @@ int main(int argc, char *argv[]) {
     if (arg == "-h" || arg == "--help") {
       options.help = true;
       command_args.emplace_back(arg);
+    } else if (arg == "-H" || arg == "--help=all") {
+      options.help_all = true;
+      command_args.emplace_back("--help=all");
+    } else if (arg == "-p" || arg == "-P" || arg == "--pretty") {
+      options.pretty = true;
     } else if (arg == "-V" || arg == "--version") {
       options.version = true;
     } else if (arg == "-v" || arg == "--verbose") {
