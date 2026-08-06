@@ -333,14 +333,23 @@ To install **grm** system-wide for all users:
 
    make release && sudo make install
 
-Files
-=====
+Files & Configuration (FreeDesktop XDG Standards)
+=================================================
 
-~/.config/grm/grm.conf
-   User configuration file containing API credentials and preferences.
+~/.config/grm/config.json
+   User configuration file containing API credentials (``api_id``, ``api_hash``) and output format defaults.
 
-~/.local/share/grm/tdlib/
-   TDLib persistent database and session cache directory.
+~/.config/grm/tdlib_db/
+   Persistent TDLib database directory containing encrypted session state, authorization keys, and cache.
+
+~/.local/bin/grm
+   User executable installation path per FHS 3.0.
+
+~/.local/share/man/man1/grm.1
+   User manual page installation path.
+
+~/.local/share/bash-completion/completions/grm
+   User Bash tab autocompletion script.
 
 See Also
 ========

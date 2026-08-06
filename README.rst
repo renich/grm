@@ -25,6 +25,22 @@ Why grm?
 * **File Upload & Download Engine**: Streamlined document, photo, video, and media extractions with MIME detection and progress tracking.
 * **Shell Tab Auto-Completion**: Context-aware Bash tab completion covering commands, subcommands, flags, and options.
 * **Telegram Rich Text & Emoji Customization**: Telegram Markdown V2 entity formatting and custom Supergroup topic emoji icons.
+* **FreeDesktop & XDG Compliant**: Strictly honors FreeDesktop standards for user binaries, man pages, shell completions, and session state.
+
+FreeDesktop & XDG Configuration Standards
+-----------------------------------------
+
+**grm** strictly honors the **FreeDesktop XDG Base Directory Specification** and **FHS 3.0**:
+
+============================================== ====================================================================
+File / Directory                               Purpose
+============================================== ====================================================================
+``~/.config/grm/config.json``                  Primary configuration file containing API credentials (``api_id``, ``api_hash``)
+``~/.config/grm/tdlib_db/``                    Persistent TDLib session database, encryption keys, and cache
+``~/.local/bin/grm``                           User binary installation path (non-root)
+``~/.local/share/man/man1/grm.1``              User manual page installation path
+``~/.local/share/bash-completion/completions/grm`` User Bash tab autocompletion script
+============================================== ====================================================================
 
 Dependencies
 ------------
@@ -143,10 +159,26 @@ To install **grm** system-wide for all users:
    # Or specify a custom PREFIX:
    make release && sudo make install PREFIX=/usr
 
+First-Time Authentication
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before executing chat or message commands, authenticate **grm** with your Telegram account:
+
+.. code-block:: bash
+
+   # Interactive authentication flow (prompts for phone, verification code, and 2FA password)
+   grm login
+
+   # Or pass your phone number directly:
+   grm login --phone +523312345678
+
 Usage Highlights
 ----------------
 
 .. code-block:: bash
+
+   # Authenticate Telegram account
+   grm login
 
    # List active chats
    grm chat ls
