@@ -34,6 +34,10 @@ add_compile_options(
     -Werror
 )
 
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(TDJSON REQUIRED tdjson)
 pkg_check_modules(JSONC REQUIRED json-c)
@@ -71,7 +75,7 @@ add_executable(grm
 
 
 target_link_libraries(grm PRIVATE
-    ${TDJSON_LIBRARIES}
+    ${TDJSON_LDFLAGS}
     ${JSONC_LIBRARIES}
 )
 
