@@ -94,6 +94,7 @@ TTY Auto-Detection Logic
 ------------------------
 
 Colors are automatically disabled if:
+
 1. ``color_mode == ColorMode::Never``
 2. ``color_mode == ColorMode::Auto`` AND ``!isatty(STDOUT_FILENO)``
 3. The ``NO_COLOR`` environment variable is set and non-empty.

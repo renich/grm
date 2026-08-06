@@ -8,7 +8,7 @@ Overview
 This specification defines the user-facing GNU/POSIX CLI option interface and output formatting guidelines for **grm**. It establishes global options, non-interactive login parameters, verbosity levels, and clean terminal output formatting adhering to GNU Coding Standards.
 
 GNU Option Design Principles
----------------------------
+----------------------------
 
 1. **Strict GNU Option Compatibility**:
    - Short options use a single dash (e.g. ``-n 50``).
@@ -55,7 +55,7 @@ Login Command:
   - ``-k, --code <code>``: Pre-fill authentication code for non-interactive scripts.
 
 Message Subcommands:
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 - ``grm msg ls [-n|--limit <N>] <chat_id>``
   - ``-n, --limit <N>``: Limit maximum messages to fetch (default: 20).
@@ -83,7 +83,7 @@ GNU Formatted History Listing:
    grm msg ls -n 50 -1002289735000
 
 GNU Formatted Export with Explicit Output Path:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -97,7 +97,7 @@ Send Text Message to Chat:
    grm msg send -1001789902965 "Hola desde grm CLI!"
 
 Upload Document with Caption to Forum Topic:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 

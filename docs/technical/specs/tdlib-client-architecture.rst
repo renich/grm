@@ -11,6 +11,7 @@ Module Specification
 
 [TECH-001] TDLib Client Wrapper (grm::TdClient)
 -----------------------------------------------
+
 * **Fulfills Requirements**: ``[FUNC-001]``, ``[FUNC-002]``
 * **Header**: ``include/grm/td_client.hpp``
 * **Implementation**: ``src/td_client.cpp``
@@ -23,6 +24,7 @@ The ``TdClient`` class wraps TDLib's C JSON API (``td_create_client_id``, ``td_s
 
 [TECH-002] RAII JSON Wrapper (grm::JsonValue)
 ---------------------------------------------
+
 * **Fulfills Requirements**: ``[FUNC-003]``
 * **Header**: ``include/grm/json_utils.hpp``
 * **Implementation**: ``src/json_utils.cpp``
@@ -34,6 +36,7 @@ Wraps C library ``json-c`` pointers with modern C++ memory management:
 
 [TECH-003] Application Controller (grm::App)
 --------------------------------------------
+
 * **Fulfills Requirements**: ``[FUNC-005]``
 * **Header**: ``include/grm/app.hpp``
 * **Implementation**: ``src/app.cpp``

@@ -34,6 +34,6 @@ Local file uploads leverage TDLib's ``sendMessage`` API combined with the ``inpu
 Asynchronous Upload Lifecycle
 -----------------------------
 
-1. **Validation**: The CLI validates local file existence, readability, and file size via ``std::filesystem::exists`` and ``std::filesystem::file_size``.
-2. **Dispatch**: The request payload is formatted and sent asynchronously through ``grm::TdClient::send_request``.
+1. **Validation**: The CLI validates local file existence, readability, and file size via ``exists()`` and ``file_size()``.
+2. **Dispatch**: The request payload is formatted and sent asynchronously through ``send_request()``.
 3. **Progress Tracking**: ``updateFile`` events monitor upload byte progress until TDLib emits completion status.

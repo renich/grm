@@ -34,7 +34,7 @@ Defined in ``include/grm/config.hpp``:
    } // namespace grm
 
 Subcommand Option Parsers
-------------------------
+-------------------------
 
 Subcommands parse GNU options using clean helper loops with ``std::from_chars`` for exception-free numeric parsing:
 

@@ -24,6 +24,7 @@ In ``src/app.cpp``, ``App::run()`` checks for ``-h`` or ``--help`` in subcommand
    }
 
 When ``is_help_requested()`` is true, execution routes to dedicated help functions:
+
 - ``print_login_help()``
 - ``print_chat_help()``
 - ``print_msg_help()``

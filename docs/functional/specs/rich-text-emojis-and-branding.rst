@@ -1,6 +1,6 @@
-=============================================
+==============================================
 Rich Text, Topic Custom Emojis & Branding Spec
-=============================================
+==============================================
 
 This specification covers Telegram Rich Text Entity parsing (Markdown V2/HTML), Supergroup Forum Topic Custom Emoji Icons, and Project Branding Assets.
 

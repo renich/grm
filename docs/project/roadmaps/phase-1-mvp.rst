@@ -12,6 +12,7 @@ Milestones & Atomic Tasks
 
 Milestone 1.1: CMake & Build Infrastructure
 -------------------------------------------
+
 * **Task 1.1.1**: Setup modern C++23 CMake build configuration with strict warning flags (``-Werror -Wall -Wextra``).
   * *Delivers*: ``CMakeLists.txt``
   * *Unblocks*: Task 1.1.2
@@ -22,6 +23,7 @@ Milestone 1.1: CMake & Build Infrastructure
 
 Milestone 1.2: TDLib Client & RAII Memory Wrappers
 --------------------------------------------------
+
 * **Task 1.2.1**: Implement ``grm::JsonValue`` RAII memory wrapper over ``json-c`` (``[TECH-002]``).
   * *Fulfills*: ``[FUNC-003]``
   * *Unblocks*: Task 1.2.2
@@ -32,6 +34,7 @@ Milestone 1.2: TDLib Client & RAII Memory Wrappers
 
 Milestone 1.3: Application Controller & CLI Commands
 -----------------------------------------------------
+
 * **Task 1.3.1**: Implement ``grm login`` interactive authentication state machine (``[FUNC-001]``).
   * *Unblocks*: Task 1.3.2
 

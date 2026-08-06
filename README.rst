@@ -122,50 +122,95 @@ Command Reference
 Global Options
 ~~~~~~~~~~~~~~
 
-- ``-h, --help``: Display help screen and exit.
-- ``-V, --version``: Display version information and exit.
-- ``-v, --verbose``: Enable verbose TDLib state output.
-- ``-d, --debug``: Enable raw JSON payload tracing.
-- ``-q, --quiet``: Suppress non-essential informational output.
-- ``-c, --config <path>``: Custom configuration file path.
-- ``-T, --test-dc``: Connect to Telegram Test Data Center environment.
+* ``-h, --help``: Display help screen and exit.
+
+* ``-V, --version``: Display version information and exit.
+
+* ``-v, --verbose``: Enable verbose TDLib state output.
+
+* ``-d, --debug``: Enable raw JSON payload tracing.
+
+* ``-q, --quiet``: Suppress non-essential informational output.
+
+* ``-F, --format <fmt>``: Output format: ``human``, ``markdown``, ``json``, ``jsonl``, ``plain`` (env: ``GRM_FORMAT``).
+
+* ``--color <mode>``: Color mode: ``auto``, ``always``, ``never`` (env: ``GRM_COLOR``).
+
+* ``-c, --config <path>``: Custom configuration file path.
+
+* ``-T, --test-dc``: Connect to Telegram Test Data Center environment.
 
 CRUD Command Structure
 ~~~~~~~~~~~~~~~~~~~~~~
 
 1. **Chats & Groups (`grm chat`)**:
-   - ``grm chat create group [--private|--public] "<title>"``
-   - ``grm chat create channel [--private|--public] "<title>" ["<description>"]``
-   - ``grm chat ls [-n|--limit <N>]``
-   - ``grm chat info <chat_id>``
-   - ``grm chat set-title <chat_id> "<new_title>"``
-   - ``grm chat set-desc <chat_id> "<description>"``
-   - ``grm chat pin <chat_id> <message_id>``
-   - ``grm chat unpin <chat_id> [<message_id>]``
-   - ``grm chat delete <chat_id>``
+
+   * List active chats:
+
+     .. code-block:: bash
+
+        grm chat ls [-n|--limit <N>]
+
+   * Chat metadata & management:
+
+     .. code-block:: bash
+
+        grm chat info <chat_id>
+        grm chat create group [--private|--public] "<title>"
+        grm chat create channel [--private|--public] "<title>" ["<description>"]
+        grm chat set-title <chat_id> "<new_title>"
+        grm chat set-desc <chat_id> "<description>"
+        grm chat pin <chat_id> <message_id>
+        grm chat unpin <chat_id> [<message_id>]
+        grm chat delete <chat_id>
 
 2. **Supergroup Forum Topics (`grm topic`)**:
-   - ``grm topic create <supergroup_id> "<topic_name>" [--icon-color <color>] [-e|--emoji <id>]``
-   - ``grm topic ls [-n|--limit <N>] <supergroup_id>``
-   - ``grm topic info <supergroup_id> <topic_id>``
-   - ``grm topic edit <supergroup_id> <topic_id> [--name "<new_name>"] [-e|--emoji <id>]``
-   - ``grm topic close <supergroup_id> <topic_id>``
-   - ``grm topic reopen <supergroup_id> <topic_id>``
-   - ``grm topic pin <supergroup_id> <topic_id>``
-   - ``grm topic unpin <supergroup_id> <topic_id>``
-   - ``grm topic delete <supergroup_id> <topic_id>``
+
+   * List forum topics:
+
+     .. code-block:: bash
+
+        grm topic ls [-n|--limit <N>] <supergroup_id>
+
+   * Topic management:
+
+     .. code-block:: bash
+
+        grm topic create <supergroup_id> "<topic_name>" [--icon-color <color>] [-e|--emoji <id>]
+        grm topic info <supergroup_id> <topic_id>
+        grm topic edit <supergroup_id> <topic_id> [--name "<new_name>"] [-e|--emoji <id>]
+        grm topic close <supergroup_id> <topic_id>
+        grm topic reopen <supergroup_id> <topic_id>
+        grm topic pin <supergroup_id> <topic_id>
+        grm topic unpin <supergroup_id> <topic_id>
+        grm topic delete <supergroup_id> <topic_id>
 
 3. **Messages & Attachments (`grm msg`)**:
-   - ``grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"]``
-   - ``grm msg ls [-t|--topic <id>] [-n|--limit <N>] <chat_id>``
-   - ``grm msg info <chat_id> <message_id>``
-   - ``grm msg search [-t|--topic <id>] [-q|--query "<pattern>"] [-n|--limit <N>] <chat_id>``
-   - ``grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] [-n|--limit <N>] <chat_id>``
-   - ``grm msg edit [-t|--topic <id>] <chat_id> <message_id> "<new_text>"``
-   - ``grm msg delete [--for-everyone] <chat_id> <message_ids...>``
+
+   * List & search messages:
+
+     .. code-block:: bash
+
+        grm msg ls [-t|--topic <id>] [-n|--limit <N>] <chat_id>
+        grm msg search [-t|--topic <id>] [-q|--query "<pattern>"] [-n|--limit <N>] <chat_id>
+
+   * Send & edit messages:
+
+     .. code-block:: bash
+
+        grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"]
+        grm msg edit [-t|--topic <id>] <chat_id> <message_id> "<new_text>"
+        grm msg info <chat_id> <message_id>
+        grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] [-n|--limit <N>] <chat_id>
+        grm msg delete [--for-everyone] <chat_id> <message_ids...>
 
 4. **File Downloads (`grm file`)**:
-   - ``grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]``
+
+   * Download attachments:
+
+     .. code-block:: bash
+
+        grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]
 
 Usage Examples
 ~~~~~~~~~~~~~~
