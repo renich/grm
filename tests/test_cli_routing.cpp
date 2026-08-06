@@ -52,6 +52,11 @@ int main() {
   assert(res6.error().find("Unknown msg subcommand: invalid_subcmd") !=
          std::string::npos);
 
+  // Test 6b: Msg unpin --all returns 0
+  auto res6b = app.run({"msg", "unpin", "--all", "12345"});
+  assert(res6b.has_value());
+  assert(*res6b == 0);
+
   // Test 7: Topic command with invalid subcommand returns unexpected error
   auto res7 = app.run({"topic", "invalid_subcmd"});
   assert(!res7.has_value());
