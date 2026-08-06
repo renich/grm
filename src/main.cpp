@@ -78,7 +78,15 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  grm::App app(std::move(*cfg_res), options);
+  grm::Config cfg = std::move(*cfg_res);
+  if (options.format == grm::fmt::OutputFormat::Auto && cfg.default_format != grm::fmt::OutputFormat::Auto) {
+    options.format = cfg.default_format;
+  }
+  if (options.color_mode == grm::fmt::ColorMode::Auto && cfg.default_color_mode != grm::fmt::ColorMode::Auto) {
+    options.color_mode = cfg.default_color_mode;
+  }
+
+  grm::App app(cfg, options);
   auto result = app.run(command_args);
 
   if (!result) {

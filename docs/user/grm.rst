@@ -265,6 +265,18 @@ Examples
 
       grm file download-all -o ~/Downloads -t 2 --type photo -1003750297693
 
+Environment Variables
+=====================
+
+GRM_FORMAT
+   Set default output format: ``human``, ``markdown``, ``json``, ``jsonl`` (or ``ndjson``), or ``plain``.
+
+GRM_COLOR
+   Set default ANSI color mode: ``auto``, ``always``, or ``never``.
+
+NO_COLOR
+   Disables ANSI color output when present and non-empty.
+
 Files
 =====
 

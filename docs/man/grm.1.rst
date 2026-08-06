@@ -238,6 +238,18 @@ EXIT STATUS
 2
    Invalid CLI arguments or usage syntax error.
 
+ENVIRONMENT
+===========
+
+GRM_FORMAT
+   Default output format mode: ``human``, ``markdown``, ``json``, ``jsonl`` (or ``ndjson``), or ``plain``. Overrides default TTY format detection when set.
+
+GRM_COLOR
+   Default ANSI color mode: ``auto``, ``always``, or ``never``.
+
+NO_COLOR
+   Disables ANSI color output when present and non-empty.
+
 FILES
 =====
 

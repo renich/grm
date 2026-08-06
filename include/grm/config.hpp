@@ -25,6 +25,8 @@ struct Config {
   std::string api_hash{"e001df71d7e35904a00f2a9a7a03d60e"};
   std::filesystem::path config_dir;
   std::filesystem::path db_dir;
+  fmt::OutputFormat default_format{fmt::OutputFormat::Auto};
+  fmt::ColorMode default_color_mode{fmt::ColorMode::Auto};
 
   [[nodiscard]] static std::expected<Config, std::string>
   load(const std::filesystem::path &custom_path = {});
