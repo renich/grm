@@ -8,7 +8,8 @@
 int main() {
   std::cout << "Running test_cli_routing...\n";
 
-  grm::App app;
+  grm::Config cfg;
+  grm::App app(cfg);
 
   // Test 1: Empty command returns 0 and prints top-level usage
   auto res1 = app.run({});
