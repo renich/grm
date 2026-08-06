@@ -1,7 +1,7 @@
 .. image:: assets/logo.svg
    :alt: grm — Group & Telegram Manager CLI
    :align: center
-   :width: 180px
+   :width: 360px
 
 ==================================
 grm — Group & Telegram Manager CLI
@@ -9,9 +9,13 @@ grm — Group & Telegram Manager CLI
 
 **grm** is a high-performance, native **C++23** command-line tool for managing Telegram accounts, groups, message history, forum topics, file uploads, media streaming, and data extractions. Powered directly by Telegram's official C++ engine **TDLib** (``libtdjson``).
 
+:Pipeline Status: `GitLab CI Pipelines <https://gitlab.com/renich/grm/-/pipelines>`_
+:License: `GPL-3.0-or-later <https://gitlab.com/renich/grm/-/blob/master/LICENSE>`_
+:Language: C++23 (ISO/IEC 14882:2023)
+:Engine: Telegram TDLib 1.8.66 (``libtdjson``)
+:Platforms: Fedora Linux / RHEL / POSIX
 :Primary Repository: `GitLab (gitlab.com/renich/grm) <https://gitlab.com/renich/grm>`_
 :GitHub Mirror: `GitHub (github.com/renich/grm) <https://github.com/renich/grm>`_
-:License: GPL-3.0-or-later
 
 Dual-Optimized Interface Architecture
 -------------------------------------
