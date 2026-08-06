@@ -268,6 +268,68 @@ std::string CommandRegistry::render_command_help(const std::string &cmd_name) co
   return ss.str();
 }
 
+std::string CommandRegistry::render_all_help() const {
+  std::stringstream ss;
+  ss << "grm - Group & Telegram Manager CLI (C++23 / TDLib) - Exhaustive Master Help\n\n"
+     << "Global Options:\n"
+     << "  -h, --help            Show command help screen\n"
+     << "  --help=all            Show exhaustive master help for all commands and options\n"
+     << "  -V, --version         Display version and build environment info\n"
+     << "  -v, --verbose         Enable verbose TDLib state output\n"
+     << "  -d, --debug           Enable debug tracing\n"
+     << "  -q, --quiet           Suppress non-error informational messages\n"
+     << "  -c, --config <file>   Path to custom configuration file\n"
+     << "  -T, --test-dc         Connect to Telegram Test Data Center environment\n"
+     << "  -F, --format <fmt>    Output format: human, markdown, json, plain (default: auto)\n"
+     << "  --color <mode>        Set ANSI color mode: auto, always, never (or --no-color)\n\n"
+     << "================================================================================\n"
+     << "EXHAUSTIVE COMMAND REFERENCE & SUBCOMMAND OPTIONS\n"
+     << "================================================================================\n\n";
+
+  for (const auto &cmd : commands_) {
+    ss << std::format("Command: grm {}\n{}\n", cmd.name, cmd.description);
+    ss << std::string(80, '-') << "\n\n";
+
+    for (const auto &sub : cmd.subcommands) {
+      std::string line = std::format("grm {} {} {}", cmd.name, sub.name, sub.synopsis);
+      ss << std::format("  {:<66} {}\n", line, sub.description);
+
+      if (!sub.options.empty()) {
+        for (const auto &opt : sub.options) {
+          std::string flags;
+          if (!opt.short_flag.empty() && !opt.long_flag.empty()) {
+            flags = std::format("{}, {}", opt.short_flag, opt.long_flag);
+          } else if (!opt.short_flag.empty()) {
+            flags = opt.short_flag;
+          } else {
+            flags = opt.long_flag;
+          }
+
+          if (!opt.value_hint.empty()) {
+            flags += " " + opt.value_hint;
+          }
+
+          std::string opt_desc = opt.description;
+          if (!opt.choices.empty()) {
+            std::string choices_str;
+            for (size_t i = 0; i < opt.choices.size(); ++i) {
+              if (i > 0) choices_str += "|";
+              choices_str += opt.choices[i];
+            }
+            opt_desc += " (" + choices_str + ")";
+          }
+
+          ss << std::format("      {:<33} {}\n", flags, opt_desc);
+        }
+      }
+      ss << "\n";
+    }
+    ss << "\n";
+  }
+
+  return ss.str();
+}
+
 std::string CommandRegistry::render_completion(const std::string &shell) const {
   if (shell == "bash") {
     std::stringstream ss;

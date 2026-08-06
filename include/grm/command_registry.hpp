@@ -33,6 +33,7 @@ public:
 
   [[nodiscard]] std::string render_global_help() const;
   [[nodiscard]] std::string render_command_help(const std::string &cmd_name) const;
+  [[nodiscard]] std::string render_all_help() const;
   [[nodiscard]] std::string render_completion(const std::string &shell) const;
 
   [[nodiscard]] const std::vector<CommandSpec> &commands() const { return commands_; }

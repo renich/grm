@@ -19,7 +19,7 @@ void App::print_usage() {
 
 bool App::is_help_requested(const std::vector<std::string> &args) {
   return std::ranges::any_of(args, [](const std::string &arg) {
-    return arg == "-h" || arg == "--help";
+    return arg == "-h" || arg == "--help" || arg == "--help=all";
   });
 }
 
@@ -207,9 +207,17 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     return 0;
   }
 
+  if (std::ranges::any_of(args, [](const std::string &arg) {
+        return arg == "--help=all";
+      }) ||
+      (args.size() >= 2 && (args[0] == "--help" || args[0] == "help") && args[1] == "all")) {
+    std::cout << CommandRegistry::get_instance().render_all_help();
+    return 0;
+  }
+
   const std::string &cmd = args[0];
 
-  if (cmd == "-h" || cmd == "--help") {
+  if (cmd == "-h" || cmd == "--help" || cmd == "help") {
     print_usage();
     return 0;
   }

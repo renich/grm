@@ -53,11 +53,21 @@ _grm_completions() {
       elif [[ "${words[2]}" == "ls" ]]; then
         COMPREPLY=($(compgen -W "-n --limit -t --topic -S --since -f --filter --sender -r --reverse -h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "export" ]]; then
-        COMPREPLY=($(compgen -W "-f --format -o --output -t --topic -n --limit csv json -h --help" -- "${cur}"))
+        if [[ "${prev}" == "-f" || "${prev}" == "--format" ]]; then
+          COMPREPLY=($(compgen -W "csv json" -- "${cur}"))
+        elif [[ "${prev}" == "-o" || "${prev}" == "--output" ]]; then
+          _filedir
+        else
+          COMPREPLY=($(compgen -W "-f --format -o --output -t --topic -n --limit -h --help" -- "${cur}"))
+        fi
       elif [[ "${words[2]}" == "search" ]]; then
         COMPREPLY=($(compgen -W "-q --query -n --limit -t --topic -S --since -f --filter --sender -h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "send" ]]; then
-        COMPREPLY=($(compgen -W "-a --attach -m --media -C --caption -t --topic -h --help" -- "${cur}"))
+        if [[ "${prev}" == "-a" || "${prev}" == "--attach" ]]; then
+          _filedir
+        else
+          COMPREPLY=($(compgen -W "-a --attach -m --media -C --caption -t --topic -h --help" -- "${cur}"))
+        fi
       elif [[ "${words[2]}" == "edit" || "${words[2]}" == "info" || "${words[2]}" == "pin" ]]; then
         COMPREPLY=($(compgen -W "-t --topic -h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "unpin" ]]; then
@@ -89,7 +99,13 @@ _grm_completions() {
           COMPREPLY=($(compgen -W "get" -- "${cur}"))
         fi
       elif [[ "${words[2]}" == "get" ]]; then
-        COMPREPLY=($(compgen -W "-a --all -A -o --output -t --topic -n --limit --type photo video doc audio all -h --help" -- "${cur}"))
+        if [[ "${prev}" == "--type" ]]; then
+          COMPREPLY=($(compgen -W "photo video doc audio all" -- "${cur}"))
+        elif [[ "${prev}" == "-o" || "${prev}" == "--output" ]]; then
+          _filedir
+        else
+          COMPREPLY=($(compgen -W "-a --all -A -o --output -t --topic -n --limit --type -h --help" -- "${cur}"))
+        fi
       fi
       ;;
     completion)
