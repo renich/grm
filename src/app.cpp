@@ -318,6 +318,15 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
       print_login_help();
       return 0;
     }
+    for (size_t i = 0; i < sub_args.size(); ++i) {
+      if ((sub_args[i] == "-p" || sub_args[i] == "--phone") &&
+          i + 1 < sub_args.size()) {
+        options_.phone = sub_args[++i];
+      } else if ((sub_args[i] == "-k" || sub_args[i] == "--code") &&
+                 i + 1 < sub_args.size()) {
+        options_.code = sub_args[++i];
+      }
+    }
     return cmd_login();
   }
 
