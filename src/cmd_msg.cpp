@@ -374,6 +374,21 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   int empty_retries = 0;
   const size_t target_limit = static_cast<size_t>(std::max(1, limit));
 
+  bool fetching_forward = false;
+  if (since_timestamp > 0) {
+    std::string date_payload = std::format(
+        R"({{"chat_id": {}, "date": {}}})", chat_id, since_timestamp);
+    auto date_res =
+        client_->send_request("getChatMessageByDate", date_payload, 5.0);
+    if (date_res) {
+      int64_t start_id = date_res->get_int("id").value_or(0);
+      if (start_id != 0) {
+        from_msg_id = start_id;
+        fetching_forward = true;
+      }
+    }
+  }
+
   bool reached_since_cutoff = false;
   while (items.size() < target_limit && !reached_since_cutoff) {
     auto fetch_limit =
@@ -381,6 +396,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
 
     const std::string method_name =
         (topic_id > 0) ? "getForumTopicHistory" : "getChatHistory";
+    int offset = fetching_forward ? (-fetch_limit + 1) : 0;
     std::string payload;
     if (topic_id > 0) {
       payload = std::format(
@@ -389,21 +405,20 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
             "forum_topic_id": {},
             "message_thread_id": {},
             "from_message_id": {},
-            "offset": 0,
+            "offset": {},
             "limit": {}
           }})",
-          chat_id, topic_id, topic_id, from_msg_id, fetch_limit);
+          chat_id, topic_id, topic_id, from_msg_id, offset, fetch_limit);
     } else {
-
       payload = std::format(
           R"({{
             "chat_id": {},
             "from_message_id": {},
-            "offset": 0,
+            "offset": {},
             "limit": {},
             "only_local": false
           }})",
-          chat_id, from_msg_id, fetch_limit);
+          chat_id, from_msg_id, offset, fetch_limit);
     }
 
     auto res = client_->send_request(method_name, payload, 10.0);
@@ -426,15 +441,32 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
     }
 
     empty_retries = 0;
+    int64_t max_batch_id = from_msg_id;
+    int64_t min_batch_id = from_msg_id;
+
     for (const auto &m : batch) {
       auto id = m.get_int("id").value_or(0);
       if (id != 0) {
-        from_msg_id = id;
+        if (!fetching_forward) {
+          from_msg_id = id;
+        } else {
+          if (id > max_batch_id || max_batch_id == 0) {
+            max_batch_id = id;
+          }
+          if (id < min_batch_id || min_batch_id == 0) {
+            min_batch_id = id;
+          }
+        }
       }
+
       int64_t msg_date = m.get_int("date").value_or(0);
       if (since_timestamp > 0 && msg_date < since_timestamp) {
-        reached_since_cutoff = true;
-        break;
+        if (!fetching_forward) {
+          reached_since_cutoff = true;
+          break;
+        } else {
+          continue;
+        }
       }
 
       SenderInfo info = resolve_sender_info(m);
@@ -489,10 +521,35 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
         }
       }
     }
+
+    if (fetching_forward) {
+      if (max_batch_id == from_msg_id && !batch.empty()) {
+        break;
+      }
+      from_msg_id = max_batch_id;
+    }
   }
 
-  if (!reverse_order) {
-    std::reverse(items.begin(), items.end());
+  if (!fetching_forward) {
+    if (!reverse_order) {
+      std::reverse(items.begin(), items.end());
+    }
+  } else {
+    std::sort(items.begin(), items.end(),
+              [](const fmt::MessageItem &a, const fmt::MessageItem &b) {
+                if (a.date != b.date)
+                  return a.date < b.date;
+                return a.id < b.id;
+              });
+    auto last = std::unique(
+        items.begin(), items.end(),
+        [](const fmt::MessageItem &a, const fmt::MessageItem &b) {
+          return a.id == b.id;
+        });
+    items.erase(last, items.end());
+    if (reverse_order) {
+      std::reverse(items.begin(), items.end());
+    }
   }
 
   fmt::Formatter::render(
