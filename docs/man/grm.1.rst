@@ -111,17 +111,20 @@ grm chat delete *CHAT_ID*
 msg
 ---
 
-grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] *CHAT_ID*
+grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] [-f *PATTERN*] *CHAT_ID*
    List recent messages from a chat or forum topic.
 
    -n, --limit *N*
-      Maximum number of messages to display (default: 20).
+      Maximum number of messages to display (default: 20, or 1000 when ``--since`` is passed).
 
    -t, --topic *TOPIC_ID*
       Filter messages by forum topic ID.
 
    -S, --since *SINCE*
-      Filter messages since duration (e.g. ``1d``, ``2h``), ISO date (``YYYY-MM-DD``), or timestamp.
+      Filter messages since natural human/systemd duration (e.g. ``"1 day ago"``, ``"3 days ago"``, ``"1 month ago"``, ``"2h"``, ``"yesterday"``), ISO date (``YYYY-MM-DD``), or timestamp.
+
+   -f, --filter, --sender *PATTERN*
+      Filter messages by sender username, display name, or handle (case-insensitive substring or regex).
 
 grm msg export [-f csv|json] [-o *FILE*] [-t *TOPIC_ID*] *CHAT_ID*
    Export chat history to CSV or JSON file.
@@ -135,7 +138,7 @@ grm msg export [-f csv|json] [-o *FILE*] [-t *TOPIC_ID*] *CHAT_ID*
    -t, --topic *TOPIC_ID*
       Target specific forum topic ID.
 
-grm msg search [-q "*QUERY*"] [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] *CHAT_ID*
+grm msg search [-q "*QUERY*"] [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] [-f *PATTERN*] *CHAT_ID*
    Search message history using pattern or regex filter.
 
    -q, --query "*QUERY*"
@@ -148,7 +151,10 @@ grm msg search [-q "*QUERY*"] [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] *CHAT_ID
       Target specific forum topic ID.
 
    -S, --since *SINCE*
-      Filter messages since duration (e.g. ``1d``, ``2h``), ISO date (``YYYY-MM-DD``), or timestamp.
+      Filter messages since natural human/systemd duration (e.g. ``"1 day ago"``, ``"3 days ago"``, ``"1 month ago"``, ``"2h"``, ``"yesterday"``), ISO date (``YYYY-MM-DD``), or timestamp.
+
+   -f, --filter, --sender *PATTERN*
+      Filter messages by sender username, display name, or handle (case-insensitive substring or regex).
 
 grm msg send [-a *FILE*] [-m] [-C "*CAPTION*"] [-t *TOPIC_ID*] *CHAT_ID* ["*MESSAGE*"]
    Send text message, document, or media attachment. Supports Telegram Rich Text Markdown V2 formatting.

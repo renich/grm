@@ -147,15 +147,26 @@ std::string App::resolve_sender_name(const JsonValue &message_obj) {
 }
 
 static std::expected<int64_t, std::string>
-parse_since_timestamp(std::string_view str) {
-  if (str.empty()) {
+parse_since_timestamp(std::string_view raw_str) {
+  if (raw_str.empty()) {
     return std::unexpected("Empty since duration/date string");
   }
 
-  if (str.find_first_not_of("0123456789") == std::string_view::npos &&
-      str.size() >= 9) {
-    if (auto val = parse_int64(str)) {
-      return *val;
+  size_t start = raw_str.find_first_not_of(" \t\n\r");
+  size_t end = raw_str.find_last_not_of(" \t\n\r");
+  if (start == std::string_view::npos) {
+    return std::unexpected("Empty since duration/date string");
+  }
+  std::string str(raw_str.substr(start, end - start + 1));
+  for (char &c : str) {
+    c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+  }
+
+  if (str.ends_with(" ago")) {
+    str = str.substr(0, str.size() - 4);
+    size_t e = str.find_last_not_of(" \t");
+    if (e != std::string::npos) {
+      str = str.substr(0, e + 1);
     }
   }
 
@@ -163,6 +174,26 @@ parse_since_timestamp(std::string_view str) {
       std::chrono::duration_cast<std::chrono::seconds>(
           std::chrono::system_clock::now().time_since_epoch())
           .count();
+
+  if (str == "yesterday") {
+    return now_sec - 86400;
+  }
+  if (str == "today") {
+    std::time_t t_now = static_cast<std::time_t>(now_sec);
+    std::tm tm_now = {};
+    gmtime_r(&t_now, &tm_now);
+    tm_now.tm_hour = 0;
+    tm_now.tm_min = 0;
+    tm_now.tm_sec = 0;
+    return static_cast<int64_t>(timegm(&tm_now));
+  }
+
+  if (str.find_first_not_of("0123456789") == std::string::npos &&
+      str.size() >= 9) {
+    if (auto val = parse_int64(str)) {
+      return *val;
+    }
+  }
 
   int64_t num = 0;
   size_t idx = 0;
@@ -172,28 +203,39 @@ parse_since_timestamp(std::string_view str) {
     idx++;
   }
 
-  if (idx > 0 && idx < str.size()) {
-    std::string_view unit_str = str.substr(idx);
-    int64_t multiplier = 0;
-    if (unit_str == "s" || unit_str == "sec" || unit_str == "seconds") {
-      multiplier = 1;
-    } else if (unit_str == "m" || unit_str == "min" || unit_str == "minutes") {
-      multiplier = 60;
-    } else if (unit_str == "h" || unit_str == "hr" || unit_str == "hours") {
-      multiplier = 3600;
-    } else if (unit_str == "d" || unit_str == "day" || unit_str == "days") {
-      multiplier = 86400;
-    } else if (unit_str == "w" || unit_str == "week" || unit_str == "weeks") {
-      multiplier = 604800;
-    } else if (unit_str == "mon" || unit_str == "month" ||
-               unit_str == "months") {
-      multiplier = 2592000;
-    } else if (unit_str == "y" || unit_str == "year" || unit_str == "years") {
-      multiplier = 31536000;
+  if (idx > 0) {
+    while (idx < str.size() && (str[idx] == ' ' || str[idx] == '\t')) {
+      idx++;
     }
 
-    if (multiplier > 0) {
-      return now_sec - (num * multiplier);
+    if (idx < str.size()) {
+      std::string_view unit_str = std::string_view(str).substr(idx);
+      int64_t multiplier = 0;
+      if (unit_str == "s" || unit_str == "sec" || unit_str == "second" ||
+          unit_str == "seconds") {
+        multiplier = 1;
+      } else if (unit_str == "m" || unit_str == "min" || unit_str == "minute" ||
+                 unit_str == "minutes") {
+        multiplier = 60;
+      } else if (unit_str == "h" || unit_str == "hr" || unit_str == "hour" ||
+                 unit_str == "hours") {
+        multiplier = 3600;
+      } else if (unit_str == "d" || unit_str == "day" || unit_str == "days") {
+        multiplier = 86400;
+      } else if (unit_str == "w" || unit_str == "week" ||
+                 unit_str == "weeks") {
+        multiplier = 604800;
+      } else if (unit_str == "mon" || unit_str == "month" ||
+                 unit_str == "months") {
+        multiplier = 2592000;
+      } else if (unit_str == "y" || unit_str == "year" ||
+                 unit_str == "years") {
+        multiplier = 31536000;
+      }
+
+      if (multiplier > 0) {
+        return now_sec - (num * multiplier);
+      }
     }
   }
 
@@ -213,28 +255,33 @@ parse_since_timestamp(std::string_view str) {
   }
 
   return std::unexpected(
-      std::format("Invalid since format '{}'. Expected duration (e.g. 1d, 2h, "
-                  "30m), ISO date (YYYY-MM-DD), or timestamp.",
-                  str));
+      std::format("Invalid since format '{}'. Expected duration (e.g. '1 day "
+                  "ago', '3 days ago', '2h', '30m'), ISO date (YYYY-MM-DD), or "
+                  "timestamp.",
+                  raw_str));
 }
 
 std::expected<int, std::string>
 App::cmd_msg_ls(const std::vector<std::string> &args) {
   int limit = 20;
+  bool limit_set_by_user = false;
   int64_t chat_id = 0;
   bool chat_id_set = false;
   int64_t topic_id = 0;
   int64_t since_timestamp = 0;
+  std::string filter_pattern;
 
   for (size_t i = 0; i < args.size(); ++i) {
     std::string_view arg(args[i]);
     if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
       if (auto lim = parse_int32(args[++i])) {
         limit = *lim;
+        limit_set_by_user = true;
       }
     } else if (arg.starts_with("--limit=")) {
       if (auto lim = parse_int32(arg.substr(8))) {
         limit = *lim;
+        limit_set_by_user = true;
       }
     } else if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
       if (auto tid = parse_int64(args[++i])) {
@@ -256,6 +303,13 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
       } else {
         return std::unexpected(ts.error());
       }
+    } else if ((arg == "-f" || arg == "--filter" || arg == "--sender") &&
+               i + 1 < args.size()) {
+      filter_pattern = args[++i];
+    } else if (arg.starts_with("--filter=")) {
+      filter_pattern = arg.substr(9);
+    } else if (arg.starts_with("--sender=")) {
+      filter_pattern = arg.substr(9);
     } else if (!chat_id_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_id_set = true;
@@ -265,7 +319,23 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   if (!chat_id_set) {
     return std::unexpected(
         "Usage: grm msg ls [-t|--topic <id>] [-n|--limit <N>] [--since "
-        "<duration|date>] <chat_id>");
+        "<duration|date>] [-f|--filter <pattern>] <chat_id>");
+  }
+
+  if (since_timestamp > 0 && !limit_set_by_user) {
+    limit = 1000;
+  }
+
+  std::regex filter_regex;
+  bool has_filter = false;
+  if (!filter_pattern.empty()) {
+    try {
+      filter_regex = std::regex(filter_pattern, std::regex::icase);
+      has_filter = true;
+    } catch (const std::regex_error &e) {
+      return std::unexpected("Invalid filter pattern: " +
+                             std::string(e.what()));
+    }
   }
 
   if (auto res = ensure_authenticated(); !res) {
@@ -342,6 +412,13 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
         break;
       }
 
+      std::string sender_name = resolve_sender_name(m);
+      if (has_filter) {
+        if (!std::regex_search(sender_name, filter_regex)) {
+          continue;
+        }
+      }
+
       std::string text = extract_message_text(m);
       if (!text.empty()) {
         bool has_attach = false;
@@ -366,7 +443,7 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
                                          .chat_id = chat_id,
                                          .topic_id = topic_id,
                                          .date = msg_date,
-                                         .sender = resolve_sender_name(m),
+                                         .sender = sender_name,
                                          .text = text,
                                          .has_attachment = has_attach,
                                          .attachment_type = attach_type});
@@ -520,6 +597,7 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
   int search_limit = 100;
 
   int64_t since_timestamp = 0;
+  std::string filter_pattern;
 
   for (size_t i = 0; i < args.size(); ++i) {
     std::string_view arg(args[i]);
@@ -547,6 +625,13 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
       } else {
         return std::unexpected(ts.error());
       }
+    } else if ((arg == "-f" || arg == "--filter" || arg == "--sender") &&
+               i + 1 < args.size()) {
+      filter_pattern = args[++i];
+    } else if (arg.starts_with("--filter=")) {
+      filter_pattern = arg.substr(9);
+    } else if (arg.starts_with("--sender=")) {
+      filter_pattern = arg.substr(9);
     } else if (!chat_id_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_id_set = true;
@@ -558,7 +643,19 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
   if (!chat_id_set || query.empty()) {
     return std::unexpected(
         "Usage: grm msg search <chat_id> [-q|--query \"<query>\"] [-n|--limit "
-        "<N>] [--since <duration|date>]");
+        "<N>] [--since <duration|date>] [-f|--filter <pattern>]");
+  }
+
+  std::regex filter_regex;
+  bool has_filter = false;
+  if (!filter_pattern.empty()) {
+    try {
+      filter_regex = std::regex(filter_pattern, std::regex::icase);
+      has_filter = true;
+    } catch (const std::regex_error &e) {
+      return std::unexpected("Invalid filter pattern: " +
+                             std::string(e.what()));
+    }
   }
 
   std::regex search_regex;
@@ -586,8 +683,6 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
   auto msgs = res->get_array("messages");
   std::cout << std::format("Searching {} messages in chat {} for '{}'\n",
                            msgs.size(), chat_id, query);
-  std::cout << std::string(60, '=') << "\n";
-
   int match_count = 0;
   std::vector<fmt::MessageItem> items;
   for (const auto &m : msgs) {
@@ -595,6 +690,13 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
     int64_t msg_date = m.get_int("date").value_or(0);
     if (since_timestamp > 0 && msg_date < since_timestamp) {
       continue;
+    }
+
+    std::string sender_name = resolve_sender_name(m);
+    if (has_filter) {
+      if (!std::regex_search(sender_name, filter_regex)) {
+        continue;
+      }
     }
 
     std::string text = extract_message_text(m);
@@ -622,7 +724,7 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
                                        .chat_id = chat_id,
                                        .topic_id = 0,
                                        .date = msg_date,
-                                       .sender = resolve_sender_name(m),
+                                       .sender = sender_name,
                                        .text = text,
                                        .has_attachment = has_attach,
                                        .attachment_type = attach_type});

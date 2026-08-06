@@ -126,17 +126,20 @@ grm chat delete <chat_id>
 Message Lifecycle
 -----------------
 
-grm msg ls [-n|--limit <N>] [-t|--topic <id>] [-S|--since <duration|date>] <chat_id>
+grm msg ls [-n|--limit <N>] [-t|--topic <id>] [-S|--since <duration|date>] [-f|--filter <pattern>] <chat_id>
    List recent messages from a chat or forum topic.
 
    -n, --limit <N>
-      Maximum number of messages to display (default: 20).
+      Maximum number of messages to display (default: 20, or 1000 when ``--since`` is passed).
 
    -t, --topic <id>
       Filter messages by forum topic ID.
 
    -S, --since <duration|date>
-      Filter messages since relative duration (e.g. ``1d``, ``2h``, ``30m``), ISO date (``YYYY-MM-DD``), or Unix timestamp.
+      Filter messages since natural human/systemd duration (e.g. ``"1 day ago"``, ``"3 days ago"``, ``"1 month ago"``, ``"2h"``, ``"30m"``, ``"yesterday"``, ``"today"``), ISO date (``YYYY-MM-DD``), or Unix timestamp.
+
+   -f, --filter, --sender <pattern>
+      Filter messages by sender username, display name, or handle (case-insensitive substring or regex).
 
 grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <chat_id>
    Export chat or topic history to a CSV or JSON file.
@@ -150,7 +153,7 @@ grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <ch
    -t, --topic <id>
       Target specific forum topic ID.
 
-grm msg search [-q|--query "<query>"] [-n|--limit <N>] [-t|--topic <id>] [-S|--since <duration|date>] <chat_id>
+grm msg search [-q|--query "<query>"] [-n|--limit <N>] [-t|--topic <id>] [-S|--since <duration|date>] [-f|--filter <pattern>] <chat_id>
    Search message history using query pattern or regex.
 
    -q, --query "<query>"
@@ -163,7 +166,10 @@ grm msg search [-q|--query "<query>"] [-n|--limit <N>] [-t|--topic <id>] [-S|--s
       Target specific forum topic ID.
 
    -S, --since <duration|date>
-      Filter messages since relative duration (e.g. ``1d``, ``2h``, ``30m``), ISO date (``YYYY-MM-DD``), or Unix timestamp.
+      Filter messages since natural human/systemd duration (e.g. ``"1 day ago"``, ``"3 days ago"``, ``"1 month ago"``, ``"2h"``, ``"30m"``, ``"yesterday"``, ``"today"``), ISO date (``YYYY-MM-DD``), or Unix timestamp.
+
+   -f, --filter, --sender <pattern>
+      Filter messages by sender username, display name, or handle (case-insensitive substring or regex).
 
 grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"]
    Send a text message, document, or media file attachment. Supports Telegram Rich Text Markdown V2 formatting.
