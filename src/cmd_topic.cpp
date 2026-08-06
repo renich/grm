@@ -124,7 +124,8 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
                                    .name = name,
                                    .message_count = total_messages,
                                    .custom_emoji_id = custom_emoji_id,
-                                   .icon_color = icon_color});
+                                   .icon_color = icon_color,
+                                   .last_message_date = last_message_date});
     if (items.size() >= static_cast<size_t>(opts.limit)) {
       break;
     }
@@ -134,8 +135,9 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
     std::reverse(items.begin(), items.end());
   }
 
-  fmt::Formatter::render(items, "topic.ls", options_.format,
-                         options_.color_mode);
+  fmt::Formatter::render(
+      items, "topic.ls", options_.format, options_.color_mode, std::cout,
+      (options_.verbosity >= log::VerbosityLevel::Verbose));
   return 0;
 }
 

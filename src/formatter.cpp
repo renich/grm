@@ -143,7 +143,7 @@ OutputFormat resolve_format(OutputFormat requested_format, bool is_tty_stream) {
 
 void Formatter::print_chats(const std::vector<ChatItem> &chats,
                             OutputFormat format, ColorMode color_mode,
-                            std::ostream &out) {
+                            std::ostream &out, bool verbose) {
   const bool is_tty =
       (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
   const OutputFormat fmt = resolve_format(format, is_tty);
@@ -175,52 +175,82 @@ void Formatter::print_chats(const std::vector<ChatItem> &chats,
   if (fmt == OutputFormat::JsonL) {
     for (const auto &c : chats) {
       out << std::format(
-          R"({{"id":{},"type":"{}","title":"{}","unread_count":{},"last_message_date":{}}})"
+          R"({{"id":{},"type":"{}","title":"{}","unread_count":{},"last_message_date":{},"last_message_iso":"{}"}})"
           "\n",
           c.id, escape_json_string(humanize_chat_type(c.type)),
-          escape_json_string(c.title), c.unread_count, c.last_message_date);
+          escape_json_string(c.title), c.unread_count, c.last_message_date,
+          format_iso8601(c.last_message_date));
     }
     return;
   }
 
   if (fmt == OutputFormat::Markdown) {
-    out << "| Chat ID | Type | Title | Unread |\n";
-    out << "| :--- | :--- | :--- | :--- |\n";
+    out << "| Chat ID | Type | Title | Unread | Last Activity |\n";
+    out << "| :--- | :--- | :--- | :--- | :--- |\n";
     for (const auto &c : chats) {
-      out << std::format("| {} | {} | {} | {} |\n", c.id,
-                         humanize_chat_type(c.type), c.title, c.unread_count);
+      out << std::format("| {} | {} | {} | {} | {} |\n", c.id,
+                         humanize_chat_type(c.type), c.title, c.unread_count,
+                         format_iso8601(c.last_message_date));
     }
     return;
   }
 
   // Human / Plain mode
-  if (use_color) {
-    out << std::format("{}{:<20} {:<15} {:<30} {}{}\n", COLOR_BOLD, "CHAT ID",
-                       "TYPE", "TITLE", "UNREAD", COLOR_RESET);
-    out << COLOR_GRAY << std::string(75, '-') << COLOR_RESET << "\n";
-  } else {
-    out << std::format("{:<20} {:<15} {:<30} {}\n", "CHAT ID", "TYPE", "TITLE",
-                       "UNREAD");
-    out << std::string(75, '-') << "\n";
-  }
-
-  for (const auto &c : chats) {
-    const auto human_type = humanize_chat_type(c.type);
+  if (verbose) {
     if (use_color) {
-      out << std::format("{}{:<20}{} {}{:<15}{} {}{:<30}{} {}{}{}\n",
-                         COLOR_CYAN, c.id, COLOR_RESET, COLOR_YELLOW,
-                         human_type, COLOR_RESET, COLOR_GREEN, c.title,
-                         COLOR_RESET, COLOR_RED, c.unread_count, COLOR_RESET);
+      out << std::format("{}{:<20} {:<15} {:<30} {:<8} {}{}\n", COLOR_BOLD,
+                         "CHAT ID", "TYPE", "TITLE", "UNREAD", "LAST ACTIVITY",
+                         COLOR_RESET);
+      out << COLOR_GRAY << std::string(95, '-') << COLOR_RESET << "\n";
     } else {
-      out << std::format("{:<20} {:<15} {:<30} {}\n", c.id, human_type, c.title,
-                         c.unread_count);
+      out << std::format("{:<20} {:<15} {:<30} {:<8} {}\n", "CHAT ID", "TYPE",
+                         "TITLE", "UNREAD", "LAST ACTIVITY");
+      out << std::string(95, '-') << "\n";
+    }
+
+    for (const auto &c : chats) {
+      const auto human_type = humanize_chat_type(c.type);
+      const auto rel_time = humanize_relative_time(c.last_message_date);
+      if (use_color) {
+        out << std::format("{}{:<20}{} {}{:<15}{} {}{:<30}{} {}{:<8}{} {}{}{}\n",
+                           COLOR_CYAN, c.id, COLOR_RESET, COLOR_YELLOW,
+                           human_type, COLOR_RESET, COLOR_GREEN, c.title,
+                           COLOR_RESET, COLOR_RED, c.unread_count, COLOR_RESET,
+                           COLOR_GRAY, rel_time, COLOR_RESET);
+      } else {
+        out << std::format("{:<20} {:<15} {:<30} {:<8} {}\n", c.id, human_type,
+                           c.title, c.unread_count, rel_time);
+      }
+    }
+  } else {
+    if (use_color) {
+      out << std::format("{}{:<20} {:<15} {:<30} {}{}\n", COLOR_BOLD, "CHAT ID",
+                         "TYPE", "TITLE", "UNREAD", COLOR_RESET);
+      out << COLOR_GRAY << std::string(75, '-') << COLOR_RESET << "\n";
+    } else {
+      out << std::format("{:<20} {:<15} {:<30} {}\n", "CHAT ID", "TYPE", "TITLE",
+                         "UNREAD");
+      out << std::string(75, '-') << "\n";
+    }
+
+    for (const auto &c : chats) {
+      const auto human_type = humanize_chat_type(c.type);
+      if (use_color) {
+        out << std::format("{}{:<20}{} {}{:<15}{} {}{:<30}{} {}{}{}\n",
+                           COLOR_CYAN, c.id, COLOR_RESET, COLOR_YELLOW,
+                           human_type, COLOR_RESET, COLOR_GREEN, c.title,
+                           COLOR_RESET, COLOR_RED, c.unread_count, COLOR_RESET);
+      } else {
+        out << std::format("{:<20} {:<15} {:<30} {}\n", c.id, human_type, c.title,
+                           c.unread_count);
+      }
     }
   }
 }
 
 void Formatter::print_topics(const std::vector<TopicItem> &topics,
                              OutputFormat format, ColorMode color_mode,
-                             std::ostream &out) {
+                             std::ostream &out, bool verbose) {
   const bool is_tty =
       (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
   const OutputFormat fmt = resolve_format(format, is_tty);
@@ -235,10 +265,13 @@ void Formatter::print_topics(const std::vector<TopicItem> &topics,
                          "      \"id\": {},\n"
                          "      \"name\": \"{}\",\n"
                          "      \"messages_count\": {},\n"
-                         "      \"custom_emoji_id\": {}\n"
+                         "      \"custom_emoji_id\": {},\n"
+                         "      \"last_message_date\": {},\n"
+                         "      \"last_message_iso\": \"{}\"\n"
                          "    }}{}",
                          t.id, escape_json_string(t.name), t.message_count,
-                         t.custom_emoji_id,
+                         t.custom_emoji_id, t.last_message_date,
+                         format_iso8601(t.last_message_date),
                          (i + 1 < topics.size() ? ",\n" : "\n"));
     }
     out << "  ]\n}\n";
@@ -248,40 +281,67 @@ void Formatter::print_topics(const std::vector<TopicItem> &topics,
   if (fmt == OutputFormat::JsonL) {
     for (const auto &t : topics) {
       out << std::format(
-          R"({{"id":{},"name":"{}","messages_count":{},"custom_emoji_id":{}}})"
+          R"({{"id":{},"name":"{}","messages_count":{},"custom_emoji_id":{},"last_message_date":{},"last_message_iso":"{}"}})"
           "\n",
-          t.id, escape_json_string(t.name), t.message_count, t.custom_emoji_id);
+          t.id, escape_json_string(t.name), t.message_count, t.custom_emoji_id,
+          t.last_message_date, format_iso8601(t.last_message_date));
     }
     return;
   }
 
   if (fmt == OutputFormat::Markdown) {
-    out << "| Topic ID | Name | Message Count |\n";
-    out << "| :--- | :--- | :--- |\n";
+    out << "| Topic ID | Name | Message Count | Last Activity |\n";
+    out << "| :--- | :--- | :--- | :--- |\n";
     for (const auto &t : topics) {
-      out << std::format("| {} | {} | {} |\n", t.id, t.name, t.message_count);
+      out << std::format("| {} | {} | {} | {} |\n", t.id, t.name, t.message_count,
+                         format_iso8601(t.last_message_date));
     }
     return;
   }
 
   // Human / Plain mode
-  if (use_color) {
-    out << std::format("{}{:<15} {:<30} {}{}\n", COLOR_BOLD, "TOPIC ID", "NAME",
-                       "MESSAGES COUNT", COLOR_RESET);
-    out << COLOR_GRAY << std::string(65, '-') << COLOR_RESET << "\n";
-  } else {
-    out << std::format("{:<15} {:<30} {}\n", "TOPIC ID", "NAME",
-                       "MESSAGES COUNT");
-    out << std::string(65, '-') << "\n";
-  }
-
-  for (const auto &t : topics) {
+  if (verbose) {
     if (use_color) {
-      out << std::format("{}{:<15}{} {}{:<30}{} {}{}{}\n", COLOR_CYAN, t.id,
-                         COLOR_RESET, COLOR_GREEN, t.name, COLOR_RESET,
-                         COLOR_YELLOW, t.message_count, COLOR_RESET);
+      out << std::format("{}{:<15} {:<30} {:<15} {}{}\n", COLOR_BOLD, "TOPIC ID",
+                         "NAME", "MESSAGES COUNT", "LAST ACTIVITY", COLOR_RESET);
+      out << COLOR_GRAY << std::string(85, '-') << COLOR_RESET << "\n";
     } else {
-      out << std::format("{:<15} {:<30} {}\n", t.id, t.name, t.message_count);
+      out << std::format("{:<15} {:<30} {:<15} {}\n", "TOPIC ID", "NAME",
+                         "MESSAGES COUNT", "LAST ACTIVITY");
+      out << std::string(85, '-') << "\n";
+    }
+
+    for (const auto &t : topics) {
+      const auto rel_time = humanize_relative_time(t.last_message_date);
+      if (use_color) {
+        out << std::format("{}{:<15}{} {}{:<30}{} {}{:<15}{} {}{}{}\n", COLOR_CYAN,
+                           t.id, COLOR_RESET, COLOR_GREEN, t.name, COLOR_RESET,
+                           COLOR_YELLOW, t.message_count, COLOR_RESET,
+                           COLOR_GRAY, rel_time, COLOR_RESET);
+      } else {
+        out << std::format("{:<15} {:<30} {:<15} {}\n", t.id, t.name,
+                           t.message_count, rel_time);
+      }
+    }
+  } else {
+    if (use_color) {
+      out << std::format("{}{:<15} {:<30} {}{}\n", COLOR_BOLD, "TOPIC ID", "NAME",
+                         "MESSAGES COUNT", COLOR_RESET);
+      out << COLOR_GRAY << std::string(65, '-') << COLOR_RESET << "\n";
+    } else {
+      out << std::format("{:<15} {:<30} {}\n", "TOPIC ID", "NAME",
+                         "MESSAGES COUNT");
+      out << std::string(65, '-') << "\n";
+    }
+
+    for (const auto &t : topics) {
+      if (use_color) {
+        out << std::format("{}{:<15}{} {}{:<30}{} {}{}{}\n", COLOR_CYAN, t.id,
+                           COLOR_RESET, COLOR_GREEN, t.name, COLOR_RESET,
+                           COLOR_YELLOW, t.message_count, COLOR_RESET);
+      } else {
+        out << std::format("{:<15} {:<30} {}\n", t.id, t.name, t.message_count);
+      }
     }
   }
 }
@@ -459,9 +519,9 @@ void Formatter::render(const RenderablePayload &payload,
       [&](const auto &data) {
         using T = std::decay_t<decltype(data)>;
         if constexpr (std::is_same_v<T, std::vector<ChatItem>>) {
-          print_chats(data, format, color_mode, out);
+          print_chats(data, format, color_mode, out, verbose);
         } else if constexpr (std::is_same_v<T, std::vector<TopicItem>>) {
-          print_topics(data, format, color_mode, out);
+          print_topics(data, format, color_mode, out, verbose);
         } else if constexpr (std::is_same_v<T, std::vector<MessageItem>>) {
           print_messages(data, format, color_mode, out, verbose);
         } else if constexpr (std::is_same_v<T, ErrorPayload>) {

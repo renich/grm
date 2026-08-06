@@ -34,6 +34,7 @@ struct TopicItem {
   int64_t message_count{0};
   int64_t custom_emoji_id{0};
   int32_t icon_color{0};
+  int64_t last_message_date{0};
 };
 
 struct MessageItem {
@@ -75,12 +76,12 @@ public:
   static void print_chats(const std::vector<ChatItem> &chats,
                           OutputFormat format = OutputFormat::Auto,
                           ColorMode color_mode = ColorMode::Auto,
-                          std::ostream &out = std::cout);
+                          std::ostream &out = std::cout, bool verbose = false);
 
   static void print_topics(const std::vector<TopicItem> &topics,
                            OutputFormat format = OutputFormat::Auto,
                            ColorMode color_mode = ColorMode::Auto,
-                           std::ostream &out = std::cout);
+                           std::ostream &out = std::cout, bool verbose = false);
 
   static void print_messages(const std::vector<MessageItem> &messages,
                              OutputFormat format = OutputFormat::Auto,

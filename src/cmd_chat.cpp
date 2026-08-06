@@ -86,8 +86,9 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
     std::reverse(items.begin(), items.end());
   }
 
-  fmt::Formatter::render(items, "chat.ls", options_.format,
-                         options_.color_mode);
+  fmt::Formatter::render(
+      items, "chat.ls", options_.format, options_.color_mode, std::cout,
+      (options_.verbosity >= log::VerbosityLevel::Verbose));
   return 0;
 }
 

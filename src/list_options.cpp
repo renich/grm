@@ -58,7 +58,7 @@ ListOptions::parse(const std::vector<std::string> &args,
       } else {
         return std::unexpected(ts.error());
       }
-    } else if ((arg == "-f" || arg == "--filter" || arg == "--sender") &&
+    } else if ((arg == "--filter" || arg == "--sender") &&
                i + 1 < args.size()) {
       opts.filter_patterns.push_back(args[++i]);
     } else if (arg.starts_with("--filter=")) {
