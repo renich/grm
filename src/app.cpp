@@ -26,14 +26,13 @@ Global Options:
   --color <mode>        Color mode: auto, always, never (or --no-color)
 
 Commands:
-  grm login [-p|--phone <num>] [-k|--code <code>]                  Interactive or non-interactive authentication
-  grm chat ls                                                      List active chats (groups, channels, private)
-  grm msg ls [-n|--limit <N>] <chat_id>                            List recent messages from a chat
-  grm msg export [-f|--format csv|json] [-o|--output <file>] <chat_id> Export chat history to CSV or JSON file
-  grm msg search [-q|--query "<query>"] [-n|--limit <N>] <chat_id> Search chat history using regex filter
-  grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<msg>"] Send message/files
-  grm topic ls <supergroup_id>                                     List active forum topics in a supergroup
+  grm login [-p|--phone <num>] [-k|--code <code>]                  Authenticate Telegram account
+  grm chat <subcommand>                                            Manage chats, groups, and channels
+  grm topic <subcommand>                                           Manage supergroup forum topics
+  grm msg <subcommand>                                             Inspect, send, edit, search, and export messages
+  grm file <subcommand>                                            Download attachments and media
 
+Run 'grm <command> --help' for details on subcommands.
 )" << '\n';
 }
 
@@ -56,25 +55,39 @@ Options:
 }
 
 void App::print_chat_help() {
-  std::cout << R"(Usage: grm chat ls
+  std::cout << R"(Usage: grm chat <subcommand> [options] [args]
 
-List all active Telegram chats, groups, channels, and private conversations.
+Manage Telegram chats, groups, and channels.
+
+Subcommands:
+  grm chat ls [-n|--limit <N>]                                        List active chats (groups, channels, private)
+  grm chat create group [--private|--public] "<title>"               Create a new group or supergroup
+  grm chat create channel [--private|--public] "<title>" ["<desc>"]  Create a new channel
+  grm chat info <chat_id>                                            View chat/group/channel metadata
+  grm chat set-title <chat_id> "<new_title>"                         Update title
+  grm chat set-desc <chat_id> "<description>"                        Update description
+  grm chat pin <chat_id> <message_id>                                Pin message
+  grm chat unpin <chat_id> [<message_id>]                            Unpin message
+  grm chat delete <chat_id>                                          Delete or leave chat
 
 Options:
-  -h, --help             Show this help screen
+  -h, --help                                                         Show this help screen
 )" << '\n';
 }
 
 void App::print_msg_help() {
   std::cout << R"(Usage: grm msg <subcommand> [options] [args]
 
-Inspect, export, search, and send chat messages or file attachments.
+Inspect, send, edit, search, and export chat messages.
 
 Subcommands:
-  grm msg ls [-n|--limit <N>] <chat_id>                             List recent messages (default limit: 20)
-  grm msg export [-f|--format csv|json] [-o|--output <file>] <chat_id> Export chat history to CSV or JSON file
-  grm msg search [-q|--query "<query>"] [-n|--limit <N>] <chat_id> Search chat history using regex pattern filter
+  grm msg ls [-t|--topic <id>] [-n|--limit <N>] <chat_id>           List recent messages (default limit: 20)
   grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"] Send text message or file attachment(s)
+  grm msg info <chat_id> <message_id>                                View message details
+  grm msg search [-t|--topic <id>] [-q|--query "<query>"] [-n|--limit <N>] <chat_id> Search chat history using regex pattern filter
+  grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <chat_id> Export chat history to CSV or JSON file
+  grm msg edit [-t|--topic <id>] <chat_id> <message_id> "<new_text>"  Edit sent message
+  grm msg delete [--for-everyone] <chat_id> <message_ids...>          Delete message(s)
 
 Options:
   -a, --attach <file>                                               Attach local file/document (repeatable)
@@ -84,7 +97,6 @@ Options:
   -h, --help                                                        Show this help screen
 )" << '\n';
 }
-
 
 void App::print_topic_help() {
   std::cout << R"(Usage: grm topic <subcommand> [options] [args]
@@ -101,6 +113,9 @@ Subcommands:
   grm topic pin <supergroup_id> <topic_id>                               Pin topic
   grm topic unpin <supergroup_id> <topic_id>                             Unpin topic
   grm topic delete <supergroup_id> <topic_id>                            Delete topic and history
+
+Options:
+  -h, --help                                                             Show this help screen
 )" << '\n';
 }
 
@@ -110,8 +125,8 @@ void App::print_file_help() {
 Download media and file attachments from chats and topics.
 
 Subcommands:
-  grm file get [-o|--output <dir|file>] [-t|--topic <id>] <chat_id> <message_ids...>
-  grm file download-all [-o|--output <dir>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id>
+  grm file get [-o|--output <dir|file>] [-t|--topic <id>] <chat_id> <message_ids...> View/download specific file attachments
+  grm file download-all [-o|--output <dir>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> Bulk download media
 
 Options:
   -o, --output <dir|file>                                           Output destination directory or file path
@@ -301,74 +316,79 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     }
     return cmd_login();
   }
+
   if (cmd == "chat") {
-    if (is_help_requested(sub_args)) {
+    if (sub_args.empty() || is_help_requested(sub_args)) {
       print_chat_help();
       return 0;
     }
-    if (!sub_args.empty()) {
-      const std::string &sub = sub_args[0];
-      std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
-      if (sub == "ls") return cmd_chat_ls(sub_opts);
-      if (sub == "create") return cmd_chat_create(sub_opts);
-      if (sub == "info") return cmd_chat_info(sub_opts);
-      if (sub == "set-title") return cmd_chat_set_title(sub_opts);
-      if (sub == "set-desc") return cmd_chat_set_desc(sub_opts);
-      if (sub == "pin") return cmd_chat_pin(sub_opts);
-      if (sub == "unpin") return cmd_chat_unpin(sub_opts);
-      if (sub == "delete") return cmd_chat_delete(sub_opts);
-    }
+    const std::string &sub = sub_args[0];
+    std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
+    if (sub == "ls") return cmd_chat_ls(sub_opts);
+    if (sub == "create") return cmd_chat_create(sub_opts);
+    if (sub == "info") return cmd_chat_info(sub_opts);
+    if (sub == "set-title") return cmd_chat_set_title(sub_opts);
+    if (sub == "set-desc") return cmd_chat_set_desc(sub_opts);
+    if (sub == "pin") return cmd_chat_pin(sub_opts);
+    if (sub == "unpin") return cmd_chat_unpin(sub_opts);
+    if (sub == "delete") return cmd_chat_delete(sub_opts);
+
+    print_chat_help();
+    return std::unexpected("Unknown chat subcommand: " + sub);
   }
 
   if (cmd == "msg") {
-    if (is_help_requested(sub_args)) {
+    if (sub_args.empty() || is_help_requested(sub_args)) {
       print_msg_help();
       return 0;
     }
-    if (!sub_args.empty()) {
-      const std::string &sub = sub_args[0];
-      std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
-      if (sub == "ls") return cmd_msg_ls(sub_opts);
-      if (sub == "export") return cmd_msg_export(sub_opts);
-      if (sub == "search") return cmd_msg_search(sub_opts);
-      if (sub == "send") return cmd_msg_send(sub_opts);
-      if (sub == "info") return cmd_msg_info(sub_opts);
-      if (sub == "edit") return cmd_msg_edit(sub_opts);
-      if (sub == "delete") return cmd_msg_delete(sub_opts);
-    }
+    const std::string &sub = sub_args[0];
+    std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
+    if (sub == "ls") return cmd_msg_ls(sub_opts);
+    if (sub == "export") return cmd_msg_export(sub_opts);
+    if (sub == "search") return cmd_msg_search(sub_opts);
+    if (sub == "send") return cmd_msg_send(sub_opts);
+    if (sub == "info") return cmd_msg_info(sub_opts);
+    if (sub == "edit") return cmd_msg_edit(sub_opts);
+    if (sub == "delete") return cmd_msg_delete(sub_opts);
+
+    print_msg_help();
+    return std::unexpected("Unknown msg subcommand: " + sub);
   }
 
   if (cmd == "topic") {
-    if (is_help_requested(sub_args)) {
+    if (sub_args.empty() || is_help_requested(sub_args)) {
       print_topic_help();
       return 0;
     }
-    if (!sub_args.empty()) {
-      const std::string &sub = sub_args[0];
-      std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
-      if (sub == "ls") return cmd_topic_ls(sub_opts);
-      if (sub == "create") return cmd_topic_create(sub_opts);
-      if (sub == "info") return cmd_topic_info(sub_opts);
-      if (sub == "edit") return cmd_topic_edit(sub_opts);
-      if (sub == "close") return cmd_topic_toggle_close(sub_opts, true);
-      if (sub == "reopen") return cmd_topic_toggle_close(sub_opts, false);
-      if (sub == "pin") return cmd_topic_toggle_pin(sub_opts, true);
-      if (sub == "unpin") return cmd_topic_toggle_pin(sub_opts, false);
-      if (sub == "delete") return cmd_topic_delete(sub_opts);
-    }
+    const std::string &sub = sub_args[0];
+    std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
+    if (sub == "ls") return cmd_topic_ls(sub_opts);
+    if (sub == "create") return cmd_topic_create(sub_opts);
+    if (sub == "info") return cmd_topic_info(sub_opts);
+    if (sub == "edit") return cmd_topic_edit(sub_opts);
+    if (sub == "close") return cmd_topic_toggle_close(sub_opts, true);
+    if (sub == "reopen") return cmd_topic_toggle_close(sub_opts, false);
+    if (sub == "pin") return cmd_topic_toggle_pin(sub_opts, true);
+    if (sub == "unpin") return cmd_topic_toggle_pin(sub_opts, false);
+    if (sub == "delete") return cmd_topic_delete(sub_opts);
+
+    print_topic_help();
+    return std::unexpected("Unknown topic subcommand: " + sub);
   }
 
   if (cmd == "file") {
-    if (is_help_requested(sub_args)) {
+    if (sub_args.empty() || is_help_requested(sub_args)) {
       print_file_help();
       return 0;
     }
-    if (!sub_args.empty()) {
-      const std::string &sub = sub_args[0];
-      std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
-      if (sub == "get") return cmd_file_get(sub_opts);
-      if (sub == "download-all") return cmd_file_download_all(sub_opts);
-    }
+    const std::string &sub = sub_args[0];
+    std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
+    if (sub == "get") return cmd_file_get(sub_opts);
+    if (sub == "download-all") return cmd_file_download_all(sub_opts);
+
+    print_file_help();
+    return std::unexpected("Unknown file subcommand: " + sub);
   }
 
   print_usage();
