@@ -66,6 +66,7 @@ add_executable(grm
     src/cmd_topic.cpp
     src/cmd_file.cpp
     src/cmd_completion.cpp
+    src/command_registry.cpp
     src/list_options.cpp
     src/exporter.cpp
     src/uploader.cpp
@@ -106,6 +107,7 @@ add_executable(test_cli_routing
     src/cmd_topic.cpp
     src/cmd_file.cpp
     src/cmd_completion.cpp
+    src/command_registry.cpp
     src/list_options.cpp
     src/exporter.cpp
     src/uploader.cpp
@@ -128,6 +130,7 @@ add_executable(test_completion
     src/cmd_topic.cpp
     src/cmd_file.cpp
     src/cmd_completion.cpp
+    src/command_registry.cpp
     src/list_options.cpp
     src/exporter.cpp
     src/uploader.cpp
@@ -139,6 +142,13 @@ add_executable(test_completion
 )
 target_link_libraries(test_completion PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
 add_test(NAME test_completion COMMAND test_completion)
+
+add_executable(test_command_registry
+    tests/test_command_registry.cpp
+    src/command_registry.cpp
+)
+target_link_libraries(test_command_registry PRIVATE)
+add_test(NAME test_command_registry COMMAND test_command_registry)
 
 add_executable(test_export
     tests/test_export.cpp

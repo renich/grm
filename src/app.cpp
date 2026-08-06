@@ -1,4 +1,5 @@
 #include "grm/app.hpp"
+#include "grm/command_registry.hpp"
 #include <algorithm>
 #include <chrono>
 #include <format>
@@ -13,29 +14,7 @@ App::App(Config config, CliOptions options)
 void App::print_version() { std::cout << "grm 0.5.1\n"; }
 
 void App::print_usage() {
-  std::cout << R"(
-grm - Group & Telegram Manager CLI (C++23 / TDLib)
-
-Global Options:
-  -h, --help            Show this help screen
-  -V, --version         Display version and build info
-  -v, --verbose         Enable verbose TDLib state output
-  -d, --debug           Enable debug tracing
-  -q, --quiet           Suppress informational messages
-  -c, --config <file>   Custom configuration file path
-  -T, --test-dc         Connect to Telegram Test Data Center environment
-  -F, --format <fmt>    Output format: human, markdown, json, plain (default: auto)
-  --color <mode>        Color mode: auto, always, never (or --no-color)
-
-Commands:
-  grm login [-p|--phone <num>] [-k|--code <code>]                  Authenticate Telegram account
-  grm chat <subcommand>                                            Manage chats, groups, and channels
-  grm topic <subcommand>                                           Manage supergroup forum topics
-  grm msg <subcommand>                                             Inspect, send, edit, search, and export messages
-  grm file <subcommand>                                            Download attachments and media
-
-Run 'grm <command> --help' for details on subcommands.
-)" << '\n';
+  std::cout << CommandRegistry::get_instance().render_global_help();
 }
 
 bool App::is_help_requested(const std::vector<std::string> &args) {
@@ -45,112 +24,23 @@ bool App::is_help_requested(const std::vector<std::string> &args) {
 }
 
 void App::print_login_help() {
-  std::cout << R"(Usage: grm login [-p|--phone <number>] [-k|--code <code>]
-
-Authenticate your Telegram account with TDLib.
-
-Options:
-  -p, --phone <number>   Pre-fill phone number in E.164 format (e.g. +12025550123)
-  -k, --code <code>      Pre-fill authentication code for non-interactive logins
-  -h, --help             Show this help screen
-)" << '\n';
+  std::cout << CommandRegistry::get_instance().render_command_help("login");
 }
 
 void App::print_chat_help() {
-  std::cout << R"(Usage: grm chat <subcommand> [options] [args]
-
-Manage Telegram chats, groups, and channels.
-
-Subcommands:
-  grm chat ls [-n|--limit <N>] [-S|--since <date>] [-f|--filter <pat>] List active chats
-  grm chat create group [--private|--public] "<title>"               Create a new group or supergroup
-  grm chat create channel [--private|--public] "<title>" ["<desc>"]  Create a new channel
-  grm chat info <chat_id>                                            View chat/group/channel metadata
-  grm chat set-title <chat_id> "<new_title>"                         Update title
-  grm chat set-desc <chat_id> "<description>"                        Update description
-  grm chat pin <chat_id>                                             Pin chat to top of chat list
-  grm chat unpin <chat_id>                                           Unpin chat from chat list
-  grm chat delete <chat_id>                                          Delete or leave chat
-
-Options:
-  -n, --limit <N>                                                    Maximum chats to list (default: 100)
-  -S, --since <duration|date>                                        Filter chats active since duration/date
-  -f, --filter <pattern>                                             Filter chats by title, type, or ID
-  -h, --help                                                         Show this help screen
-)" << '\n';
+  std::cout << CommandRegistry::get_instance().render_command_help("chat");
 }
 
 void App::print_msg_help() {
-  std::cout << R"(Usage: grm msg <subcommand> [options] [args]
-
-Inspect, send, edit, search, pin, and export chat messages.
-
-Subcommands:
-  grm msg ls [-t|--topic <id>] [-n|--limit <N>] [-S|--since <date>] [-f|--filter <pat>] [-r] <chat_id> List messages
-  grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<text>"] Send message or attachment(s)
-  grm msg info <chat_id> <message_id>                                View message details
-  grm msg search [-t|--topic <id>] [-q|--query "<query>"] [-n|--limit <N>] <chat_id> Search history using regex filter
-  grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <chat_id> Export chat history
-  grm msg edit [-t|--topic <id>] <chat_id> <message_id> "<new_text>"  Edit sent message
-  grm msg pin <chat_id> <message_id>                                  Pin message in chat
-  grm msg unpin [-a|--all] <chat_id> [<message_id>]                 Unpin specific message or all messages
-  grm msg delete [--for-everyone] <chat_id> <message_ids...>          Delete message(s)
-
-Options:
-  -a, --attach <file>                                               Attach local file/document (repeatable)
-  -m, --media                                                       Send attachment(s) as compressed media
-  -C, --caption "<text>"                                            Caption text for attachments
-  -t, --topic <id>                                                  Target specific forum topic thread ID
-  -n, --limit <N>                                                   Maximum messages to fetch or search
-  -S, --since <duration|date>                                       Filter messages since duration/date
-  -f, --filter, --sender <pattern>                                  Filter messages by sender username or pattern
-  -r, --reverse                                                     Reverse chronological order
-  -h, --help                                                        Show this help screen
-)" << '\n';
+  std::cout << CommandRegistry::get_instance().render_command_help("msg");
 }
 
 void App::print_topic_help() {
-  std::cout << R"(Usage: grm topic <subcommand> [options] [args]
-
-Supergroup forum topic lifecycle management.
-
-Subcommands:
-  grm topic ls [-n|--limit <N>] <supergroup_id>                         List active forum topics
-  grm topic create [-e|--emoji <id>] [--icon-color <color>] <supergroup_id> "<name>" Create forum topic
-  grm topic info <supergroup_id> <topic_id>                              View topic metadata
-  grm topic edit [-e|--emoji <id>] <supergroup_id> <topic_id> ["<name>"] Edit topic title or icon
-  grm topic close <supergroup_id> <topic_id>                             Close forum topic
-  grm topic reopen <supergroup_id> <topic_id>                            Reopen closed topic
-  grm topic pin <supergroup_id> <topic_id>                               Pin topic to top of topic list
-  grm topic unpin <supergroup_id> <topic_id>                             Unpin topic
-  grm topic delete <supergroup_id> <topic_id>                            Delete topic and history
-
-Options:
-  -e, --emoji, --icon <id>                                               Custom Telegram emoji icon ID
-  --icon-color <color>                                                   RGB icon color (e.g. 0x6FB9F0)
-  -n, --limit <N>                                                        Maximum topics to list (default: 100)
-  -h, --help                                                             Show this help screen
-)" << '\n';
+  std::cout << CommandRegistry::get_instance().render_command_help("topic");
 }
 
 void App::print_file_help() {
-  std::cout
-      << R"(Usage: grm file get [-a|-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]
-
-Download media and file attachments from chats and topics.
-
-Subcommands:
-  grm file get <chat_id> <message_ids...>                            Download specific attachment files by message ID
-  grm file get [-a|-A|--all] [-o|--output <dir>] <chat_id>          Bulk download all attachment files in chat or topic
-
-Options:
-  -a, -A, --all                                                     Bulk download all attachment files in chat or topic
-  -o, --output <dir|file>                                           Destination output directory or filepath
-  -t, --topic <id>                                                  Target specific forum topic thread ID
-  -n, --limit <N>                                                   Maximum messages to fetch or search
-  --type photo|video|doc|audio|all                                  Filter media type for bulk download
-  -h, --help                                                        Show this help screen
-)" << '\n';
+  std::cout << CommandRegistry::get_instance().render_command_help("file");
 }
 
 std::string App::get_auth_state() const {

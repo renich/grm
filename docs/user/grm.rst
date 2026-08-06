@@ -387,9 +387,18 @@ Self-generating, zero-maintenance shell completion generator powered by native C
 * ``grm completion zsh``: Output native Zsh completion function script with rich subcommand descriptions.
 * ``grm completion fish``: Output Fish shell completion definitions to stdout.
 * **Dynamic Completion Wrapper**: Per FreeDesktop/FHS standards, ``~/.local/share/bash-completion/completions/grm`` is installed as a lightweight 10-line wrapper script (``_grm_loader``) that dynamically executes ``grm completion bash`` on demand. You **never** need to re-install or update the completion file when subcommands or flags change in new builds of **grm**.
-* **Introspective Command Tree**: Single-source-of-truth C++ registry (``src/cmd_completion.cpp``) defining command names, subcommands, flags, option types, and completion hints so ``--help`` screens and shell completions remain 100% synchronized without manual maintenance.
 
-8. Attachment Types: Inline Media vs. Raw Document
+8. Single-Source-of-Truth Command Registry (``CommandRegistry``)
+-----------------------------------------------------------------
+
+Unified C++23 command specification architecture (``include/grm/command_registry.hpp``):
+
+* **Single Data Model**: Standardized ``CommandSpec``, ``SubcommandSpec``, and ``OptionSpec`` structures define command names, subcommands, synopsis, option flags, value hints, descriptions, and option value choices (e.g. ``photo|video|doc|audio|all`` for ``--type``).
+* **Dual Automatic Rendering**:
+  * **Help Engine**: ``CommandRegistry::render_help()`` dynamically formats all CLI ``--help`` screens with consistent padding, option alignment, and usage banners, eliminating hardcoded string literals and dead code.
+  * **Completion Engine**: ``CommandRegistry::render_completion()`` automatically generates context-aware shell autocompletions for Bash, Zsh, and Fish.
+
+9. Attachment Types: Inline Media vs. Raw Document
 --------------------------------------------------
 
 Explicit distinction between visual inline media transmission and uncompressed binary document transfers:
@@ -402,6 +411,7 @@ Project Roadmap & Status
 
 The following features and specifications have been implemented and verified:
 
+- [x] **Single-Source Command Registry**: Unified ``CommandRegistry`` powering ``--help`` and ``grm completion``.
 - [x] **Introspective Shell Completion**: Native ``grm completion <bash|zsh|fish>`` engine with dynamic loader wrapper script.
 - [x] **GNU Standard Makefile**: Default ``PREFIX ?= /usr/local`` (per GNU Coding Standards Section 7.2.5) with ``PREFIX_USER ?= $(HOME)/.local`` for non-root ``make install-user``.
 - [x] **File Engine Consolidation**: Unified ``grm file get [-a|-A|--all] <chat_id> [<message_ids...>]`` syntax.
