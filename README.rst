@@ -23,6 +23,8 @@ Why grm?
 * **Native TDLib Engine**: Direct C++ bindings to ``libtdjson`` for zero-hallucination, full MTProto protocol fidelity.
 * **Supergroup & Forum Topic First**: Complete lifecycle management for Telegram Supergroups, Forum Topics, custom emoji icons, and thread messages.
 * **File Upload & Download Engine**: Streamlined document, photo, video, and media extractions with MIME detection and progress tracking.
+* **Shell Tab Auto-Completion**: Context-aware Bash tab completion covering commands, subcommands, flags, and options.
+* **Telegram Rich Text & Emoji Customization**: Telegram Markdown V2 entity formatting and custom Supergroup topic emoji icons.
 
 Dependencies
 ------------
@@ -47,7 +49,16 @@ Installing Dependencies (Fedora Linux / RHEL)
 
 .. code-block:: bash
 
-   sudo dnf install tdlib-devel json-c-devel cmake ninja-build gcc-c++ clang-tools-extra rstcheck python3-docutils git
+   sudo dnf -y install \
+       tdlib-devel \
+       json-c-devel \
+       cmake \
+       ninja-build \
+       gcc-c++ \
+       clang-tools-extra \
+       rstcheck \
+       python3-docutils \
+       git
 
 Quick Start
 -----------
@@ -78,11 +89,24 @@ Per **FHS 3.0** and the **XDG Base Directory Specification**, install **grm** in
 
 .. code-block:: bash
 
-   # Installs binary to ~/.local/bin/grm, man page to ~/.local/share/man/man1/grm.1, and completions
+   # Installs binary to ~/.local/bin/grm, man page to ~/.local/share/man/man1/grm.1, and completion
    make install-user
 
    # Ensure ~/.local/bin is in your PATH (e.g. in ~/.bashrc or ~/.bash_profile):
    export PATH="$HOME/.local/bin:$PATH"
+
+Setting Up Shell Auto-Completion
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If installed via ``make install-user``, Bash autocompletion is placed in ``~/.local/share/bash-completion/completions/grm``.
+
+To enable completion for your current shell session:
+
+.. code-block:: bash
+
+   source "$HOME/.local/share/bash-completion/completions/grm"
+
+To enable completion permanently, ensure your ``~/.bashrc`` loads user completions or add the source line above.
 
 Installing System-Wide (Requires Sudo)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

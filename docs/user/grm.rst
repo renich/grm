@@ -24,6 +24,8 @@ Features
 * **Full Authentication Flow**: Interactive or non-interactive phone code and 2FA password verification.
 * **Complete CRUD Lifecycle**: Full lifecycle support for chats, groups, forum topics, and text/media messages.
 * **File Download Engine**: Batch download media attachments from chat history or specific forum topics with type filtering.
+* **Context-Aware Shell Autocompletion**: Full Bash tab completion covering commands, subcommands, options, and parameters.
+* **Telegram Rich Text & Emoji Icons**: Native Telegram Markdown V2 entity parsing and custom Supergroup topic emoji icons.
 * **Multiple Output Formats**: Supports human-readable tables, ANSI color, Markdown, JSON, and CSV export.
 * **POSIX & GNU Standard Compliance**: Supports GNU short/long option flags and positional parameters.
 
