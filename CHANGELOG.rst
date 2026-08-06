@@ -11,6 +11,7 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 
 .. rubric:: Added
 
+* Custom Fedora OCI container image (``Containerfile.ci``) pre-baking C++23 build dependencies, documentation validators (``rstcheck``, ``python3-docutils``), and TDLib 1.8.66 libraries/headers for zero-delay CI execution.
 * Server-side search integration across all listing commands: ``grm chat ls --filter`` (via ``searchChats``), ``grm topic ls --filter`` (via ``getForumTopics(query)``), and ``grm msg ls --filter`` / ``grm msg search`` (via ``searchChatMessages``).
 * Universal ``ListOptions`` parser with default limit 20, relative/ISO duration cutoff (``-S | --since``), multi-field regex filter (``-f | --filter``), and reverse ordering (``-r | --reverse``).
 * Relative and ISO timestamps in verbose (``-v`` / ``--verbose``) human mode, AI Markdown tables, and AI JSON envelope formats for chat and topic listings.
@@ -23,12 +24,16 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 
 .. rubric:: Changed
 
+* Updated ``.gitlab-ci.yml`` pipeline architecture to execute inside the pre-built custom Fedora OCI image (``registry.gitlab.com/renich/grm/ci-fedora:latest``) with global ``PKG_CONFIG_PATH`` and ``LD_LIBRARY_PATH`` environment variables.
 * Upgraded TDLib compatibility layer to support TDLib 1.8.66 / MTProto Layer 228 API specifications.
 * Gated ``[MsgID <id>]`` display prefix in message list output to verbose (``-v`` / ``--verbose``) mode.
 * Flattened ``setTdlibParameters`` request payload structure for modern TDLib release standards.
 
 .. rubric:: Fixed
 
+* Fixed CMake library search paths in ``CMakeLists.txt`` by adding global ``link_directories`` for ``TDJSON_LIBRARY_DIRS`` and ``JSONC_LIBRARY_DIRS``, resolving linker errors on CTest test targets.
+* Fixed CMake version compatibility policy error for TDLib by explicitly setting ``-DCMAKE_POLICY_VERSION_MINIMUM=3.5`` for modern CMake toolchains (3.31+).
+* Fixed GitLab CI YAML script syntax parsing in release stages by formatting script steps with block scalar multiline syntax.
 * Fixed deep history pagination timeouts in large channels by leveraging TDLib's server-side search index (``searchChatMessages``) with fallback to ``getChatHistory`` capped at 15 batch iterations.
 * Fixed loop termination in message listing pagination to halt immediately when target limit or since cutoff date is reached.
 * Fixed instant MTProto stream synchronization by issuing non-blocking ``openChat`` TDLib requests inside ``ensure_chat_loaded``.
