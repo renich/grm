@@ -1,0 +1,36 @@
+# Containerfile.ci for grm (Fedora C++23 + TDLib 1.8.66 CI Image)
+# Compliant with Podman and OCI standards
+FROM registry.fedoraproject.org/fedora:latest
+
+# Install Fedora build dependencies and documentation validation tools
+RUN dnf -y install \
+    json-c-devel \
+    cmake \
+    ninja-build \
+    gcc-c++ \
+    clang-tools-extra \
+    python3-docutils \
+    rstcheck \
+    git \
+    make \
+    ccache \
+    gperf \
+    openssl-devel \
+    zlib-devel \
+    binutils \
+    && dnf clean all
+
+# Compile and install TDLib 1.8.66 into /usr/local
+WORKDIR /tmp/tdlib-build
+RUN git clone --depth 1 --branch v1.8.0 https://github.com/tdlib/td.git . \
+    && mkdir build \
+    && cd build \
+    && cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX=/usr/local -DTD_ENABLE_JNI=OFF -DTD_ENABLE_DOTNET=OFF .. \
+    && cmake --build . --target install \
+    && cd / \
+    && rm -rf /tmp/tdlib-build
+
+# Refresh system dynamic linker cache
+RUN ldconfig
+
+WORKDIR /
