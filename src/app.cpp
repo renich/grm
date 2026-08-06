@@ -246,7 +246,7 @@ void App::send_tdlib_parameters() {
           "system_language_code": "en",
           "device_model": "grm",
           "system_version": "Linux x86_64",
-          "application_version": "1.0.0"
+          "application_version": "5.2.2"
         }}
       }})",
       options_.use_test_dc ? "true" : "false", db_path.string(),
