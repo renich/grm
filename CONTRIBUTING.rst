@@ -50,10 +50,21 @@ All feature additions, refactorings, and bug fixes **must** be accompanied by un
 2. **Implement minimal code** in `src/` to satisfy the tests.
 3. **Refactor** while ensuring all CTest targets continue to pass 100%.
 
+Git Pre-Push Hook & Quality Automation
+---------------------------------------
+
+`grm` provides a version-controlled Git pre-push hook (`.githooks/pre-push.bash`) that allows local work-in-progress (`WiP`) commits while guaranteeing remote code quality, document syntax, formatting, and test pass rates prior to pushing upstream.
+
+To configure the pre-push hook in your clone:
+
+.. code-block:: bash
+
+   make install-hooks
+
 Running Quality Checks
 ----------------------
 
-Before submitting a Merge Request (MR) or Pull Request (PR), ensure all quality suites pass:
+Before pushing or submitting a Merge Request (MR) or Pull Request (PR), ensure all quality suites pass:
 
 .. code-block:: bash
 
@@ -69,6 +80,9 @@ Before submitting a Merge Request (MR) or Pull Request (PR), ensure all quality 
    # Compile man page and verify reStructuredText syntax
    make man
    make doc-check
+
+   # Run crstlint reStructuredText linter across all RST documents
+   crstlint -fr .
 
 Commit Message Standards
 ========================

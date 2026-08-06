@@ -277,6 +277,15 @@ GRM_COLOR
 NO_COLOR
    Disables ANSI color output when present and non-empty.
 
+Git Pre-Push Hook Setup
+========================
+
+To register the repository pre-push quality automation hook (runs ``crstlint``, ``make doc-check``, ``make format``, ``make check``, and ``make lint`` prior to pushing to remote repositories):
+
+.. code-block:: bash
+
+   make install-hooks
+
 Files
 =====
 
