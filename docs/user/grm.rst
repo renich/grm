@@ -379,7 +379,7 @@ First-class audio transmission and voice note processing:
 * ``grm audio info <file_path>``: Inspect audio duration, sample rate, channels, and codec details via libsox.
 
 7. Introspective Shell Completion Engine (``grm completion``)
-------------------------------------------------------------
+--------------------------------------------------------------
 
 Self-generating, zero-maintenance shell completion generator powered by native C++ command tree introspection:
 

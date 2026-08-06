@@ -99,11 +99,23 @@ add_test(NAME test_json_utils COMMAND test_json_utils)
 add_executable(test_cli_routing
     tests/test_cli_routing.cpp
     src/app.cpp
+    src/td_client.cpp
+    src/cmd_auth.cpp
+    src/cmd_chat.cpp
+    src/cmd_msg.cpp
+    src/cmd_topic.cpp
+    src/cmd_file.cpp
+    src/cmd_completion.cpp
+    src/list_options.cpp
+    src/exporter.cpp
+    src/uploader.cpp
+    src/downloader.cpp
+    src/formatter.cpp
     src/config.cpp
     src/logger.cpp
     src/json_utils.cpp
 )
-target_link_libraries(test_cli_routing PRIVATE ${JSONC_LIBRARIES})
+target_link_libraries(test_cli_routing PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
 add_test(NAME test_cli_routing COMMAND test_cli_routing)
 
 add_executable(test_completion

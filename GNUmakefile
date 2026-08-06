@@ -1,13 +1,6 @@
-# GNUmakefile for grm (Group & Telegram Manager CLI in C++23)
-# Compliant with GNU Coding Standards & POSIX Conventions
-
-SHELL := /usr/bin/bash
-.SHELLFLAGS := -eu -o pipefail -c
-
-.DEFAULT_GOAL := all
-
-# Standard GNU Installation Directories (Defaults to user installation ~/.local)
-PREFIX ?= $(HOME)/.local
+# Standard GNU Installation Directories (Compliant with GNU Coding Standards Section 7.2.5)
+PREFIX ?= /usr/local
+PREFIX_USER ?= $(HOME)/.local
 EXEC_PREFIX ?= $(PREFIX)
 BINDIR ?= $(EXEC_PREFIX)/bin
 DATAROOTDIR ?= $(PREFIX)/share
@@ -46,9 +39,10 @@ help:
 	@echo "  install-hooks        Configure repository Git pre-push hook (.githooks/pre-push.bash)"
 	@echo ""
 	@echo "Installation Targets:"
-	@echo "  install              Install release binary, man page, and completions to $(PREFIX)"
-	@echo "  install-user         Alias for install (installs to $(PREFIX))"
+	@echo "  install              Install release binary, man page, and completions to $(PREFIX) (default: /usr/local)"
+	@echo "  install-user         Install release binary, man page, and completions to $(PREFIX_USER)"
 	@echo "  uninstall            Remove installed binary, man page, and completions from $(PREFIX)"
+	@echo "  uninstall-user       Remove installed user files from $(PREFIX_USER)"
 	@echo "  clean                Remove build directory and documentation artifacts"
 	@echo "  distclean            Alias for clean"
 
@@ -95,7 +89,8 @@ install: release install-man install-completions
 	install -d $(DESTDIR)$(BINDIR)
 	install -m 0755 $(BUILD_DIR)/grm $(DESTDIR)$(BINDIR)/grm
 
-install-user: install
+install-user:
+	$(MAKE) install PREFIX="$(PREFIX_USER)"
 
 install-man:
 	$(MAKE) -C docs install-man BUILD_DIR="$(abspath $(BUILD_DIR))" PREFIX="$(PREFIX)" MAN_DIR="$(MAN1DIR)" DESTDIR="$(DESTDIR)"
@@ -112,4 +107,5 @@ uninstall:
 	rm -f $(DESTDIR)$(MAN1DIR)/grm.1
 	rm -f $(DESTDIR)$(BASH_COMPLETION_DIR)/grm
 
-uninstall-user: uninstall
+uninstall-user:
+	$(MAKE) uninstall PREFIX="$(PREFIX_USER)"

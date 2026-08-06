@@ -1,4 +1,23 @@
-#!/usr/bin/bash
+#include "grm/app.hpp"
+#include "grm/logger.hpp"
+#include <expected>
+#include <iostream>
+#include <string>
+#include <vector>
+
+namespace grm {
+
+std::expected<int, std::string>
+App::cmd_completion(const std::vector<std::string> &args) {
+  if (args.empty()) {
+    return std::unexpected(
+        "Usage: grm completion <shell>\n\nSupported shells: bash, zsh, fish");
+  }
+
+  const std::string &shell = args[0];
+
+  if (shell == "bash") {
+    std::cout << R"(#!/usr/bin/bash
 # Bash completion script for grm (Group & Telegram Manager CLI)
 # Generated dynamically by 'grm completion bash'
 
@@ -105,3 +124,69 @@ _grm_completions() {
 }
 
 complete -F _grm_completions grm
+)";
+    return 0;
+  }
+
+  if (shell == "zsh") {
+    std::cout << R"(#compdef grm
+# Zsh completion script for grm (Group & Telegram Manager CLI)
+# Generated dynamically by 'grm completion zsh'
+
+_grm() {
+  local -a commands
+  commands=(
+    'login:Authenticate Telegram account'
+    'chat:Manage Telegram chats, groups, and channels'
+    'msg:Inspect, send, edit, search, pin, and export messages'
+    'topic:Manage supergroup forum topics'
+    'file:Download attachments and media'
+    'completion:Generate shell completion script (bash, zsh, fish)'
+  )
+
+  _arguments -s \
+    '(-h --help)'{-h,--help}'[Show help message]' \
+    '(-V --version)'{-V,--version}'[Print version number]' \
+    '1: :->command' \
+    '*:: :->args'
+
+  case $state in
+    command)
+      _describe -t commands 'grm command' commands
+      ;;
+    args)
+      case $words[1] in
+        completion)
+          _values 'shell' bash zsh fish
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_grm "$@"
+)";
+    return 0;
+  }
+
+  if (shell == "fish") {
+    std::cout << R"(# Fish completion script for grm (Group & Telegram Manager CLI)
+# Generated dynamically by 'grm completion fish'
+
+complete -c grm -f -n "__fish_use_subcommand" -a login -d "Authenticate Telegram account"
+complete -c grm -f -n "__fish_use_subcommand" -a chat -d "Manage Telegram chats, groups, and channels"
+complete -c grm -f -n "__fish_use_subcommand" -a msg -d "Inspect, send, edit, search, pin, and export messages"
+complete -c grm -f -n "__fish_use_subcommand" -a topic -d "Manage supergroup forum topics"
+complete -c grm -f -n "__fish_use_subcommand" -a file -d "Download attachments and media"
+complete -c grm -f -n "__fish_use_subcommand" -a completion -d "Generate shell completion script"
+
+complete -c grm -f -n "__fish_seen_subcommand_from completion" -a "bash zsh fish"
+)";
+    return 0;
+  }
+
+  return std::unexpected("Unsupported shell: " + shell +
+                         "\nSupported shells: bash, zsh, fish");
+}
+
+} // namespace grm
