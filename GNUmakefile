@@ -77,7 +77,7 @@ format:
 	$(CLANG_FORMAT) -i include/grm/*.hpp src/*.cpp tests/*.cpp
 
 lint: release doc-check
-	$(CLANG_TIDY) -p $(BUILD_DIR) src/*.cpp
+	$(CLANG_TIDY) -p $(BUILD_DIR) src/*.cpp tests/*.cpp
 
 analyze:
 	$(SCAN_BUILD) --status-bugs $(CMAKE) --build $(BUILD_DIR) --clean-first
