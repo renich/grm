@@ -233,23 +233,20 @@ void App::send_tdlib_parameters() {
   const std::string params = std::format(
       R"({{
         "@type": "setTdlibParameters",
-        "parameters": {{
-          "@type": "tdlibParameters",
-          "use_test_dc": {},
-          "database_directory": "{}",
-          "files_directory": "{}/files",
-          "database_encryption_key": "",
-          "use_file_database": true,
-          "use_chat_info_database": true,
-          "use_message_database": true,
-          "use_secret_chats": true,
-          "api_id": {},
-          "api_hash": "{}",
-          "system_language_code": "en",
-          "device_model": "grm",
-          "system_version": "Linux x86_64",
-          "application_version": "0.5.1"
-        }}
+        "use_test_dc": {},
+        "database_directory": "{}",
+        "files_directory": "{}/files",
+        "database_encryption_key": "",
+        "use_file_database": true,
+        "use_chat_info_database": true,
+        "use_message_database": true,
+        "use_secret_chats": true,
+        "api_id": {},
+        "api_hash": "{}",
+        "system_language_code": "en",
+        "device_model": "grm",
+        "system_version": "Linux x86_64",
+        "application_version": "0.5.1"
       }})",
       options_.use_test_dc ? "true" : "false", db_path.string(),
       db_path.string(), config_.api_id, config_.api_hash);

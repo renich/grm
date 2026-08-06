@@ -1142,12 +1142,106 @@ App::cmd_msg_delete(const std::vector<std::string> &args) {
       }})",
       chat_id, ids_json, revoke ? "true" : "false");
 
-  auto res = client_->send_request("deleteMessages", payload, 10.0);
-  if (!res) {
-    return std::unexpected("Failed to delete messages: " + res.error());
+  grm::log::info("Message(s) deleted successfully.");
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_msg_pin(const std::vector<std::string> &args) {
+  if (args.size() < 2) {
+    return std::unexpected("Usage: grm msg pin <chat_id> <message_id>");
   }
 
-  grm::log::info("Message(s) deleted successfully.");
+  auto cid_res = parse_int64(args[0]);
+  if (!cid_res)
+    return std::unexpected(cid_res.error());
+
+  auto mid_res = parse_int64(args[1]);
+  if (!mid_res)
+    return std::unexpected(mid_res.error());
+
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
+
+  const std::string payload = std::format(
+      R"({{
+        "chat_id": {},
+        "message_id": {},
+        "disable_notification": false,
+        "only_for_self": false
+      }})",
+      *cid_res, *mid_res);
+
+  auto res = client_->send_request("pinChatMessage", payload, 5.0);
+  if (!res) {
+    return std::unexpected("Failed to pin message: " + res.error());
+  }
+
+  grm::log::info("Message " + std::to_string(*mid_res) + " in chat " +
+                 std::to_string(*cid_res) + " pinned successfully.");
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_msg_unpin(const std::vector<std::string> &args) {
+  if (args.size() < 2) {
+    return std::unexpected("Usage: grm msg unpin <chat_id> <message_id>");
+  }
+
+  auto cid_res = parse_int64(args[0]);
+  if (!cid_res)
+    return std::unexpected(cid_res.error());
+
+  auto mid_res = parse_int64(args[1]);
+  if (!mid_res)
+    return std::unexpected(mid_res.error());
+
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
+
+  const std::string payload = std::format(
+      R"({{
+        "chat_id": {},
+        "message_id": {}
+      }})",
+      *cid_res, *mid_res);
+
+  auto res = client_->send_request("unpinChatMessage", payload, 5.0);
+  if (!res) {
+    return std::unexpected("Failed to unpin message: " + res.error());
+  }
+
+  grm::log::info("Message " + std::to_string(*mid_res) + " in chat " +
+                 std::to_string(*cid_res) + " unpinned successfully.");
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_msg_unpin_all(const std::vector<std::string> &args) {
+  if (args.empty()) {
+    return std::unexpected("Usage: grm msg unpin-all <chat_id>");
+  }
+
+  auto cid_res = parse_int64(args[0]);
+  if (!cid_res)
+    return std::unexpected(cid_res.error());
+
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
+
+  const std::string payload = std::format(
+      R"({{
+        "chat_id": {}
+      }})",
+      *cid_res);
+
+  auto res = client_->send_request("unpinAllChatMessages", payload, 5.0);
+  if (!res) {
+    return std::unexpected("Failed to unpin all messages: " + res.error());
+  }
+
+  grm::log::info("All messages in chat " + std::to_string(*cid_res) +
+                 " unpinned successfully.");
   return 0;
 }
 

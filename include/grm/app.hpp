@@ -79,6 +79,12 @@ private:
   [[nodiscard]] std::expected<int, std::string>
   cmd_msg_edit(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
+  cmd_msg_pin(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_msg_unpin(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_msg_unpin_all(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
   cmd_msg_delete(const std::vector<std::string> &args);
 
   // Supergroup Topic CRUD

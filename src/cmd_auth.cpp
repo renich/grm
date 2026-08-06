@@ -66,12 +66,10 @@ std::expected<int, std::string> App::cmd_login() {
 
       if (state == "authorizationStateWaitTdlibParameters") {
         grm::log::info("Configuring TDLib engine parameters...");
-        send_tdlib_parameters();
       } else if (state == "authorizationStateWaitPhoneNumber") {
         std::string phone = options_.phone;
         if (phone.empty()) {
-          std::cout << "[AUTH] Enter your Telegram phone number (e.g. "
-                       "+521234567890): "
+          std::cout << "\n[AUTH] Enter your Telegram phone number (e.g. +521234567890):\n> "
                     << std::flush;
           std::cin >> phone;
         } else {
@@ -103,7 +101,7 @@ std::expected<int, std::string> App::cmd_login() {
             grm::log::info(
                 "Telegram does not allow SMS auth for custom API_IDs.");
             grm::log::info(
-                "Please make sure your phone number (+523335765013) is logged into an official Telegram client (phone/desktop), then retry.");
+                "Please make sure your phone number is logged into an official Telegram client (phone/desktop), then retry.");
           } else {
             grm::log::error("Failed to set phone number: " + res.error());
           }
@@ -117,8 +115,7 @@ std::expected<int, std::string> App::cmd_login() {
       } else if (state == "authorizationStateWaitCode") {
         std::string code = options_.code;
         if (code.empty()) {
-          std::cout << "[AUTH] Enter authentication code (or type 'resend' for "
-                       "SMS): "
+          std::cout << "\n[AUTH] Enter authentication code (or type 'resend' for SMS):\n> "
                     << std::flush;
           std::cin >> code;
         } else {

@@ -103,19 +103,19 @@ grm chat set-title *CHAT_ID* "*TITLE*"
    Update group or channel title.
 
 grm chat set-desc *CHAT_ID* "*DESCRIPTION*"
-   Update supergroup or channel description.
+   Update the description of a supergroup or channel.
 
-grm chat pin *CHAT_ID* *MESSAGE_ID* [--notify]
-   Pin a message in group or channel.
+grm chat pin *CHAT_ID*
+   Pin a chat or group to the top of the chat list.
 
-grm chat unpin *CHAT_ID* [*MESSAGE_ID*]
-   Unpin a specific message or all pinned messages.
+grm chat unpin *CHAT_ID*
+   Unpin a chat or group from the chat list.
 
 grm chat delete *CHAT_ID*
-   Delete chat history or leave group/channel.
+   Delete chat history or leave group.
 
-msg
----
+Message Lifecycle
+-----------------
 
 grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] [-f *PATTERN*] [-r] *CHAT_ID*
    List messages from a chat or forum topic in chronological order (oldest first at top, newest at bottom).
@@ -134,6 +134,15 @@ grm msg ls [-n *LIMIT*] [-t *TOPIC_ID*] [-S *SINCE*] [-f *PATTERN*] [-r] *CHAT_I
 
    -r, --reverse
       Display messages in reverse-chronological order (newest first at top).
+
+grm msg pin *CHAT_ID* *MESSAGE_ID*
+   Pin a specific message in a chat or supergroup.
+
+grm msg unpin *CHAT_ID* *MESSAGE_ID*
+   Unpin a specific message in a chat or supergroup.
+
+grm msg unpin-all *CHAT_ID*
+   Unpin all pinned messages in a chat or supergroup.
 
 grm msg export [-f csv|json] [-o *FILE*] [-t *TOPIC_ID*] *CHAT_ID*
    Export chat history to CSV or JSON file.
@@ -181,22 +190,22 @@ grm msg send [-a *FILE*] [-m] [-C "*CAPTION*"] [-t *TOPIC_ID*] *CHAT_ID* ["*MESS
       Target specific forum topic ID.
 
 grm msg info *CHAT_ID* *MESSAGE_ID*
-   View message metadata in JSON format.
+   Display detailed JSON payload for a message.
 
-grm msg edit [-t *TOPIC_ID*] *CHAT_ID* *MESSAGE_ID* "*TEXT*"
-   Edit content of a sent text message.
+grm msg edit *CHAT_ID* *MESSAGE_ID* "*NEW_TEXT*"
+   Edit text of an existing message.
 
-grm msg delete [--for-everyone] *CHAT_ID* *MESSAGE_IDS...*
-   Delete one or more messages.
+grm msg delete [-e] *CHAT_ID* *MESSAGE_IDS...*
+   Delete one or more messages by ID.
 
    -e, --for-everyone
-      Delete message for all chat participants.
+      Delete messages for all chat participants.
 
-topic
------
+Supergroup Topic Management
+---------------------------
 
-grm topic ls [-n *LIMIT*] [-S *SINCE*] [-f *PATTERN*] *SUPERGROUP_ID*
-   List active forum topics in a supergroup.
+grm topic ls [-n *LIMIT*] [-S *SINCE*] [-f *PATTERN*] *CHAT_ID*
+   List forum topics in a supergroup.
 
    -n, --limit *N*
       Maximum number of topics to display (default: 100).

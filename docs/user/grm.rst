@@ -120,11 +120,11 @@ grm chat set-title <chat_id> "<new_title>"
 grm chat set-desc <chat_id> "<description>"
    Update the description of a supergroup or channel.
 
-grm chat pin <chat_id> <message_id>
-   Pin a message in a chat or supergroup.
+grm chat pin <chat_id>
+   Pin a chat or group at the top of the chat list.
 
-grm chat unpin <chat_id> [<message_id>]
-   Unpin a message in a chat or supergroup.
+grm chat unpin <chat_id>
+   Unpin a chat or group from the top of the chat list.
 
 grm chat delete <chat_id>
    Delete chat history or leave group.
@@ -149,6 +149,15 @@ grm msg ls [-n|--limit <N>] [-t|--topic <id>] [-S|--since <duration|date>] [-f|-
 
    -r, --reverse
       Display messages in reverse-chronological order (newest first at top).
+
+grm msg pin <chat_id> <message_id>
+   Pin a specific message in a chat or supergroup.
+
+grm msg unpin <chat_id> <message_id>
+   Unpin a specific message in a chat or supergroup.
+
+grm msg unpin-all <chat_id>
+   Unpin all pinned messages in a chat or supergroup.
 
 grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <chat_id>
    Export chat or topic history to a CSV or JSON file.
