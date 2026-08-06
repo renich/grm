@@ -1,4 +1,5 @@
-// TestTopic validates [FUNC-008] and [TECH-005] (Forum Topics & Thread ID Formatting)
+// TestTopic validates [FUNC-008] and [TECH-005] (Forum Topics & Thread ID
+// Formatting)
 #include "grm/json_utils.hpp"
 #include "grm/uploader.hpp"
 #include <cstdlib>

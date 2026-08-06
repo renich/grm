@@ -15,7 +15,7 @@ static void check(bool condition, const std::string &msg) {
 namespace grm::test {
 
 static std::string build_create_topic_payload(int64_t chat_id,
-                                               const std::string &name) {
+                                              const std::string &name) {
   return std::format(
       R"({{
         "@type": "createForumTopic",
@@ -25,9 +25,8 @@ static std::string build_create_topic_payload(int64_t chat_id,
       chat_id, grm::escape_json_string(name));
 }
 
-static std::string build_edit_topic_payload(int64_t chat_id,
-                                             int64_t topic_id,
-                                             const std::string &name) {
+static std::string build_edit_topic_payload(int64_t chat_id, int64_t topic_id,
+                                            const std::string &name) {
   return std::format(
       R"({{
         "@type": "editForumTopic",
@@ -39,8 +38,8 @@ static std::string build_edit_topic_payload(int64_t chat_id,
 }
 
 static std::string build_toggle_topic_close_payload(int64_t chat_id,
-                                                     int64_t topic_id,
-                                                     bool is_closed) {
+                                                    int64_t topic_id,
+                                                    bool is_closed) {
   return std::format(
       R"({{
         "@type": "toggleForumTopicIsClosed",
@@ -75,8 +74,10 @@ void test_edit_topic_payload() {
 void test_toggle_topic_close_payload() {
   std::string payload =
       grm::test::build_toggle_topic_close_payload(-1001789902965, 2, true);
-  check(payload.find("toggleForumTopicIsClosed") != std::string::npos, "Type match");
-  check(payload.find("\"is_closed\": true") != std::string::npos, "Close state match");
+  check(payload.find("toggleForumTopicIsClosed") != std::string::npos,
+        "Type match");
+  check(payload.find("\"is_closed\": true") != std::string::npos,
+        "Close state match");
   std::cout << "[PASS] test_toggle_topic_close_payload\n";
 }
 

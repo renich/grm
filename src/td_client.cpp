@@ -66,7 +66,8 @@ std::string TdClient::generate_extra_id() {
 
 void TdClient::send_async(const std::string &type,
                           std::string_view payload_json) const {
-  if (client_id_ < 0) return;
+  if (client_id_ < 0)
+    return;
 
   auto parsed = JsonValue::parse(payload_json);
   json_object *raw_obj = nullptr;

@@ -16,7 +16,8 @@ int main() {
   assert(humanize_chat_type("chatTypeSecret") == "Secret Chat");
   assert(humanize_chat_type("chatTypeCustom") == "Custom");
 
-  assert(humanize_auth_code_type("authenticationCodeTypeTelegramMessage") == "In-App Message");
+  assert(humanize_auth_code_type("authenticationCodeTypeTelegramMessage") ==
+         "In-App Message");
   assert(humanize_auth_code_type("authenticationCodeTypeSms") == "SMS");
 
   // Test 2: Humanize bytes
@@ -45,8 +46,7 @@ int main() {
   // Test 6: Chat list rendering in JSON Envelope mode
   std::vector<ChatItem> chats = {
       {101, "chatTypeSupergroup", "DevOps Supergroup", 2, fixed_time},
-      {102, "chatTypePrivate", "Alice", 0, fixed_time - 3600}
-  };
+      {102, "chatTypePrivate", "Alice", 0, fixed_time - 3600}};
 
   std::ostringstream ss_json;
   Formatter::print_chats(chats, OutputFormat::Json, ColorMode::Never, ss_json);
@@ -57,36 +57,41 @@ int main() {
 
   // Test 7: Chat list rendering in NDJSON (JsonL) mode
   std::ostringstream ss_jsonl;
-  Formatter::print_chats(chats, OutputFormat::JsonL, ColorMode::Never, ss_jsonl);
+  Formatter::print_chats(chats, OutputFormat::JsonL, ColorMode::Never,
+                         ss_jsonl);
   std::string jsonl_out = ss_jsonl.str();
   assert(jsonl_out.find("{\"id\":101") != std::string::npos);
   assert(jsonl_out.find("{\"id\":102") != std::string::npos);
 
   // Test 8: Topic rendering in Markdown mode
-  std::vector<TopicItem> topics = {
-      {1, "General", 42, 0, 0},
-      {2, "Support", 15, 0, 0}
-  };
+  std::vector<TopicItem> topics = {{1, "General", 42, 0, 0},
+                                   {2, "Support", 15, 0, 0}};
   std::ostringstream ss_md;
-  Formatter::print_topics(topics, OutputFormat::Markdown, ColorMode::Never, ss_md);
+  Formatter::print_topics(topics, OutputFormat::Markdown, ColorMode::Never,
+                          ss_md);
   std::string md_out = ss_md.str();
-  assert(md_out.find("| Topic ID | Name | Message Count |") != std::string::npos);
+  assert(md_out.find("| Topic ID | Name | Message Count |") !=
+         std::string::npos);
   assert(md_out.find("| 1 | General | 42 |") != std::string::npos);
 
   // Test 9: Error payload rendering in JSON & Human mode
-  ErrorPayload err{404, "CHAT_NOT_FOUND", "Chat ID -100999 is invalid", "Check chat ID via grm chat ls"};
+  ErrorPayload err{404, "CHAT_NOT_FOUND", "Chat ID -100999 is invalid",
+                   "Check chat ID via grm chat ls"};
 
   std::ostringstream ss_err_json;
-  Formatter::print_error(err, OutputFormat::Json, ColorMode::Never, ss_err_json);
+  Formatter::print_error(err, OutputFormat::Json, ColorMode::Never,
+                         ss_err_json);
   std::string err_json_out = ss_err_json.str();
   assert(err_json_out.find("\"status\": \"error\"") != std::string::npos);
   assert(err_json_out.find("\"code\": 404") != std::string::npos);
-  assert(err_json_out.find("Check chat ID via grm chat ls") != std::string::npos);
+  assert(err_json_out.find("Check chat ID via grm chat ls") !=
+         std::string::npos);
 
   // Test 10: Polymorphic render visitor via std::visit
   RenderablePayload payload = chats;
   std::ostringstream ss_visitor;
-  Formatter::render(payload, "chat.ls", OutputFormat::Plain, ColorMode::Never, ss_visitor);
+  Formatter::render(payload, "chat.ls", OutputFormat::Plain, ColorMode::Never,
+                    ss_visitor);
   std::string visitor_out = ss_visitor.str();
   assert(visitor_out.find("DevOps Supergroup") != std::string::npos);
 

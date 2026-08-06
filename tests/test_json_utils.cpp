@@ -4,7 +4,8 @@
 #include <iostream>
 
 void test_json_parse_valid() {
-  const std::string json = R"({"@type": "updateAuthorizationState", "api_id": 12345, "enabled": true})";
+  const std::string json =
+      R"({"@type": "updateAuthorizationState", "api_id": 12345, "enabled": true})";
   auto res = grm::JsonValue::parse(json);
   assert(res.has_value());
   assert(res->is_object());

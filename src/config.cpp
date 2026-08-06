@@ -8,18 +8,26 @@
 namespace grm {
 
 static fmt::OutputFormat parse_format_str(std::string_view str) {
-  if (str == "human") return fmt::OutputFormat::Human;
-  if (str == "markdown") return fmt::OutputFormat::Markdown;
-  if (str == "json") return fmt::OutputFormat::Json;
-  if (str == "jsonl" || str == "ndjson") return fmt::OutputFormat::JsonL;
-  if (str == "plain") return fmt::OutputFormat::Plain;
+  if (str == "human")
+    return fmt::OutputFormat::Human;
+  if (str == "markdown")
+    return fmt::OutputFormat::Markdown;
+  if (str == "json")
+    return fmt::OutputFormat::Json;
+  if (str == "jsonl" || str == "ndjson")
+    return fmt::OutputFormat::JsonL;
+  if (str == "plain")
+    return fmt::OutputFormat::Plain;
   return fmt::OutputFormat::Auto;
 }
 
 static fmt::ColorMode parse_color_str(std::string_view str) {
-  if (str == "always") return fmt::ColorMode::Always;
-  if (str == "never") return fmt::ColorMode::Never;
-  if (str == "auto") return fmt::ColorMode::Auto;
+  if (str == "always")
+    return fmt::ColorMode::Always;
+  if (str == "never")
+    return fmt::ColorMode::Never;
+  if (str == "auto")
+    return fmt::ColorMode::Auto;
   return fmt::ColorMode::Auto;
 }
 

@@ -58,8 +58,10 @@ std::string_view humanize_auth_code_type(std::string_view tdlib_type) {
 }
 
 std::string humanize_bytes(int64_t bytes) {
-  if (bytes < 0) return "0 B";
-  if (bytes < 1024) return std::format("{} B", bytes);
+  if (bytes < 0)
+    return "0 B";
+  if (bytes < 1024)
+    return std::format("{} B", bytes);
   constexpr double kKiB = 1024.0;
   constexpr double kMiB = 1024.0 * 1024.0;
   constexpr double kGiB = 1024.0 * 1024.0 * 1024.0;
@@ -75,7 +77,8 @@ std::string humanize_bytes(int64_t bytes) {
 }
 
 std::string humanize_relative_time(int64_t timestamp_sec, int64_t now_sec) {
-  if (timestamp_sec <= 0) return "Never";
+  if (timestamp_sec <= 0)
+    return "Never";
   if (now_sec <= 0) {
     now_sec = std::chrono::duration_cast<std::chrono::seconds>(
                   std::chrono::system_clock::now().time_since_epoch())
@@ -83,18 +86,25 @@ std::string humanize_relative_time(int64_t timestamp_sec, int64_t now_sec) {
   }
 
   int64_t diff = now_sec - timestamp_sec;
-  if (diff < -5) return "In the future";
-  if (diff < 30) return "Just now";
-  if (diff < 60) return std::format("{}s ago", diff);
-  if (diff < 3600) return std::format("{}m ago", diff / 60);
-  if (diff < 86400) return std::format("{}h ago", diff / 3600);
-  if (diff < 604800) return std::format("{}d ago", diff / 86400);
+  if (diff < -5)
+    return "In the future";
+  if (diff < 30)
+    return "Just now";
+  if (diff < 60)
+    return std::format("{}s ago", diff);
+  if (diff < 3600)
+    return std::format("{}m ago", diff / 60);
+  if (diff < 86400)
+    return std::format("{}h ago", diff / 3600);
+  if (diff < 604800)
+    return std::format("{}d ago", diff / 86400);
 
   return format_iso8601(timestamp_sec);
 }
 
 std::string format_iso8601(int64_t timestamp_sec) {
-  if (timestamp_sec <= 0) return "";
+  if (timestamp_sec <= 0)
+    return "";
   std::time_t t = static_cast<std::time_t>(timestamp_sec);
   std::tm tm_buf{};
 #if defined(_POSIX_C_SOURCE) || defined(_GNU_SOURCE)
@@ -133,27 +143,29 @@ OutputFormat resolve_format(OutputFormat requested_format, bool is_tty_stream) {
 void Formatter::print_chats(const std::vector<ChatItem> &chats,
                             OutputFormat format, ColorMode color_mode,
                             std::ostream &out) {
-  const bool is_tty = (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
+  const bool is_tty =
+      (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
   const OutputFormat fmt = resolve_format(format, is_tty);
   const bool use_color = should_use_color(color_mode);
 
   if (fmt == OutputFormat::Json) {
-    out << "{\n  \"status\": \"success\",\n  \"count\": " << chats.size() << ",\n  \"data\": [\n";
+    out << "{\n  \"status\": \"success\",\n  \"count\": " << chats.size()
+        << ",\n  \"data\": [\n";
     for (size_t i = 0; i < chats.size(); ++i) {
       const auto &c = chats[i];
-      out << std::format(
-          "    {{\n"
-          "      \"id\": {},\n"
-          "      \"type\": \"{}\",\n"
-          "      \"title\": \"{}\",\n"
-          "      \"unread_count\": {},\n"
-          "      \"last_message_date\": {},\n"
-          "      \"last_message_iso\": \"{}\"\n"
-          "    }}{}",
-          c.id, escape_json_string(humanize_chat_type(c.type)),
-          escape_json_string(c.title), c.unread_count, c.last_message_date,
-          format_iso8601(c.last_message_date),
-          (i + 1 < chats.size() ? ",\n" : "\n"));
+      out << std::format("    {{\n"
+                         "      \"id\": {},\n"
+                         "      \"type\": \"{}\",\n"
+                         "      \"title\": \"{}\",\n"
+                         "      \"unread_count\": {},\n"
+                         "      \"last_message_date\": {},\n"
+                         "      \"last_message_iso\": \"{}\"\n"
+                         "    }}{}",
+                         c.id, escape_json_string(humanize_chat_type(c.type)),
+                         escape_json_string(c.title), c.unread_count,
+                         c.last_message_date,
+                         format_iso8601(c.last_message_date),
+                         (i + 1 < chats.size() ? ",\n" : "\n"));
     }
     out << "  ]\n}\n";
     return;
@@ -162,7 +174,8 @@ void Formatter::print_chats(const std::vector<ChatItem> &chats,
   if (fmt == OutputFormat::JsonL) {
     for (const auto &c : chats) {
       out << std::format(
-          R"({{"id":{},"type":"{}","title":"{}","unread_count":{},"last_message_date":{}}})" "\n",
+          R"({{"id":{},"type":"{}","title":"{}","unread_count":{},"last_message_date":{}}})"
+          "\n",
           c.id, escape_json_string(humanize_chat_type(c.type)),
           escape_json_string(c.title), c.unread_count, c.last_message_date);
     }
@@ -185,43 +198,47 @@ void Formatter::print_chats(const std::vector<ChatItem> &chats,
                        "TYPE", "TITLE", "UNREAD", COLOR_RESET);
     out << COLOR_GRAY << std::string(75, '-') << COLOR_RESET << "\n";
   } else {
-    out << std::format("{:<20} {:<15} {:<30} {}\n", "CHAT ID", "TYPE", "TITLE", "UNREAD");
+    out << std::format("{:<20} {:<15} {:<30} {}\n", "CHAT ID", "TYPE", "TITLE",
+                       "UNREAD");
     out << std::string(75, '-') << "\n";
   }
 
   for (const auto &c : chats) {
     const auto human_type = humanize_chat_type(c.type);
     if (use_color) {
-      out << std::format("{}{:<20}{} {}{:<15}{} {}{:<30}{} {}{}{}\n", COLOR_CYAN,
-                         c.id, COLOR_RESET, COLOR_YELLOW, human_type,
-                         COLOR_RESET, COLOR_GREEN, c.title, COLOR_RESET,
-                         COLOR_RED, c.unread_count, COLOR_RESET);
+      out << std::format("{}{:<20}{} {}{:<15}{} {}{:<30}{} {}{}{}\n",
+                         COLOR_CYAN, c.id, COLOR_RESET, COLOR_YELLOW,
+                         human_type, COLOR_RESET, COLOR_GREEN, c.title,
+                         COLOR_RESET, COLOR_RED, c.unread_count, COLOR_RESET);
     } else {
-      out << std::format("{:<20} {:<15} {:<30} {}\n", c.id, human_type, c.title, c.unread_count);
+      out << std::format("{:<20} {:<15} {:<30} {}\n", c.id, human_type, c.title,
+                         c.unread_count);
     }
   }
 }
 
 void Formatter::print_topics(const std::vector<TopicItem> &topics,
-                            OutputFormat format, ColorMode color_mode,
-                            std::ostream &out) {
-  const bool is_tty = (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
+                             OutputFormat format, ColorMode color_mode,
+                             std::ostream &out) {
+  const bool is_tty =
+      (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
   const OutputFormat fmt = resolve_format(format, is_tty);
   const bool use_color = should_use_color(color_mode);
 
   if (fmt == OutputFormat::Json) {
-    out << "{\n  \"status\": \"success\",\n  \"count\": " << topics.size() << ",\n  \"data\": [\n";
+    out << "{\n  \"status\": \"success\",\n  \"count\": " << topics.size()
+        << ",\n  \"data\": [\n";
     for (size_t i = 0; i < topics.size(); ++i) {
       const auto &t = topics[i];
-      out << std::format(
-          "    {{\n"
-          "      \"id\": {},\n"
-          "      \"name\": \"{}\",\n"
-          "      \"messages_count\": {},\n"
-          "      \"custom_emoji_id\": {}\n"
-          "    }}{}",
-          t.id, escape_json_string(t.name), t.message_count, t.custom_emoji_id,
-          (i + 1 < topics.size() ? ",\n" : "\n"));
+      out << std::format("    {{\n"
+                         "      \"id\": {},\n"
+                         "      \"name\": \"{}\",\n"
+                         "      \"messages_count\": {},\n"
+                         "      \"custom_emoji_id\": {}\n"
+                         "    }}{}",
+                         t.id, escape_json_string(t.name), t.message_count,
+                         t.custom_emoji_id,
+                         (i + 1 < topics.size() ? ",\n" : "\n"));
     }
     out << "  ]\n}\n";
     return;
@@ -230,7 +247,8 @@ void Formatter::print_topics(const std::vector<TopicItem> &topics,
   if (fmt == OutputFormat::JsonL) {
     for (const auto &t : topics) {
       out << std::format(
-          R"({{"id":{},"name":"{}","messages_count":{},"custom_emoji_id":{}}})" "\n",
+          R"({{"id":{},"name":"{}","messages_count":{},"custom_emoji_id":{}}})"
+          "\n",
           t.id, escape_json_string(t.name), t.message_count, t.custom_emoji_id);
     }
     return;
@@ -247,20 +265,20 @@ void Formatter::print_topics(const std::vector<TopicItem> &topics,
 
   // Human / Plain mode
   if (use_color) {
-    out << std::format("{}{:<15} {:<30} {}{}\n", COLOR_BOLD, "TOPIC ID",
-                       "NAME", "MESSAGES COUNT", COLOR_RESET);
+    out << std::format("{}{:<15} {:<30} {}{}\n", COLOR_BOLD, "TOPIC ID", "NAME",
+                       "MESSAGES COUNT", COLOR_RESET);
     out << COLOR_GRAY << std::string(65, '-') << COLOR_RESET << "\n";
   } else {
-    out << std::format("{:<15} {:<30} {}\n", "TOPIC ID", "NAME", "MESSAGES COUNT");
+    out << std::format("{:<15} {:<30} {}\n", "TOPIC ID", "NAME",
+                       "MESSAGES COUNT");
     out << std::string(65, '-') << "\n";
   }
 
   for (const auto &t : topics) {
     if (use_color) {
-      out << std::format("{}{:<15}{} {}{:<30}{} {}{}{}\n", COLOR_CYAN,
-                         t.id, COLOR_RESET, COLOR_GREEN, t.name,
-                         COLOR_RESET, COLOR_YELLOW, t.message_count,
-                         COLOR_RESET);
+      out << std::format("{}{:<15}{} {}{:<30}{} {}{}{}\n", COLOR_CYAN, t.id,
+                         COLOR_RESET, COLOR_GREEN, t.name, COLOR_RESET,
+                         COLOR_YELLOW, t.message_count, COLOR_RESET);
     } else {
       out << std::format("{:<15} {:<30} {}\n", t.id, t.name, t.message_count);
     }
@@ -297,30 +315,32 @@ static std::string escape_markdown_table_cell(std::string_view text) {
 void Formatter::print_messages(const std::vector<MessageItem> &messages,
                                OutputFormat format, ColorMode color_mode,
                                std::ostream &out) {
-  const bool is_tty = (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
+  const bool is_tty =
+      (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
   const OutputFormat fmt = resolve_format(format, is_tty);
   const bool use_color = should_use_color(color_mode);
 
   if (fmt == OutputFormat::Json) {
-    out << "{\n  \"status\": \"success\",\n  \"count\": " << messages.size() << ",\n  \"data\": [\n";
+    out << "{\n  \"status\": \"success\",\n  \"count\": " << messages.size()
+        << ",\n  \"data\": [\n";
     for (size_t i = 0; i < messages.size(); ++i) {
       const auto &m = messages[i];
-      out << std::format(
-          "    {{\n"
-          "      \"id\": {},\n"
-          "      \"chat_id\": {},\n"
-          "      \"date\": {},\n"
-          "      \"date_iso\": \"{}\",\n"
-          "      \"sender\": \"{}\",\n"
-          "      \"text\": \"{}\",\n"
-          "      \"has_attachment\": {},\n"
-          "      \"attachment_type\": \"{}\"\n"
-          "    }}{}",
-          m.id, m.chat_id, m.date, format_iso8601(m.date),
-          escape_json_string(m.sender), escape_json_string(m.text),
-          (m.has_attachment ? "true" : "false"),
-          escape_json_string(m.attachment_type),
-          (i + 1 < messages.size() ? ",\n" : "\n"));
+      out << std::format("    {{\n"
+                         "      \"id\": {},\n"
+                         "      \"chat_id\": {},\n"
+                         "      \"date\": {},\n"
+                         "      \"date_iso\": \"{}\",\n"
+                         "      \"sender\": \"{}\",\n"
+                         "      \"text\": \"{}\",\n"
+                         "      \"has_attachment\": {},\n"
+                         "      \"attachment_type\": \"{}\"\n"
+                         "    }}{}",
+                         m.id, m.chat_id, m.date, format_iso8601(m.date),
+                         escape_json_string(m.sender),
+                         escape_json_string(m.text),
+                         (m.has_attachment ? "true" : "false"),
+                         escape_json_string(m.attachment_type),
+                         (i + 1 < messages.size() ? ",\n" : "\n"));
     }
     out << "  ]\n}\n";
     return;
@@ -329,7 +349,8 @@ void Formatter::print_messages(const std::vector<MessageItem> &messages,
   if (fmt == OutputFormat::JsonL) {
     for (const auto &m : messages) {
       out << std::format(
-          R"({{"id":{},"chat_id":{},"date":{},"date_iso":"{}","sender":"{}","text":"{}","has_attachment":{},"attachment_type":"{}"}})" "\n",
+          R"({{"id":{},"chat_id":{},"date":{},"date_iso":"{}","sender":"{}","text":"{}","has_attachment":{},"attachment_type":"{}"}})"
+          "\n",
           m.id, m.chat_id, m.date, format_iso8601(m.date),
           escape_json_string(m.sender), escape_json_string(m.text),
           (m.has_attachment ? "true" : "false"),
@@ -357,7 +378,8 @@ void Formatter::print_messages(const std::vector<MessageItem> &messages,
     }
 
     const std::string date_str = humanize_relative_time(m.date);
-    const std::string prefix_plain = std::format("[MsgID {} | {}]: ", m.id, date_str);
+    const std::string prefix_plain =
+        std::format("[MsgID {} | {}]: ", m.id, date_str);
     const std::string indent(prefix_plain.size(), ' ');
 
     if (use_color) {
@@ -378,22 +400,22 @@ void Formatter::print_messages(const std::vector<MessageItem> &messages,
 
 void Formatter::print_error(const ErrorPayload &err, OutputFormat format,
                             ColorMode color_mode, std::ostream &out) {
-  const bool is_tty = (out.rdbuf() == std::cerr.rdbuf() && isatty(STDERR_FILENO) != 0);
+  const bool is_tty =
+      (out.rdbuf() == std::cerr.rdbuf() && isatty(STDERR_FILENO) != 0);
   const OutputFormat fmt = resolve_format(format, is_tty);
   const bool use_color = should_use_color(color_mode);
 
   if (fmt == OutputFormat::Json || fmt == OutputFormat::JsonL) {
-    out << std::format(
-        "{{\n"
-        "  \"status\": \"error\",\n"
-        "  \"code\": {},\n"
-        "  \"error_type\": \"{}\",\n"
-        "  \"message\": \"{}\",\n"
-        "  \"remediation\": \"{}\"\n"
-        "}}\n",
-        err.code, escape_json_string(err.error_type),
-        escape_json_string(err.message),
-        escape_json_string(err.remediation));
+    out << std::format("{{\n"
+                       "  \"status\": \"error\",\n"
+                       "  \"code\": {},\n"
+                       "  \"error_type\": \"{}\",\n"
+                       "  \"message\": \"{}\",\n"
+                       "  \"remediation\": \"{}\"\n"
+                       "}}\n",
+                       err.code, escape_json_string(err.error_type),
+                       escape_json_string(err.message),
+                       escape_json_string(err.remediation));
     return;
   }
 
@@ -401,10 +423,12 @@ void Formatter::print_error(const ErrorPayload &err, OutputFormat format,
     out << std::format("{}[ERROR {}]{} {}: {}\n", COLOR_RED, err.code,
                        COLOR_RESET, err.error_type, err.message);
     if (!err.remediation.empty()) {
-      out << std::format("{}[TIP]{} {}\n", COLOR_YELLOW, COLOR_RESET, err.remediation);
+      out << std::format("{}[TIP]{} {}\n", COLOR_YELLOW, COLOR_RESET,
+                         err.remediation);
     }
   } else {
-    out << std::format("[ERROR {}] {}: {}\n", err.code, err.error_type, err.message);
+    out << std::format("[ERROR {}] {}: {}\n", err.code, err.error_type,
+                       err.message);
     if (!err.remediation.empty()) {
       out << std::format("[TIP] {}\n", err.remediation);
     }

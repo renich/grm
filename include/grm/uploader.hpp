@@ -19,7 +19,6 @@ public:
                            const std::filesystem::path &file_path,
                            const std::string &caption = "",
                            int64_t message_thread_id = 0);
-
 };
 
 } // namespace grm

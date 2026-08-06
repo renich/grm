@@ -24,7 +24,7 @@ static std::string build_create_group_payload(const std::string &title) {
 }
 
 static std::string build_set_chat_title_payload(int64_t chat_id,
-                                                 const std::string &title) {
+                                                const std::string &title) {
   return std::format(
       R"({{
         "@type": "setChatTitle",
@@ -35,7 +35,7 @@ static std::string build_set_chat_title_payload(int64_t chat_id,
 }
 
 static std::string build_pin_message_payload(int64_t chat_id,
-                                              int64_t message_id) {
+                                             int64_t message_id) {
   return std::format(
       R"({{
         "@type": "pinChatMessage",
@@ -51,7 +51,8 @@ static std::string build_pin_message_payload(int64_t chat_id,
 
 void test_create_group_payload() {
   std::string payload = grm::test::build_create_group_payload("Dev Team Chat");
-  check(payload.find("createNewBasicGroupChat") != std::string::npos, "Type match");
+  check(payload.find("createNewBasicGroupChat") != std::string::npos,
+        "Type match");
   check(payload.find("Dev Team Chat") != std::string::npos, "Title match");
   std::cout << "[PASS] test_create_group_payload\n";
 }

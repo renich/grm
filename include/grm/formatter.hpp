@@ -9,7 +9,14 @@
 
 namespace grm::fmt {
 
-enum class OutputFormat : std::uint8_t { Auto, Human, Markdown, Json, JsonL, Plain };
+enum class OutputFormat : std::uint8_t {
+  Auto,
+  Human,
+  Markdown,
+  Json,
+  JsonL,
+  Plain
+};
 
 enum class ColorMode : std::uint8_t { Auto, Always, Never };
 
@@ -47,21 +54,21 @@ struct ErrorPayload {
   std::string remediation;
 };
 
-using RenderablePayload = std::variant<
-    std::vector<ChatItem>,
-    std::vector<TopicItem>,
-    std::vector<MessageItem>,
-    ErrorPayload
->;
+using RenderablePayload =
+    std::variant<std::vector<ChatItem>, std::vector<TopicItem>,
+                 std::vector<MessageItem>, ErrorPayload>;
 
 [[nodiscard]] std::string_view humanize_chat_type(std::string_view tdlib_type);
-[[nodiscard]] std::string_view humanize_auth_code_type(std::string_view tdlib_type);
+[[nodiscard]] std::string_view
+humanize_auth_code_type(std::string_view tdlib_type);
 [[nodiscard]] std::string humanize_bytes(int64_t bytes);
-[[nodiscard]] std::string humanize_relative_time(int64_t timestamp_sec, int64_t now_sec = 0);
+[[nodiscard]] std::string humanize_relative_time(int64_t timestamp_sec,
+                                                 int64_t now_sec = 0);
 [[nodiscard]] std::string format_iso8601(int64_t timestamp_sec);
 
 [[nodiscard]] bool should_use_color(ColorMode mode);
-[[nodiscard]] OutputFormat resolve_format(OutputFormat requested_format, bool is_tty_stream = false);
+[[nodiscard]] OutputFormat resolve_format(OutputFormat requested_format,
+                                          bool is_tty_stream = false);
 
 class Formatter {
 public:

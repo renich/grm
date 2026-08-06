@@ -7,7 +7,6 @@
 #include <string_view>
 #include <vector>
 
-
 int main(int argc, char *argv[]) {
   grm::CliOptions options;
   std::vector<std::string> command_args;
@@ -69,7 +68,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-
   grm::log::set_verbosity(options.verbosity);
 
   auto cfg_res = grm::Config::load(options.custom_config_path);
@@ -79,10 +77,12 @@ int main(int argc, char *argv[]) {
   }
 
   grm::Config cfg = std::move(*cfg_res);
-  if (options.format == grm::fmt::OutputFormat::Auto && cfg.default_format != grm::fmt::OutputFormat::Auto) {
+  if (options.format == grm::fmt::OutputFormat::Auto &&
+      cfg.default_format != grm::fmt::OutputFormat::Auto) {
     options.format = cfg.default_format;
   }
-  if (options.color_mode == grm::fmt::ColorMode::Auto && cfg.default_color_mode != grm::fmt::ColorMode::Auto) {
+  if (options.color_mode == grm::fmt::ColorMode::Auto &&
+      cfg.default_color_mode != grm::fmt::ColorMode::Auto) {
     options.color_mode = cfg.default_color_mode;
   }
 

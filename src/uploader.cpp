@@ -24,7 +24,8 @@ std::expected<std::string, std::string> Uploader::build_send_document_payload(
 
   std::string thread_part;
   if (message_thread_id > 0) {
-    thread_part = std::format(R"(, "message_thread_id": {})", message_thread_id);
+    thread_part =
+        std::format(R"(, "message_thread_id": {})", message_thread_id);
   }
 
   std::string payload = std::format(
@@ -72,7 +73,8 @@ std::expected<std::string, std::string> Uploader::build_send_media_payload(
 
   std::string thread_part;
   if (message_thread_id > 0) {
-    thread_part = std::format(R"(, "message_thread_id": {})", message_thread_id);
+    thread_part =
+        std::format(R"(, "message_thread_id": {})", message_thread_id);
   }
 
   std::string payload = std::format(

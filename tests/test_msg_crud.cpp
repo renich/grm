@@ -15,8 +15,8 @@ static void check(bool condition, const std::string &msg) {
 namespace grm::test {
 
 static std::string build_edit_message_payload(int64_t chat_id,
-                                               int64_t message_id,
-                                               const std::string &new_text) {
+                                              int64_t message_id,
+                                              const std::string &new_text) {
   return std::format(
       R"({{
         "@type": "editMessageText",
@@ -34,8 +34,8 @@ static std::string build_edit_message_payload(int64_t chat_id,
 }
 
 static std::string build_delete_messages_payload(int64_t chat_id,
-                                                  int64_t message_id,
-                                                  bool revoke) {
+                                                 int64_t message_id,
+                                                 bool revoke) {
   return std::format(
       R"({{
         "@type": "deleteMessages",
@@ -60,8 +60,8 @@ void test_edit_message_payload() {
 }
 
 void test_delete_messages_payload() {
-  std::string payload = grm::test::build_delete_messages_payload(
-      -1001789902965, 3145728, true);
+  std::string payload =
+      grm::test::build_delete_messages_payload(-1001789902965, 3145728, true);
   check(payload.find("deleteMessages") != std::string::npos, "Type match");
   check(payload.find("\"revoke\": true") != std::string::npos, "Revoke match");
   std::cout << "[PASS] test_delete_messages_payload\n";

@@ -93,13 +93,12 @@ private:
   [[nodiscard]] std::expected<int, std::string>
   cmd_file_download_all(const std::vector<std::string> &args);
 
-
-
   [[nodiscard]] std::expected<void, std::string> ensure_authenticated();
   [[nodiscard]] std::expected<void, std::string> init_tdlib();
   void ensure_chat_loaded(int64_t chat_id);
   [[nodiscard]] std::expected<JsonValue, std::string>
-  parse_formatted_text(const std::string &text, const std::string &mode = "markdown");
+  parse_formatted_text(const std::string &text,
+                       const std::string &mode = "markdown");
 
   [[nodiscard]] std::string get_auth_state() const;
 

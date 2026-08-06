@@ -34,27 +34,32 @@ int main() {
   // Test 5: Chat command with invalid subcommand returns unexpected error
   auto res5 = app.run({"chat", "invalid_subcmd"});
   assert(!res5.has_value());
-  assert(res5.error().find("Unknown chat subcommand: invalid_subcmd") != std::string::npos);
+  assert(res5.error().find("Unknown chat subcommand: invalid_subcmd") !=
+         std::string::npos);
 
   // Test 6: Msg command with invalid subcommand returns unexpected error
   auto res6 = app.run({"msg", "invalid_subcmd"});
   assert(!res6.has_value());
-  assert(res6.error().find("Unknown msg subcommand: invalid_subcmd") != std::string::npos);
+  assert(res6.error().find("Unknown msg subcommand: invalid_subcmd") !=
+         std::string::npos);
 
   // Test 7: Topic command with invalid subcommand returns unexpected error
   auto res7 = app.run({"topic", "invalid_subcmd"});
   assert(!res7.has_value());
-  assert(res7.error().find("Unknown topic subcommand: invalid_subcmd") != std::string::npos);
+  assert(res7.error().find("Unknown topic subcommand: invalid_subcmd") !=
+         std::string::npos);
 
   // Test 8: File command with invalid subcommand returns unexpected error
   auto res8 = app.run({"file", "invalid_subcmd"});
   assert(!res8.has_value());
-  assert(res8.error().find("Unknown file subcommand: invalid_subcmd") != std::string::npos);
+  assert(res8.error().find("Unknown file subcommand: invalid_subcmd") !=
+         std::string::npos);
 
   // Test 9: Unknown top-level command returns unexpected error
   auto res9 = app.run({"unknown_command"});
   assert(!res9.has_value());
-  assert(res9.error().find("Unknown command: unknown_command") != std::string::npos);
+  assert(res9.error().find("Unknown command: unknown_command") !=
+         std::string::npos);
 
   std::cout << "test_cli_routing passed successfully!\n";
   return 0;

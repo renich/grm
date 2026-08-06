@@ -127,7 +127,8 @@ Options:
 }
 
 void App::print_file_help() {
-  std::cout << R"(Usage: grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]
+  std::cout
+      << R"(Usage: grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]
 
 Download media and file attachments from chats and topics.
 
@@ -144,9 +145,6 @@ Options:
   -h, --help                                                        Show this help screen
 )" << '\n';
 }
-
-
-
 
 std::string App::get_auth_state() const {
   std::scoped_lock lock(auth_mutex_);
@@ -296,7 +294,6 @@ void App::ensure_chat_loaded(int64_t chat_id) {
   }
 }
 
-
 std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
   if (options_.version) {
     print_version();
@@ -332,14 +329,22 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     }
     const std::string &sub = sub_args[0];
     std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
-    if (sub == "ls") return cmd_chat_ls(sub_opts);
-    if (sub == "create") return cmd_chat_create(sub_opts);
-    if (sub == "info") return cmd_chat_info(sub_opts);
-    if (sub == "set-title") return cmd_chat_set_title(sub_opts);
-    if (sub == "set-desc") return cmd_chat_set_desc(sub_opts);
-    if (sub == "pin") return cmd_chat_pin(sub_opts);
-    if (sub == "unpin") return cmd_chat_unpin(sub_opts);
-    if (sub == "delete") return cmd_chat_delete(sub_opts);
+    if (sub == "ls")
+      return cmd_chat_ls(sub_opts);
+    if (sub == "create")
+      return cmd_chat_create(sub_opts);
+    if (sub == "info")
+      return cmd_chat_info(sub_opts);
+    if (sub == "set-title")
+      return cmd_chat_set_title(sub_opts);
+    if (sub == "set-desc")
+      return cmd_chat_set_desc(sub_opts);
+    if (sub == "pin")
+      return cmd_chat_pin(sub_opts);
+    if (sub == "unpin")
+      return cmd_chat_unpin(sub_opts);
+    if (sub == "delete")
+      return cmd_chat_delete(sub_opts);
 
     print_chat_help();
     return std::unexpected("Unknown chat subcommand: " + sub);
@@ -352,13 +357,20 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     }
     const std::string &sub = sub_args[0];
     std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
-    if (sub == "ls") return cmd_msg_ls(sub_opts);
-    if (sub == "export") return cmd_msg_export(sub_opts);
-    if (sub == "search") return cmd_msg_search(sub_opts);
-    if (sub == "send") return cmd_msg_send(sub_opts);
-    if (sub == "info") return cmd_msg_info(sub_opts);
-    if (sub == "edit") return cmd_msg_edit(sub_opts);
-    if (sub == "delete") return cmd_msg_delete(sub_opts);
+    if (sub == "ls")
+      return cmd_msg_ls(sub_opts);
+    if (sub == "export")
+      return cmd_msg_export(sub_opts);
+    if (sub == "search")
+      return cmd_msg_search(sub_opts);
+    if (sub == "send")
+      return cmd_msg_send(sub_opts);
+    if (sub == "info")
+      return cmd_msg_info(sub_opts);
+    if (sub == "edit")
+      return cmd_msg_edit(sub_opts);
+    if (sub == "delete")
+      return cmd_msg_delete(sub_opts);
 
     print_msg_help();
     return std::unexpected("Unknown msg subcommand: " + sub);
@@ -371,15 +383,24 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     }
     const std::string &sub = sub_args[0];
     std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
-    if (sub == "ls") return cmd_topic_ls(sub_opts);
-    if (sub == "create") return cmd_topic_create(sub_opts);
-    if (sub == "info") return cmd_topic_info(sub_opts);
-    if (sub == "edit") return cmd_topic_edit(sub_opts);
-    if (sub == "close") return cmd_topic_toggle_close(sub_opts, true);
-    if (sub == "reopen") return cmd_topic_toggle_close(sub_opts, false);
-    if (sub == "pin") return cmd_topic_toggle_pin(sub_opts, true);
-    if (sub == "unpin") return cmd_topic_toggle_pin(sub_opts, false);
-    if (sub == "delete") return cmd_topic_delete(sub_opts);
+    if (sub == "ls")
+      return cmd_topic_ls(sub_opts);
+    if (sub == "create")
+      return cmd_topic_create(sub_opts);
+    if (sub == "info")
+      return cmd_topic_info(sub_opts);
+    if (sub == "edit")
+      return cmd_topic_edit(sub_opts);
+    if (sub == "close")
+      return cmd_topic_toggle_close(sub_opts, true);
+    if (sub == "reopen")
+      return cmd_topic_toggle_close(sub_opts, false);
+    if (sub == "pin")
+      return cmd_topic_toggle_pin(sub_opts, true);
+    if (sub == "unpin")
+      return cmd_topic_toggle_pin(sub_opts, false);
+    if (sub == "delete")
+      return cmd_topic_delete(sub_opts);
 
     print_topic_help();
     return std::unexpected("Unknown topic subcommand: " + sub);
@@ -392,8 +413,10 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     }
     const std::string &sub = sub_args[0];
     std::vector<std::string> sub_opts(sub_args.begin() + 1, sub_args.end());
-    if (sub == "get") return cmd_file_get(sub_opts);
-    if (sub == "download-all") return cmd_file_download_all(sub_opts);
+    if (sub == "get")
+      return cmd_file_get(sub_opts);
+    if (sub == "download-all")
+      return cmd_file_download_all(sub_opts);
 
     print_file_help();
     return std::unexpected("Unknown file subcommand: " + sub);
@@ -406,7 +429,8 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
 std::expected<JsonValue, std::string>
 App::parse_formatted_text(const std::string &text, const std::string &mode) {
   if (text.empty()) {
-    std::string empty_payload = R"({"@type": "formattedText", "text": "", "entities": []})";
+    std::string empty_payload =
+        R"({"@type": "formattedText", "text": "", "entities": []})";
     return *JsonValue::parse(empty_payload);
   }
 
@@ -428,7 +452,8 @@ App::parse_formatted_text(const std::string &text, const std::string &mode) {
 
   auto res = client_->send_request("parseTextEntities", payload, 5.0);
   if (!res) {
-    grm::log::debug("parseTextEntities failed: " + res.error() + ", falling back to plain formattedText");
+    grm::log::debug("parseTextEntities failed: " + res.error() +
+                    ", falling back to plain formattedText");
     const std::string plain_payload = std::format(
         R"({{
           "@type": "formattedText",
@@ -443,4 +468,3 @@ App::parse_formatted_text(const std::string &text, const std::string &mode) {
 }
 
 } // namespace grm
-

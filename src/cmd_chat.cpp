@@ -46,26 +46,31 @@ App::cmd_chat_ls([[maybe_unused]] const std::vector<std::string> &args) {
         if (auto type_obj = chat_info->get_object("type")) {
           type_name = type_obj->get_type().value_or("Chat");
         }
-        int32_t unread = static_cast<int32_t>(chat_info->get_int("unread_count").value_or(0));
+        int32_t unread = static_cast<int32_t>(
+            chat_info->get_int("unread_count").value_or(0));
         int64_t last_date = 0;
         if (auto last_msg = chat_info->get_object("last_message")) {
           last_date = last_msg->get_int("date").value_or(0);
         }
-        items.push_back(
-            fmt::ChatItem{.id = *cid, .type = type_name, .title = title, .unread_count = unread, .last_message_date = last_date});
+        items.push_back(fmt::ChatItem{.id = *cid,
+                                      .type = type_name,
+                                      .title = title,
+                                      .unread_count = unread,
+                                      .last_message_date = last_date});
       }
     }
   }
 
-  fmt::Formatter::render(items, "chat.ls", options_.format, options_.color_mode);
+  fmt::Formatter::render(items, "chat.ls", options_.format,
+                         options_.color_mode);
   return 0;
 }
 
 std::expected<int, std::string>
 App::cmd_chat_create(const std::vector<std::string> &args) {
   if (args.size() < 2) {
-    return std::unexpected(
-        "Usage: grm chat create <group|channel> [--private|--public] \"<title>\"");
+    return std::unexpected("Usage: grm chat create <group|channel> "
+                           "[--private|--public] \"<title>\"");
   }
 
   const std::string &kind = args[0];
@@ -112,10 +117,12 @@ App::cmd_chat_info(const std::vector<std::string> &args) {
   }
 
   auto cid_res = parse_int64(args[0]);
-  if (!cid_res) return std::unexpected(cid_res.error());
+  if (!cid_res)
+    return std::unexpected(cid_res.error());
   const int64_t chat_id = *cid_res;
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
   ensure_chat_loaded(chat_id);
 
   const std::string req = std::format(R"({{"chat_id": {}}})", chat_id);
@@ -131,15 +138,18 @@ App::cmd_chat_info(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_chat_set_title(const std::vector<std::string> &args) {
   if (args.size() < 2) {
-    return std::unexpected("Usage: grm chat set-title <chat_id> \"<new_title>\"");
+    return std::unexpected(
+        "Usage: grm chat set-title <chat_id> \"<new_title>\"");
   }
 
   auto cid_res = parse_int64(args[0]);
-  if (!cid_res) return std::unexpected(cid_res.error());
+  if (!cid_res)
+    return std::unexpected(cid_res.error());
   const int64_t chat_id = *cid_res;
   const std::string &title = args[1];
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
   ensure_chat_loaded(chat_id);
 
   const std::string payload = std::format(
@@ -161,15 +171,18 @@ App::cmd_chat_set_title(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_chat_set_desc(const std::vector<std::string> &args) {
   if (args.size() < 2) {
-    return std::unexpected("Usage: grm chat set-desc <chat_id> \"<description>\"");
+    return std::unexpected(
+        "Usage: grm chat set-desc <chat_id> \"<description>\"");
   }
 
   auto cid_res = parse_int64(args[0]);
-  if (!cid_res) return std::unexpected(cid_res.error());
+  if (!cid_res)
+    return std::unexpected(cid_res.error());
   const int64_t chat_id = *cid_res;
   const std::string &desc = args[1];
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
   ensure_chat_loaded(chat_id);
 
   const std::string payload = std::format(
@@ -196,9 +209,11 @@ App::cmd_chat_pin(const std::vector<std::string> &args) {
 
   auto cid_res = parse_int64(args[0]);
   auto mid_res = parse_int64(args[1]);
-  if (!cid_res || !mid_res) return std::unexpected("Invalid chat_id or message_id");
+  if (!cid_res || !mid_res)
+    return std::unexpected("Invalid chat_id or message_id");
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
 
   const std::string payload = std::format(
       R"({{
@@ -225,10 +240,12 @@ App::cmd_chat_unpin(const std::vector<std::string> &args) {
   }
 
   auto cid_res = parse_int64(args[0]);
-  if (!cid_res) return std::unexpected(cid_res.error());
+  if (!cid_res)
+    return std::unexpected(cid_res.error());
   int64_t message_id = (args.size() > 1) ? parse_int64(args[1]).value_or(0) : 0;
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
 
   const std::string payload = std::format(
       R"({{
@@ -253,9 +270,11 @@ App::cmd_chat_delete(const std::vector<std::string> &args) {
   }
 
   auto cid_res = parse_int64(args[0]);
-  if (!cid_res) return std::unexpected(cid_res.error());
+  if (!cid_res)
+    return std::unexpected(cid_res.error());
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
 
   const std::string payload = std::format(
       R"({{

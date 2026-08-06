@@ -1,4 +1,5 @@
-// TestCliOptions validates GNU short & long option flag parsing across all subcommands
+// TestCliOptions validates GNU short & long option flag parsing across all
+// subcommands
 #include <charconv>
 #include <cstdlib>
 #include <iostream>
@@ -111,7 +112,8 @@ void test_msg_send_option_parsing() {
        "-t", "42", "-1001789902965", "Hello World"});
 
   check(opts.chat_id_set, "Chat ID should be set");
-  check(opts.chat_id == -1001789902965LL, "Chat ID should match negative supergroup ID");
+  check(opts.chat_id == -1001789902965LL,
+        "Chat ID should match negative supergroup ID");
   check(opts.message_text == "Hello World", "Message text should match");
   check(opts.caption == "My Caption", "Caption should match");
   check(opts.is_media, "Media flag should be true");

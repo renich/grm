@@ -1,4 +1,5 @@
-// TestFile validates [FUNC-007] and [TECH-004] (File & Media Upload Payload Generation)
+// TestFile validates [FUNC-007] and [TECH-004] (File & Media Upload Payload
+// Generation)
 #include "grm/uploader.hpp"
 #include <cstdlib>
 #include <filesystem>
@@ -57,8 +58,8 @@ void test_uploader_media_payload_generation() {
     out << "Sample image content for TDLib upload\n";
   }
 
-  auto res = grm::Uploader::build_send_media_payload(
-      -1001789902965, dummy_file, "Photo caption test", 15);
+  auto res = grm::Uploader::build_send_media_payload(-1001789902965, dummy_file,
+                                                     "Photo caption test", 15);
   check(res.has_value(), "Media payload generation should succeed");
   const std::string &payload = *res;
   check(payload.find("inputMessagePhoto") != std::string::npos,
@@ -69,8 +70,7 @@ void test_uploader_media_payload_generation() {
   check(payload.find("inputFileLocal") != std::string::npos,
         "Has inputFileLocal");
   check(payload.find("dummy_media_test.jpg") != std::string::npos, "Has path");
-  check(payload.find("Photo caption test") != std::string::npos,
-        "Has caption");
+  check(payload.find("Photo caption test") != std::string::npos, "Has caption");
   check(payload.find("\"message_thread_id\": 15") != std::string::npos,
         "Has thread ID");
 

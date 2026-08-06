@@ -24,7 +24,8 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
   }
 
   auto cid_res = parse_int64(args[0]);
-  if (!cid_res) return std::unexpected(cid_res.error());
+  if (!cid_res)
+    return std::unexpected(cid_res.error());
   const int64_t chat_id = *cid_res;
 
   if (auto res = ensure_authenticated(); !res) {
@@ -85,7 +86,8 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
     if (auto info = t.get_object("info")) {
       if (auto icon = info->get_object("icon")) {
         if (auto custom_emoji = icon->get_object("custom_emoji")) {
-          custom_emoji_id = custom_emoji->get_int("custom_emoji_id").value_or(0);
+          custom_emoji_id =
+              custom_emoji->get_int("custom_emoji_id").value_or(0);
         }
         if (auto col = icon->get_int("color")) {
           icon_color = static_cast<int32_t>(*col);
@@ -100,7 +102,8 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
                                    .icon_color = icon_color});
   }
 
-  fmt::Formatter::render(items, "topic.ls", options_.format, options_.color_mode);
+  fmt::Formatter::render(items, "topic.ls", options_.format,
+                         options_.color_mode);
   return 0;
 }
 
@@ -119,14 +122,17 @@ App::cmd_topic_create(const std::vector<std::string> &args) {
 
   if (positional.size() < 2) {
     return std::unexpected(
-        "Usage: grm topic create [-e|--emoji <custom_emoji_id>] <supergroup_id> \"<topic_name>\"");
+        "Usage: grm topic create [-e|--emoji <custom_emoji_id>] "
+        "<supergroup_id> \"<topic_name>\"");
   }
 
   auto cid_res = parse_int64(positional[0]);
-  if (!cid_res) return std::unexpected(cid_res.error());
+  if (!cid_res)
+    return std::unexpected(cid_res.error());
   const std::string &name = positional[1];
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
   ensure_chat_loaded(*cid_res);
 
   const std::string payload = std::format(
@@ -154,9 +160,11 @@ App::cmd_topic_info(const std::vector<std::string> &args) {
 
   auto cid_res = parse_int64(args[0]);
   auto tid_res = parse_int64(args[1]);
-  if (!cid_res || !tid_res) return std::unexpected("Invalid supergroup_id or topic_id");
+  if (!cid_res || !tid_res)
+    return std::unexpected("Invalid supergroup_id or topic_id");
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
   ensure_chat_loaded(*cid_res);
 
   const std::string payload = std::format(
@@ -193,15 +201,18 @@ App::cmd_topic_edit(const std::vector<std::string> &args) {
 
   if (positional.size() < 2) {
     return std::unexpected(
-        "Usage: grm topic edit [-e|--emoji <custom_emoji_id>] <supergroup_id> <topic_id> [\"<new_name>\"]");
+        "Usage: grm topic edit [-e|--emoji <custom_emoji_id>] <supergroup_id> "
+        "<topic_id> [\"<new_name>\"]");
   }
 
   auto cid_res = parse_int64(positional[0]);
   auto tid_res = parse_int64(positional[1]);
-  if (!cid_res || !tid_res) return std::unexpected("Invalid supergroup_id or topic_id");
+  if (!cid_res || !tid_res)
+    return std::unexpected("Invalid supergroup_id or topic_id");
   const std::string new_name = positional.size() >= 3 ? positional[2] : "";
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
 
   const std::string payload = std::format(
       R"({{
@@ -227,14 +238,17 @@ App::cmd_topic_edit(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_topic_toggle_close(const std::vector<std::string> &args, bool close) {
   if (args.size() < 2) {
-    return std::unexpected("Usage: grm topic <close|reopen> <supergroup_id> <topic_id>");
+    return std::unexpected(
+        "Usage: grm topic <close|reopen> <supergroup_id> <topic_id>");
   }
 
   auto cid_res = parse_int64(args[0]);
   auto tid_res = parse_int64(args[1]);
-  if (!cid_res || !tid_res) return std::unexpected("Invalid supergroup_id or topic_id");
+  if (!cid_res || !tid_res)
+    return std::unexpected("Invalid supergroup_id or topic_id");
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
 
   const std::string payload = std::format(
       R"({{
@@ -247,7 +261,8 @@ App::cmd_topic_toggle_close(const std::vector<std::string> &args, bool close) {
 
   auto res = client_->send_request("toggleForumTopicIsClosed", payload, 10.0);
   if (!res) {
-    return std::unexpected("Failed to toggle topic closed state: " + res.error());
+    return std::unexpected("Failed to toggle topic closed state: " +
+                           res.error());
   }
 
   grm::log::info("Forum topic closed state updated successfully.");
@@ -257,14 +272,17 @@ App::cmd_topic_toggle_close(const std::vector<std::string> &args, bool close) {
 std::expected<int, std::string>
 App::cmd_topic_toggle_pin(const std::vector<std::string> &args, bool pin) {
   if (args.size() < 2) {
-    return std::unexpected("Usage: grm topic <pin|unpin> <supergroup_id> <topic_id>");
+    return std::unexpected(
+        "Usage: grm topic <pin|unpin> <supergroup_id> <topic_id>");
   }
 
   auto cid_res = parse_int64(args[0]);
   auto tid_res = parse_int64(args[1]);
-  if (!cid_res || !tid_res) return std::unexpected("Invalid supergroup_id or topic_id");
+  if (!cid_res || !tid_res)
+    return std::unexpected("Invalid supergroup_id or topic_id");
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
 
   const std::string payload = std::format(
       R"({{
@@ -277,25 +295,28 @@ App::cmd_topic_toggle_pin(const std::vector<std::string> &args, bool pin) {
 
   auto res = client_->send_request("toggleForumTopicIsPinned", payload, 10.0);
   if (!res) {
-    return std::unexpected("Failed to toggle topic pinned state: " + res.error());
+    return std::unexpected("Failed to toggle topic pinned state: " +
+                           res.error());
   }
 
   grm::log::info("Forum topic pin state updated successfully.");
   return 0;
 }
 
-
 std::expected<int, std::string>
 App::cmd_topic_delete(const std::vector<std::string> &args) {
   if (args.size() < 2) {
-    return std::unexpected("Usage: grm topic delete <supergroup_id> <topic_id>");
+    return std::unexpected(
+        "Usage: grm topic delete <supergroup_id> <topic_id>");
   }
 
   auto cid_res = parse_int64(args[0]);
   auto tid_res = parse_int64(args[1]);
-  if (!cid_res || !tid_res) return std::unexpected("Invalid supergroup_id or topic_id");
+  if (!cid_res || !tid_res)
+    return std::unexpected("Invalid supergroup_id or topic_id");
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
 
   const std::string payload = std::format(
       R"({{
@@ -313,7 +334,5 @@ App::cmd_topic_delete(const std::vector<std::string> &args) {
   grm::log::info("Forum topic deleted successfully.");
   return 0;
 }
-
-
 
 } // namespace grm

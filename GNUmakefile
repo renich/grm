@@ -29,7 +29,7 @@ CLANG_FORMAT ?= clang-format
 CLANG_TIDY ?= clang-tidy
 SCAN_BUILD ?= scan-build
 
-.PHONY: all build release clean distclean format lint analyze check man doc-check install install-user install-man install-user-man install-completions install-user-completions uninstall uninstall-user help
+.PHONY: all build release clean distclean format lint analyze check man doc-check install install-user install-man install-user-man install-completions install-user-completions install-hooks hooks uninstall uninstall-user help
 
 all: build
 
@@ -48,6 +48,7 @@ help:
 	@echo "  analyze              Run Clang scan-build static analyzer"
 	@echo "  doc-check            Verify rstcheck syntax for user guide and man page"
 	@echo "  man                  Compile reStructuredText man page to $(BUILD_DIR)/grm.1"
+	@echo "  install-hooks        Configure repository Git pre-commit hook (.githooks/pre-commit.bash)"
 	@echo ""
 	@echo "Installation Targets:"
 	@echo "  install              Install release binary, man page, and completions to $(PREFIX)"
@@ -89,6 +90,12 @@ man:
 
 doc-check:
 	$(MAKE) -C docs doc-check
+
+install-hooks:
+	chmod +x .githooks/pre-commit.bash
+	git config core.hooksPath .githooks
+
+hooks: install-hooks
 
 install: release install-man install-completions
 	install -d $(DESTDIR)$(BINDIR)

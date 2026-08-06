@@ -5,8 +5,6 @@
 #include "grm/logger.hpp"
 #include "grm/uploader.hpp"
 
-
-
 #include <charconv>
 #include <chrono>
 #include <filesystem>
@@ -14,7 +12,6 @@
 #include <iostream>
 #include <regex>
 #include <thread>
-
 
 namespace grm {
 
@@ -109,8 +106,8 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
   const size_t target_limit = static_cast<size_t>(std::max(1, limit));
 
   while (items.size() < target_limit) {
-    auto fetch_limit = static_cast<int>(
-        std::min<size_t>(100, target_limit - items.size()));
+    auto fetch_limit =
+        static_cast<int>(std::min<size_t>(100, target_limit - items.size()));
 
     const std::string method_name =
         (topic_id > 0) ? "getForumTopicHistory" : "getChatHistory";
@@ -127,8 +124,6 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
           }})",
           chat_id, topic_id, topic_id, from_msg_id, fetch_limit);
     } else {
-
-
 
       payload = std::format(
           R"({{
@@ -173,20 +168,28 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
         std::string attach_type;
         if (auto content = m.get_object("content")) {
           std::string type_str = content->get_type().value_or("");
-          if (type_str == "messageDocument") { has_attach = true; attach_type = "document"; }
-          else if (type_str == "messagePhoto") { has_attach = true; attach_type = "photo"; }
-          else if (type_str == "messageVideo") { has_attach = true; attach_type = "video"; }
-          else if (type_str == "messageAudio") { has_attach = true; attach_type = "audio"; }
+          if (type_str == "messageDocument") {
+            has_attach = true;
+            attach_type = "document";
+          } else if (type_str == "messagePhoto") {
+            has_attach = true;
+            attach_type = "photo";
+          } else if (type_str == "messageVideo") {
+            has_attach = true;
+            attach_type = "video";
+          } else if (type_str == "messageAudio") {
+            has_attach = true;
+            attach_type = "audio";
+          }
         }
-        items.push_back(fmt::MessageItem{
-            .id = id,
-            .chat_id = chat_id,
-            .topic_id = topic_id,
-            .date = msg_date,
-            .sender = "",
-            .text = text,
-            .has_attachment = has_attach,
-            .attachment_type = attach_type});
+        items.push_back(fmt::MessageItem{.id = id,
+                                         .chat_id = chat_id,
+                                         .topic_id = topic_id,
+                                         .date = msg_date,
+                                         .sender = "",
+                                         .text = text,
+                                         .has_attachment = has_attach,
+                                         .attachment_type = attach_type});
         if (items.size() >= target_limit) {
           break;
         }
@@ -194,14 +197,9 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
     }
   }
 
-
   fmt::Formatter::render(items, "msg.ls", options_.format, options_.color_mode);
   return 0;
-
-
-
 }
-
 
 std::expected<int, std::string>
 App::cmd_msg_export(const std::vector<std::string> &args) {
@@ -240,7 +238,6 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
     }
   }
 
-
   if (!chat_id_set) {
     return std::unexpected(
         "Usage: grm msg export <chat_id> [-f|--format csv|json] [-o|--output "
@@ -250,7 +247,6 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
   if (out_path.empty()) {
     out_path = std::format("chat_{}_export.{}", chat_id, format_type);
   }
-
 
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
@@ -270,7 +266,6 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
     const std::string payload = std::format(
         R"({{"chat_id": {}, "from_message_id": {}, "offset": 0, "limit": {}}})",
         chat_id, from_msg_id, fetch_limit);
-
 
     auto res = client_->send_request("getChatHistory", payload, 10.0);
     if (!res) {
@@ -313,7 +308,6 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
       records.push_back(rec);
     }
   }
-
 
   std::expected<void, std::string> export_res;
   if (format_type == "json") {
@@ -360,7 +354,6 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
     } else if (chat_id_set && query.empty() && !arg.starts_with("-")) {
       query = arg;
     }
-
   }
 
   if (!chat_id_set || query.empty()) {
@@ -386,7 +379,6 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
       R"({{"chat_id": {}, "from_message_id": 0, "offset": 0, "limit": {}}})",
       chat_id, search_limit);
 
-
   auto res = client_->send_request("getChatHistory", payload, 10.0);
   if (!res) {
     return std::unexpected("Failed to get chat history: " + res.error());
@@ -409,28 +401,36 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
       std::string attach_type;
       if (auto content = m.get_object("content")) {
         std::string type_str = content->get_type().value_or("");
-        if (type_str == "messageDocument") { has_attach = true; attach_type = "document"; }
-        else if (type_str == "messagePhoto") { has_attach = true; attach_type = "photo"; }
-        else if (type_str == "messageVideo") { has_attach = true; attach_type = "video"; }
-        else if (type_str == "messageAudio") { has_attach = true; attach_type = "audio"; }
+        if (type_str == "messageDocument") {
+          has_attach = true;
+          attach_type = "document";
+        } else if (type_str == "messagePhoto") {
+          has_attach = true;
+          attach_type = "photo";
+        } else if (type_str == "messageVideo") {
+          has_attach = true;
+          attach_type = "video";
+        } else if (type_str == "messageAudio") {
+          has_attach = true;
+          attach_type = "audio";
+        }
       }
-      items.push_back(fmt::MessageItem{
-          .id = id,
-          .chat_id = chat_id,
-          .topic_id = 0,
-          .date = msg_date,
-          .sender = "",
-          .text = text,
-          .has_attachment = has_attach,
-          .attachment_type = attach_type});
+      items.push_back(fmt::MessageItem{.id = id,
+                                       .chat_id = chat_id,
+                                       .topic_id = 0,
+                                       .date = msg_date,
+                                       .sender = "",
+                                       .text = text,
+                                       .has_attachment = has_attach,
+                                       .attachment_type = attach_type});
       match_count++;
     }
   }
 
-  fmt::Formatter::render(items, "msg.search", options_.format, options_.color_mode);
+  fmt::Formatter::render(items, "msg.search", options_.format,
+                         options_.color_mode);
   grm::log::info(std::format("Found {} matching messages.", match_count));
   return 0;
-
 }
 
 std::expected<int, std::string>
@@ -443,10 +443,10 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
   [[maybe_unused]] bool is_media = false;
   int64_t message_thread_id = 0;
 
-
   for (size_t i = 0; i < args.size(); ++i) {
     std::string_view arg(args[i]);
-    if ((arg == "-a" || arg == "--attach" || arg == "-A" || arg == "--attachment") &&
+    if ((arg == "-a" || arg == "--attach" || arg == "-A" ||
+         arg == "--attachment") &&
         i + 1 < args.size()) {
       attachments.emplace_back(args[++i]);
     } else if (arg.starts_with("--attach=")) {
@@ -497,10 +497,14 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
           "Cannot send message: no text payload or file attachments provided.");
     }
     auto text_obj = parse_formatted_text(message_text, "markdown");
-    std::string text_json = text_obj ? text_obj->to_string() : std::format(R"({{"@type":"formattedText","text":"{}"}})", escape_json_string(message_text));
-    std::string thread_part = (message_thread_id > 0)
-                                  ? std::format(R"("message_thread_id": {},)", message_thread_id)
-                                  : "";
+    std::string text_json =
+        text_obj ? text_obj->to_string()
+                 : std::format(R"({{"@type":"formattedText","text":"{}"}})",
+                               escape_json_string(message_text));
+    std::string thread_part =
+        (message_thread_id > 0)
+            ? std::format(R"("message_thread_id": {},)", message_thread_id)
+            : "";
     const std::string payload = std::format(
         R"({{
           "chat_id": {},
@@ -526,23 +530,33 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
     const std::string file_caption = (idx == 0) ? caption : "";
 
     std::error_code ec;
-    if (!std::filesystem::exists(file_path, ec) || !std::filesystem::is_regular_file(file_path, ec)) {
-      return std::unexpected("Attachment file not found: " + file_path.string());
+    if (!std::filesystem::exists(file_path, ec) ||
+        !std::filesystem::is_regular_file(file_path, ec)) {
+      return std::unexpected("Attachment file not found: " +
+                             file_path.string());
     }
 
-    const std::string abs_path = std::filesystem::absolute(file_path, ec).string();
-    grm::log::info(std::format("Uploading {} to chat {}...", file_path.string(), chat_id));
+    const std::string abs_path =
+        std::filesystem::absolute(file_path, ec).string();
+    grm::log::info(
+        std::format("Uploading {} to chat {}...", file_path.string(), chat_id));
 
     std::string caption_part;
     if (!file_caption.empty()) {
       auto caption_obj = parse_formatted_text(file_caption, "markdown");
-      std::string caption_json = caption_obj ? caption_obj->to_string() : std::format(R"({{"@type":"formattedText","text":"{}","entities":[]}})", escape_json_string(file_caption));
+      std::string caption_json =
+          caption_obj
+              ? caption_obj->to_string()
+              : std::format(
+                    R"({{"@type":"formattedText","text":"{}","entities":[]}})",
+                    escape_json_string(file_caption));
       caption_part = std::format(R"(, "caption": {})", caption_json);
     }
 
     std::string thread_part;
     if (message_thread_id > 0) {
-      thread_part = std::format(R"(, "message_thread_id": {})", message_thread_id);
+      thread_part =
+          std::format(R"(, "message_thread_id": {})", message_thread_id);
     }
 
     std::string msg_payload;
@@ -582,15 +596,14 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
 
     auto res = client_->send_request("sendMessage", msg_payload, 30.0);
     if (!res) {
-      return std::unexpected("Failed to send file " + file_path.string() + ": " + res.error());
+      return std::unexpected("Failed to send file " + file_path.string() +
+                             ": " + res.error());
     }
   }
 
   grm::log::info("Attachment(s) sent successfully.");
   return 0;
 }
-
-
 
 std::expected<int, std::string>
 App::cmd_msg_info(const std::vector<std::string> &args) {
@@ -600,9 +613,11 @@ App::cmd_msg_info(const std::vector<std::string> &args) {
 
   auto cid_res = parse_int64(args[0]);
   auto mid_res = parse_int64(args[1]);
-  if (!cid_res || !mid_res) return std::unexpected("Invalid chat_id or message_id");
+  if (!cid_res || !mid_res)
+    return std::unexpected("Invalid chat_id or message_id");
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
   ensure_chat_loaded(*cid_res);
 
   const std::string payload = std::format(
@@ -624,8 +639,8 @@ App::cmd_msg_info(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_msg_edit(const std::vector<std::string> &args) {
   if (args.size() < 3) {
-    return std::unexpected(
-        "Usage: grm msg edit [-t|--topic <id>] <chat_id> <message_id> \"<new_text>\"");
+    return std::unexpected("Usage: grm msg edit [-t|--topic <id>] <chat_id> "
+                           "<message_id> \"<new_text>\"");
   }
 
   int64_t chat_id = 0;
@@ -642,7 +657,8 @@ App::cmd_msg_edit(const std::vector<std::string> &args) {
     } else if (chat_set && !msg_set && parse_int64(arg).has_value()) {
       message_id = *parse_int64(arg);
       msg_set = true;
-    } else if (chat_set && msg_set && new_text.empty() && !arg.starts_with("-")) {
+    } else if (chat_set && msg_set && new_text.empty() &&
+               !arg.starts_with("-")) {
       new_text = arg;
     }
   }
@@ -652,7 +668,8 @@ App::cmd_msg_edit(const std::vector<std::string> &args) {
         "Usage: grm msg edit <chat_id> <message_id> \"<new_text>\"");
   }
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
 
   const std::string payload = std::format(
       R"({{
@@ -701,18 +718,19 @@ App::cmd_msg_delete(const std::vector<std::string> &args) {
     }
   }
 
-
   if (!chat_set || message_ids.empty()) {
     return std::unexpected(
         "Usage: grm msg delete [--for-everyone] <chat_id> <message_ids...>");
   }
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  if (auto res = ensure_authenticated(); !res)
+    return std::unexpected(res.error());
 
   std::string ids_json = "[";
   for (size_t idx = 0; idx < message_ids.size(); ++idx) {
     ids_json += std::to_string(message_ids[idx]);
-    if (idx + 1 < message_ids.size()) ids_json += ", ";
+    if (idx + 1 < message_ids.size())
+      ids_json += ", ";
   }
   ids_json += "]";
 
@@ -734,4 +752,3 @@ App::cmd_msg_delete(const std::vector<std::string> &args) {
 }
 
 } // namespace grm
-
