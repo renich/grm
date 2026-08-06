@@ -47,7 +47,7 @@ lint-docs:
         git clone --depth 1 --branch v1.8.0 https://github.com/tdlib/td.git .tdlib-src
         mkdir -p .tdlib-src/build
         cd .tdlib-src/build
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$CI_PROJECT_DIR/.local" -DTD_ENABLE_JNI=OFF -DTD_ENABLE_DOTNET=OFF ..
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX="$CI_PROJECT_DIR/.local" -DTD_ENABLE_JNI=OFF -DTD_ENABLE_DOTNET=OFF ..
         cmake --build . --target install
         cd "$CI_PROJECT_DIR"
         rm -rf .tdlib-src
