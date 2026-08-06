@@ -81,10 +81,7 @@ std::expected<int, std::string> App::cmd_login() {
             R"({{
               "phone_number": "{}",
               "settings": {{
-                "@type": "phoneNumberAuthenticationSettings",
-                "allow_flash_call": false,
-                "is_current_phone_number": false,
-                "allow_sms_retriever_api": false
+                "@type": "phoneNumberAuthenticationSettings"
               }}
             }})",
             escape_json_string(phone));
