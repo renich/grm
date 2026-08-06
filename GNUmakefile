@@ -6,19 +6,14 @@ SHELL := /usr/bin/bash
 
 .DEFAULT_GOAL := all
 
-# Standard GNU Installation Directories
-PREFIX ?= /usr/local
+# Standard GNU Installation Directories (Defaults to user installation ~/.local)
+PREFIX ?= $(HOME)/.local
 EXEC_PREFIX ?= $(PREFIX)
 BINDIR ?= $(EXEC_PREFIX)/bin
 DATAROOTDIR ?= $(PREFIX)/share
 MANDIR ?= $(DATAROOTDIR)/man
 MAN1DIR ?= $(MANDIR)/man1
 BASH_COMPLETION_DIR ?= $(DATAROOTDIR)/bash-completion/completions
-
-# User Installation Directories (~/.local/bin, ~/.local/share)
-USER_BIN ?= $(HOME)/.local/bin
-USER_MAN_DIR ?= $(HOME)/.local/share/man/man1
-USER_BASH_COMPLETION_DIR ?= $(HOME)/.local/share/bash-completion/completions
 
 # Build Toolchain & Directories
 BUILD_DIR := build
@@ -29,7 +24,7 @@ CLANG_FORMAT ?= clang-format
 CLANG_TIDY ?= clang-tidy
 SCAN_BUILD ?= scan-build
 
-.PHONY: all build release clean distclean format lint analyze check man doc-check install install-user install-man install-user-man install-completions install-user-completions install-hooks hooks uninstall uninstall-user help
+.PHONY: all build release clean distclean format lint analyze check man doc-check install install-user install-man install-completions install-hooks hooks uninstall uninstall-user help
 
 all: build
 
@@ -52,9 +47,8 @@ help:
 	@echo ""
 	@echo "Installation Targets:"
 	@echo "  install              Install release binary, man page, and completions to $(PREFIX)"
-	@echo "  install-user         Install release binary, man page, and completions to $(HOME)/.local"
+	@echo "  install-user         Alias for install (installs to $(PREFIX))"
 	@echo "  uninstall            Remove installed binary, man page, and completions from $(PREFIX)"
-	@echo "  uninstall-user       Remove installed user files from $(HOME)/.local"
 	@echo "  clean                Remove build directory and documentation artifacts"
 	@echo "  distclean            Alias for clean"
 
@@ -101,30 +95,21 @@ install: release install-man install-completions
 	install -d $(DESTDIR)$(BINDIR)
 	install -m 0755 $(BUILD_DIR)/grm $(DESTDIR)$(BINDIR)/grm
 
-install-user: release install-user-man install-user-completions
-	install -d $(USER_BIN)
-	install -m 0755 $(BUILD_DIR)/grm $(USER_BIN)/grm
+install-user: install
 
 install-man:
 	$(MAKE) -C docs install-man BUILD_DIR="$(abspath $(BUILD_DIR))" PREFIX="$(PREFIX)" MAN_DIR="$(MAN1DIR)" DESTDIR="$(DESTDIR)"
 
-install-user-man:
-	$(MAKE) -C docs install-user-man BUILD_DIR="$(abspath $(BUILD_DIR))" USER_MAN_DIR="$(USER_MAN_DIR)"
-
-install-completions:
+install-completions: release
 	install -d $(DESTDIR)$(BASH_COMPLETION_DIR)
+	@if [ -x $(BUILD_DIR)/grm ]; then \
+		$(BUILD_DIR)/grm completion bash > completions/grm.bash 2>/dev/null || true; \
+	fi
 	install -m 0644 completions/grm.bash $(DESTDIR)$(BASH_COMPLETION_DIR)/grm
-
-install-user-completions:
-	install -d $(USER_BASH_COMPLETION_DIR)
-	install -m 0644 completions/grm.bash $(USER_BASH_COMPLETION_DIR)/grm
 
 uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/grm
 	rm -f $(DESTDIR)$(MAN1DIR)/grm.1
 	rm -f $(DESTDIR)$(BASH_COMPLETION_DIR)/grm
 
-uninstall-user:
-	rm -f $(USER_BIN)/grm
-	rm -f $(USER_MAN_DIR)/grm.1
-	rm -f $(USER_BASH_COMPLETION_DIR)/grm
+uninstall-user: uninstall

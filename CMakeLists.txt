@@ -65,11 +65,9 @@ add_executable(grm
     src/cmd_msg.cpp
     src/cmd_topic.cpp
     src/cmd_file.cpp
+    src/cmd_completion.cpp
     src/list_options.cpp
     src/exporter.cpp
-
-
-
     src/uploader.cpp
     src/downloader.cpp
     src/formatter.cpp
@@ -98,15 +96,37 @@ add_executable(test_json_utils
 target_link_libraries(test_json_utils PRIVATE ${JSONC_LIBRARIES})
 add_test(NAME test_json_utils COMMAND test_json_utils)
 
-add_executable(test_config
-    tests/test_config.cpp
+add_executable(test_cli_routing
+    tests/test_cli_routing.cpp
+    src/app.cpp
     src/config.cpp
     src/logger.cpp
     src/json_utils.cpp
 )
+target_link_libraries(test_cli_routing PRIVATE ${JSONC_LIBRARIES})
+add_test(NAME test_cli_routing COMMAND test_cli_routing)
 
-target_link_libraries(test_config PRIVATE ${JSONC_LIBRARIES})
-add_test(NAME test_config COMMAND test_config)
+add_executable(test_completion
+    tests/test_completion.cpp
+    src/app.cpp
+    src/td_client.cpp
+    src/cmd_auth.cpp
+    src/cmd_chat.cpp
+    src/cmd_msg.cpp
+    src/cmd_topic.cpp
+    src/cmd_file.cpp
+    src/cmd_completion.cpp
+    src/list_options.cpp
+    src/exporter.cpp
+    src/uploader.cpp
+    src/downloader.cpp
+    src/formatter.cpp
+    src/config.cpp
+    src/logger.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_completion PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
+add_test(NAME test_completion COMMAND test_completion)
 
 add_executable(test_export
     tests/test_export.cpp
@@ -148,32 +168,6 @@ add_executable(test_render_engine
 )
 target_link_libraries(test_render_engine PRIVATE ${JSONC_LIBRARIES})
 add_test(NAME test_render_engine COMMAND test_render_engine)
-
-add_executable(test_cli_options
-    tests/test_cli_options.cpp
-)
-add_test(NAME test_cli_options COMMAND test_cli_options)
-
-add_executable(test_cli_routing
-    tests/test_cli_routing.cpp
-    src/app.cpp
-    src/config.cpp
-    src/logger.cpp
-    src/json_utils.cpp
-    src/td_client.cpp
-    src/cmd_auth.cpp
-    src/cmd_chat.cpp
-    src/cmd_msg.cpp
-    src/cmd_topic.cpp
-    src/cmd_file.cpp
-    src/list_options.cpp
-    src/exporter.cpp
-    src/uploader.cpp
-    src/downloader.cpp
-    src/formatter.cpp
-)
-target_link_libraries(test_cli_routing PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
-add_test(NAME test_cli_routing COMMAND test_cli_routing)
 
 add_executable(test_downloader
     tests/test_downloader.cpp

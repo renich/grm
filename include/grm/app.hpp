@@ -46,6 +46,8 @@ public:
 
 private:
   [[nodiscard]] std::expected<int, std::string> cmd_login();
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_completion(const std::vector<std::string> &args);
 
   // Chat & Group CRUD
   [[nodiscard]] std::expected<int, std::string>

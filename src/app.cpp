@@ -62,18 +62,20 @@ void App::print_chat_help() {
 Manage Telegram chats, groups, and channels.
 
 Subcommands:
-  grm chat ls [-n|--limit <N>]                                        List active chats (groups, channels, private)
+  grm chat ls [-n|--limit <N>] [-S|--since <date>] [-f|--filter <pat>] List active chats
   grm chat create group [--private|--public] "<title>"               Create a new group or supergroup
   grm chat create channel [--private|--public] "<title>" ["<desc>"]  Create a new channel
   grm chat info <chat_id>                                            View chat/group/channel metadata
   grm chat set-title <chat_id> "<new_title>"                         Update title
   grm chat set-desc <chat_id> "<description>"                        Update description
-  grm chat pin <chat_id> <message_id>                                Pin message
-  grm chat unpin <chat_id> [<message_id>]                            Unpin message
+  grm chat pin <chat_id>                                             Pin chat to top of chat list
+  grm chat unpin <chat_id>                                           Unpin chat from chat list
   grm chat delete <chat_id>                                          Delete or leave chat
 
 Options:
   -n, --limit <N>                                                    Maximum chats to list (default: 100)
+  -S, --since <duration|date>                                        Filter chats active since duration/date
+  -f, --filter <pattern>                                             Filter chats by title, type, or ID
   -h, --help                                                         Show this help screen
 )" << '\n';
 }
@@ -81,23 +83,28 @@ Options:
 void App::print_msg_help() {
   std::cout << R"(Usage: grm msg <subcommand> [options] [args]
 
-Inspect, send, edit, search, and export chat messages.
+Inspect, send, edit, search, pin, and export chat messages.
 
 Subcommands:
-  grm msg ls [-t|--topic <id>] [-n|--limit <N>] <chat_id>           List recent messages (default limit: 20)
-  grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"] Send text message or file attachment(s)
+  grm msg ls [-t|--topic <id>] [-n|--limit <N>] [-S|--since <date>] [-f|--filter <pat>] [-r] <chat_id> List messages
+  grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<text>"] Send message or attachment(s)
   grm msg info <chat_id> <message_id>                                View message details
-  grm msg search [-t|--topic <id>] [-q|--query "<query>"] [-n|--limit <N>] <chat_id> Search chat history using regex pattern filter
-  grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <chat_id> Export chat history to CSV or JSON file
+  grm msg search [-t|--topic <id>] [-q|--query "<query>"] [-n|--limit <N>] <chat_id> Search history using regex filter
+  grm msg export [-f|--format csv|json] [-o|--output <file>] [-t|--topic <id>] <chat_id> Export chat history
   grm msg edit [-t|--topic <id>] <chat_id> <message_id> "<new_text>"  Edit sent message
+  grm msg pin <chat_id> <message_id>                                  Pin message in chat
+  grm msg unpin [-a|--all] <chat_id> [<message_id>]                 Unpin specific message or all messages
   grm msg delete [--for-everyone] <chat_id> <message_ids...>          Delete message(s)
 
 Options:
   -a, --attach <file>                                               Attach local file/document (repeatable)
-  -m, --media                                                       Send attachment(s) as compressed media (photo/video/audio)
+  -m, --media                                                       Send attachment(s) as compressed media
   -C, --caption "<text>"                                            Caption text for attachments
   -t, --topic <id>                                                  Target specific forum topic thread ID
   -n, --limit <N>                                                   Maximum messages to fetch or search
+  -S, --since <duration|date>                                       Filter messages since duration/date
+  -f, --filter, --sender <pattern>                                  Filter messages by sender username or pattern
+  -r, --reverse                                                     Reverse chronological order
   -h, --help                                                        Show this help screen
 )" << '\n';
 }
@@ -109,12 +116,12 @@ Supergroup forum topic lifecycle management.
 
 Subcommands:
   grm topic ls [-n|--limit <N>] <supergroup_id>                         List active forum topics
-  grm topic create [-e|--emoji <id>] [--icon-color <color>] <supergroup_id> "<topic_name>" Create new forum topic
+  grm topic create [-e|--emoji <id>] [--icon-color <color>] <supergroup_id> "<name>" Create forum topic
   grm topic info <supergroup_id> <topic_id>                              View topic metadata
-  grm topic edit [-e|--emoji <id>] <supergroup_id> <topic_id> ["<name>"] Edit topic title or custom emoji icon
+  grm topic edit [-e|--emoji <id>] <supergroup_id> <topic_id> ["<name>"] Edit topic title or icon
   grm topic close <supergroup_id> <topic_id>                             Close forum topic
   grm topic reopen <supergroup_id> <topic_id>                            Reopen closed topic
-  grm topic pin <supergroup_id> <topic_id>                               Pin topic
+  grm topic pin <supergroup_id> <topic_id>                               Pin topic to top of topic list
   grm topic unpin <supergroup_id> <topic_id>                             Unpin topic
   grm topic delete <supergroup_id> <topic_id>                            Delete topic and history
 
@@ -434,6 +441,10 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
 
     print_file_help();
     return std::unexpected("Unknown file subcommand: " + sub);
+  }
+
+  if (cmd == "completion") {
+    return cmd_completion(sub_args);
   }
 
   print_usage();

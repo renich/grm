@@ -374,10 +374,19 @@ Advanced message delivery controls utilizing TDLib's ``messageSendOptions``:
 
 First-class audio transmission and voice note processing:
 
-* ``grm audio send <chat_id> <file_path> [--title "<title>"] [--performer "<performer>"] [--silent]``: Send audio files (MP3, FLAC, WAV, OGG) with embedded metadata (album cover, performer, title, duration) via ``inputMessageAudio``.
 * ``grm audio voice <chat_id> <voice_ogg_path> [--convert] [--silent]``: Send voice notes (OGG/Opus format) via ``inputMessageVoiceNote``.
 * **SoX / libsox Engine Integration**: Native integration with **libsox** (or ``sox`` CLI engine) to automatically probe audio metadata, convert arbitrary audio formats to OGG/Opus voice notes, and extract exact 100-bar amplitude waveform arrays for TDLib voice note rendering.
 * ``grm audio info <file_path>``: Inspect audio duration, sample rate, channels, and codec details via libsox.
+
+7. Introspective Shell Completion Engine (``grm completion``)
+------------------------------------------------------------
+
+Self-generating, zero-maintenance shell completion generator powered by native C++ command tree introspection:
+
+* ``grm completion bash``: Output context-aware Bash completion script to stdout (supports ``source <(grm completion bash)`` and automatic installation via ``make install-user``).
+* ``grm completion zsh``: Output native Zsh completion function script with rich subcommand descriptions.
+* ``grm completion fish``: Output Fish shell completion definitions to stdout.
+* **Introspective Command Tree**: Single-source-of-truth C++ registry (``src/cmd_completion.cpp``) defining command names, subcommands, flags, option types, and completion hints so ``--help`` screens and shell completions remain 100% synchronized without manual maintenance.
 
 7. Attachment Types: Inline Media vs. Raw Document
 --------------------------------------------------
