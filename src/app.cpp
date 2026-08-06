@@ -127,15 +127,16 @@ Options:
 }
 
 void App::print_file_help() {
-  std::cout << R"(Usage: grm file <subcommand> [options] [args]
+  std::cout << R"(Usage: grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]
 
 Download media and file attachments from chats and topics.
 
-Subcommands:
-  grm file get [-o|--output <dir|file>] [-t|--topic <id>] <chat_id> <message_ids...> View/download specific file attachments
-  grm file download-all [-o|--output <dir>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> Bulk download media
+Commands / Flags:
+  grm file get <chat_id> <message_ids...>                            Download specific attachment files by message ID
+  grm file get [-A|--all] [-o|--output <dir>] <chat_id>             Bulk download all attachment files from chat or topic
 
 Options:
+  -A, --all                                                         Bulk download all attachment files in chat or topic
   -o, --output <dir|file>                                           Output destination directory or file path
   -t, --topic <id>                                                  Target specific forum topic thread ID
   -n, --limit <N>                                                   Maximum messages to scan (default: 100)

@@ -220,20 +220,20 @@ grm topic delete <supergroup_id> <topic_id>
 File Download Engine
 --------------------
 
-grm file get [-o|--output <dir|file>] [-t|--topic <id>] <chat_id> <message_ids...>
-   Download specific attachment files by message ID.
+grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]
+   Download specific attachment files by message ID, or bulk download all media files when ``-A`` or ``--all`` is specified.
 
-grm file download-all [-o|--output <dir>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id>
-   Scan and bulk download attachment media files from a chat or forum topic.
+   -A, --all
+      Bulk download all attachment files in chat or topic.
 
-   -o, --output <dir>
-      Destination directory path.
+   -o, --output <dir|file>
+      Destination directory path or target file path.
 
    -t, --topic <id>
       Target specific forum topic ID.
 
    -n, --limit <N>
-      Maximum messages to scan (default: 100).
+      Maximum messages to scan during bulk download (default: 100).
 
    --type <type>
       Filter media type: ``photo``, ``video``, ``doc``, ``audio``, or ``all``.

@@ -153,8 +153,7 @@ CRUD Command Structure
    - ``grm msg delete [--for-everyone] <chat_id> <message_ids...>``
 
 4. **File Downloads (`grm file`)**:
-   - ``grm file get [-o|--output <dir|file>] [-t|--topic <id>] <chat_id> <message_ids...>``
-   - ``grm file download-all [-o|--output <dir>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id>``
+   - ``grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]``
 
 Usage Examples
 ~~~~~~~~~~~~~~

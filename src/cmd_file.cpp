@@ -20,23 +20,32 @@ static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
 
 std::expected<int, std::string>
 App::cmd_file_get(const std::vector<std::string> &args) {
-  if (args.size() < 2) {
+  if (args.empty()) {
     return std::unexpected(
-        "Usage: grm file get [-o|--output <dir|file>] [-t|--topic <id>] <chat_id> <message_ids...>");
+        "Usage: grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]");
   }
 
   int64_t chat_id = 0;
   bool chat_set = false;
+  bool download_all = false;
   std::filesystem::path out_dir = ".";
   int64_t topic_id = 0;
+  int limit = 100;
+  std::string requested_type = "all";
   std::vector<int64_t> message_ids;
 
   for (size_t i = 0; i < args.size(); ++i) {
     std::string_view arg(args[i]);
-    if ((arg == "-o" || arg == "--output") && i + 1 < args.size()) {
+    if (arg == "-A" || arg == "--all") {
+      download_all = true;
+    } else if ((arg == "-o" || arg == "--output") && i + 1 < args.size()) {
       out_dir = args[++i];
     } else if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
       if (auto tid = parse_int64(args[++i])) topic_id = *tid;
+    } else if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
+      if (auto lim = parse_int64(args[++i])) limit = static_cast<int>(*lim);
+    } else if (arg == "--type" && i + 1 < args.size()) {
+      requested_type = args[++i];
     } else if (!chat_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_set = true;
@@ -45,6 +54,14 @@ App::cmd_file_get(const std::vector<std::string> &args) {
     }
   }
 
+  if (!chat_set) {
+    return std::unexpected(
+        "Usage: grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]");
+  }
+
+  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
+  ensure_chat_loaded(chat_id);
+
   if (topic_id > 0) {
     const std::string topic_req = std::format(
         R"({{"chat_id": {}, "message_thread_id": {}}})", chat_id, topic_id);
@@ -52,16 +69,80 @@ App::cmd_file_get(const std::vector<std::string> &args) {
     (void)unused_topic;
   }
 
+  if (download_all || message_ids.empty()) {
+    grm::log::info(std::format("Scanning chat {} (topic {}) for media attachments...", chat_id, topic_id));
 
+    std::string method = (topic_id > 0) ? "getForumTopicHistory" : "getChatHistory";
+    std::string req_payload;
+    if (topic_id > 0) {
+      req_payload = std::format(
+          R"({{
+            "chat_id": {},
+            "forum_topic_id": {},
+            "message_thread_id": {},
+            "from_message_id": 0,
+            "offset": 0,
+            "limit": {}
+          }})",
+          chat_id, topic_id, topic_id, std::min(100, limit));
+    } else {
+      req_payload = std::format(
+          R"({{
+            "chat_id": {},
+            "from_message_id": 0,
+            "offset": 0,
+            "limit": {},
+            "only_local": false
+          }})",
+          chat_id, std::min(100, limit));
+    }
 
-  if (!chat_set || message_ids.empty()) {
-    return std::unexpected(
-        "Usage: grm file get [-o|--output <dir|file>] [-t|--topic <id>] <chat_id> <message_ids...>");
+    auto history_res = client_->send_request(method, req_payload, 15.0);
+    if (!history_res) {
+      return std::unexpected("Failed to scan chat history for downloads: " + history_res.error());
+    }
+
+    auto msgs = history_res->get_array("messages");
+    int downloaded_count = 0;
+
+    for (const auto &m : msgs) {
+      auto content = m.get_object("content");
+      if (!content) continue;
+
+      std::string type_str = content->get_type().value_or("");
+      if (!Downloader::matches_file_type(type_str, requested_type)) continue;
+
+      int32_t file_id = 0;
+      if (type_str == "messageDocument") {
+        if (auto doc = content->get_object("document")) {
+          if (auto f = doc->get_object("document")) {
+            file_id = static_cast<int32_t>(f->get_int("id").value_or(0));
+          }
+        }
+      } else if (type_str == "messagePhoto") {
+        auto sizes = content->get_array("sizes");
+        if (!sizes.empty()) {
+          if (auto f = sizes.back().get_object("photo")) {
+            file_id = static_cast<int32_t>(f->get_int("id").value_or(0));
+          }
+        }
+      }
+
+      if (file_id > 0) {
+        auto dl_payload = Downloader::build_download_file_payload(file_id, 1);
+        if (dl_payload) {
+          auto unused_dl = client_->send_request("downloadFile", *dl_payload, 30.0);
+          (void)unused_dl;
+          downloaded_count++;
+        }
+      }
+    }
+
+    grm::log::info(std::format("Initiated bulk download for {} attachment(s) to {}", downloaded_count, out_dir.string()));
+    return 0;
   }
 
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
-  ensure_chat_loaded(chat_id);
-
+  // Specific message IDs download
   for (int64_t msg_id : message_ids) {
     const std::string get_msg_req = std::format(
         R"({{"chat_id": {}, "message_id": {}}})", chat_id, msg_id);
@@ -109,113 +190,9 @@ App::cmd_file_get(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_file_download_all(const std::vector<std::string> &args) {
-  if (args.empty()) {
-    return std::unexpected(
-        "Usage: grm file download-all [-o|--output <dir>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id>");
-  }
-
-  int64_t chat_id = 0;
-  bool chat_set = false;
-  std::filesystem::path out_dir = "./downloads";
-  int64_t topic_id = 0;
-  int limit = 100;
-  std::string requested_type = "all";
-
-  for (size_t i = 0; i < args.size(); ++i) {
-    std::string_view arg(args[i]);
-    if ((arg == "-o" || arg == "--output") && i + 1 < args.size()) {
-      out_dir = args[++i];
-    } else if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
-      if (auto tid = parse_int64(args[++i])) topic_id = *tid;
-    } else if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
-      if (auto lim = parse_int64(args[++i])) limit = static_cast<int>(*lim);
-    } else if (arg == "--type" && i + 1 < args.size()) {
-      requested_type = args[++i];
-    } else if (!chat_set && parse_int64(arg).has_value()) {
-      chat_id = *parse_int64(arg);
-      chat_set = true;
-    }
-  }
-
-  if (!chat_set) {
-    return std::unexpected(
-        "Usage: grm file download-all [-o|--output <dir>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id>");
-  }
-
-  if (auto res = ensure_authenticated(); !res) return std::unexpected(res.error());
-  ensure_chat_loaded(chat_id);
-
-  grm::log::info(std::format("Scanning chat {} (topic {}) for media attachments...", chat_id, topic_id));
-
-  std::string method = (topic_id > 0) ? "getForumTopicHistory" : "getChatHistory";
-  std::string req_payload;
-  if (topic_id > 0) {
-    req_payload = std::format(
-        R"({{
-          "chat_id": {},
-          "forum_topic_id": {},
-          "message_thread_id": {},
-          "from_message_id": 0,
-          "offset": 0,
-          "limit": {}
-        }})",
-        chat_id, topic_id, topic_id, std::min(100, limit));
-  } else {
-    req_payload = std::format(
-        R"({{
-          "chat_id": {},
-          "from_message_id": 0,
-          "offset": 0,
-          "limit": {},
-          "only_local": false
-        }})",
-        chat_id, std::min(100, limit));
-  }
-
-  auto history_res = client_->send_request(method, req_payload, 15.0);
-  if (!history_res) {
-    return std::unexpected("Failed to scan chat history for downloads: " + history_res.error());
-  }
-
-  auto msgs = history_res->get_array("messages");
-  int downloaded_count = 0;
-
-  for (const auto &m : msgs) {
-    auto content = m.get_object("content");
-    if (!content) continue;
-
-    std::string type_str = content->get_type().value_or("");
-    if (!Downloader::matches_file_type(type_str, requested_type)) continue;
-
-    int32_t file_id = 0;
-    if (type_str == "messageDocument") {
-      if (auto doc = content->get_object("document")) {
-        if (auto f = doc->get_object("document")) {
-          file_id = static_cast<int32_t>(f->get_int("id").value_or(0));
-        }
-      }
-    } else if (type_str == "messagePhoto") {
-      auto sizes = content->get_array("sizes");
-      if (!sizes.empty()) {
-        if (auto f = sizes.back().get_object("photo")) {
-          file_id = static_cast<int32_t>(f->get_int("id").value_or(0));
-        }
-      }
-    }
-
-    if (file_id > 0) {
-      auto dl_payload = Downloader::build_download_file_payload(file_id, 1);
-      if (dl_payload) {
-        auto unused_dl = client_->send_request("downloadFile", *dl_payload, 30.0);
-        (void)unused_dl;
-        downloaded_count++;
-      }
-    }
-
-  }
-
-  grm::log::info(std::format("Initiated bulk download for {} attachment(s) to {}", downloaded_count, out_dir.string()));
-  return 0;
+  std::vector<std::string> new_args = args;
+  new_args.push_back("--all");
+  return cmd_file_get(new_args);
 }
 
 } // namespace grm

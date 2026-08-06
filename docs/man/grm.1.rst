@@ -207,8 +207,11 @@ grm topic delete *SUPERGROUP_ID* *TOPIC_ID*
 file
 ----
 
-grm file get [-o *OUTPUT*] [-t *TOPIC_ID*] *CHAT_ID* *MESSAGE_IDS...*
-   Download specific attachment files by message ID.
+grm file get [-A] [-o *OUTPUT*] [-t *TOPIC_ID*] [-n *LIMIT*] [--type photo|video|doc|audio|all] *CHAT_ID* [*MESSAGE_IDS...*]
+   Download specific attachment files by message ID, or bulk download all attachments when -A, --all is specified.
+
+   -A, --all
+      Bulk download all attachment media files from chat or topic.
 
    -o, --output *OUTPUT*
       Output directory or destination file path.
@@ -216,14 +219,6 @@ grm file get [-o *OUTPUT*] [-t *TOPIC_ID*] *CHAT_ID* *MESSAGE_IDS...*
    -t, --topic *TOPIC_ID*
       Target specific forum topic ID.
 
-grm file download-all [-o *DIR*] [-t *TOPIC_ID*] [-n *LIMIT*] [--type photo|video|doc|audio|all] *CHAT_ID*
-   Bulk download attachment media files from a chat or topic.
-
-   -o, --output *DIR*
-      Destination directory path.
-
-   -t, --topic *TOPIC_ID*
-      Target specific forum topic ID.
 
    -n, --limit *LIMIT*
       Maximum messages to scan (default: 100).
