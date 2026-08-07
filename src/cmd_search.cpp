@@ -41,6 +41,54 @@ void App::print_search_help(fmt::OutputFormat format) {
   }
 }
 
+struct SearchArgs {
+  std::string query;
+  int limit{20};
+  int64_t chat_id{0};
+  std::string type_filter{"doc"};
+  bool verbose{false};
+};
+
+static SearchArgs parse_search_args(const std::vector<std::string> &args, int default_limit = 20) {
+  SearchArgs result;
+  result.limit = default_limit;
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    const std::string &arg = args[i];
+
+    if (arg == "-n" || arg == "--limit") {
+      if (i + 1 < args.size()) {
+        result.limit = std::atoi(args[++i].c_str());
+      }
+    } else if (arg.starts_with("--limit=")) {
+      result.limit = std::atoi(arg.substr(8).c_str());
+    } else if (arg.starts_with("-n=")) {
+      result.limit = std::atoi(arg.substr(3).c_str());
+    } else if (arg == "-c" || arg == "--chat") {
+      if (i + 1 < args.size()) {
+        result.chat_id = std::stoll(args[++i]);
+      }
+    } else if (arg.starts_with("--chat=")) {
+      result.chat_id = std::stoll(arg.substr(7));
+    } else if (arg == "-t" || arg == "--type") {
+      if (i + 1 < args.size()) {
+        result.type_filter = args[++i];
+      }
+    } else if (arg.starts_with("--type=")) {
+      result.type_filter = arg.substr(7);
+    } else if (arg == "-v" || arg == "--verbose") {
+      result.verbose = true;
+    } else if (!arg.starts_with('-')) {
+      if (result.query.empty()) {
+        result.query = arg;
+      }
+    }
+  }
+
+  if (result.limit <= 0) result.limit = default_limit;
+  return result;
+}
+
 std::expected<int, std::string>
 App::cmd_search(const std::vector<std::string> &args) {
   if (args.empty() || is_help_requested(args)) {
@@ -48,8 +96,19 @@ App::cmd_search(const std::vector<std::string> &args) {
     return 0;
   }
 
-  const std::string &sub = args[0];
-  std::vector<std::string> sub_args(args.begin() + 1, args.end());
+  // Scan args for subcommand keyword
+  std::string sub;
+  std::vector<std::string> sub_args;
+  for (size_t i = 0; i < args.size(); ++i) {
+    const std::string &arg = args[i];
+    if (sub.empty() && (arg == "chats" || arg == "supergroups" || arg == "supergroup" ||
+                        arg == "groups" || arg == "msgs" || arg == "messages" ||
+                        arg == "users" || arg == "contacts")) {
+      sub = arg;
+    } else {
+      sub_args.push_back(arg);
+    }
+  }
 
   if (sub == "chats") {
     return cmd_search_chats(sub_args);
@@ -64,28 +123,24 @@ App::cmd_search(const std::vector<std::string> &args) {
     return cmd_search_users(sub_args);
   }
 
-
   // Universal multi-domain query
   if (auto res = ensure_authenticated(); !res) {
     return std::unexpected(res.error());
   }
 
-  const std::string query = sub;
-  int limit = 10;
-  bool verbose = (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
-
-  for (size_t i = 0; i < sub_args.size(); ++i) {
-    if (sub_args[i] == "-n" || sub_args[i] == "--limit") {
-      if (i + 1 < sub_args.size()) {
-        limit = std::atoi(sub_args[++i].c_str());
-      }
-    } else if (sub_args[i] == "-v" || sub_args[i] == "--verbose") {
-      verbose = true;
-    }
+  SearchArgs sargs = parse_search_args(args, 10);
+  if (sargs.query.empty()) {
+    print_search_help(options_.format);
+    return 0;
   }
+
+  const std::string &query = sargs.query;
+  int limit = sargs.limit;
+  bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
 
   fmt::SearchSummary summary;
   summary.query = query;
+
 
   // 1. Search chats & supergroups
   std::vector<int64_t> candidate_chat_ids;
@@ -231,19 +286,15 @@ App::cmd_search_chats(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
-  const std::string &query = args[0];
-  int limit = 20;
-  bool verbose = (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
-
-  for (size_t i = 1; i < args.size(); ++i) {
-    if (args[i] == "-n" || args[i] == "--limit") {
-      if (i + 1 < args.size()) {
-        limit = std::atoi(args[++i].c_str());
-      }
-    } else if (args[i] == "-v" || args[i] == "--verbose") {
-      verbose = true;
-    }
+  SearchArgs sargs = parse_search_args(args, 20);
+  if (sargs.query.empty()) {
+    print_search_help(options_.format);
+    return 0;
   }
+
+  const std::string &query = sargs.query;
+  int limit = sargs.limit;
+  bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
 
   // 1. Warm TDLib memory cache
   (void)client_->send_request("loadChats", R"({"limit": 100})", 3.0);
@@ -327,34 +378,26 @@ App::cmd_search_msgs(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
-  const std::string &query = args[0];
-  int64_t chat_id = 0;
-  int limit = 20;
-  bool verbose = (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
-
-  for (size_t i = 1; i < args.size(); ++i) {
-    if (args[i] == "-c" || args[i] == "--chat") {
-      if (i + 1 < args.size()) {
-        chat_id = std::stoll(args[++i]);
-      }
-    } else if (args[i] == "-n" || args[i] == "--limit") {
-      if (i + 1 < args.size()) {
-        limit = std::atoi(args[++i].c_str());
-      }
-    } else if (args[i] == "-v" || args[i] == "--verbose") {
-      verbose = true;
-    }
+  SearchArgs sargs = parse_search_args(args, 20);
+  if (sargs.query.empty()) {
+    print_search_help(options_.format);
+    return 0;
   }
+
+  const std::string &query = sargs.query;
+  int64_t chat_id = sargs.chat_id;
+  int limit = sargs.limit;
+  bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
 
   std::optional<JsonValue> res;
   if (chat_id != 0) {
     ensure_chat_loaded(chat_id);
-    const std::string req = std::format(R"({{"chat_id": {}, "query": "{}", "limit": {}}})", chat_id, query, limit);
+    const std::string req = std::format(R"({{"chat_id": {}, "query": "{}", "limit": {}}})", chat_id, escape_json_string(query), limit);
     if (auto call = client_->send_request("searchChatMessages", req, 5.0)) {
       res = *call;
     }
   } else {
-    const std::string req = std::format(R"({{"query": "{}", "limit": {}}})", query, limit);
+    const std::string req = std::format(R"({{"query": "{}", "limit": {}}})", escape_json_string(query), limit);
     if (auto call = client_->send_request("searchMessages", req, 5.0)) {
       res = *call;
     }
@@ -387,23 +430,6 @@ App::cmd_search_msgs(const std::vector<std::string> &args) {
   return 0;
 }
 
-static int parse_limit_option(const std::vector<std::string> &args, int default_limit) {
-  int limit = default_limit;
-  for (size_t i = 0; i < args.size(); ++i) {
-    const std::string &arg = args[i];
-    if (arg == "-n" || arg == "--limit") {
-      if (i + 1 < args.size()) {
-        limit = std::atoi(args[++i].c_str());
-      }
-    } else if (arg.starts_with("--limit=")) {
-      limit = std::atoi(arg.substr(8).c_str());
-    } else if (arg.starts_with("-n=")) {
-      limit = std::atoi(arg.substr(3).c_str());
-    }
-  }
-  return limit > 0 ? limit : default_limit;
-}
-
 std::expected<int, std::string>
 App::cmd_search_users(const std::vector<std::string> &args) {
   if (args.empty() || is_help_requested(args)) {
@@ -415,15 +441,15 @@ App::cmd_search_users(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
-  const std::string &query = args[0];
-  int limit = parse_limit_option(args, 20);
-  bool verbose = (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
-
-  for (size_t i = 1; i < args.size(); ++i) {
-    if (args[i] == "-v" || args[i] == "--verbose") {
-      verbose = true;
-    }
+  SearchArgs sargs = parse_search_args(args, 20);
+  if (sargs.query.empty()) {
+    print_search_help(options_.format);
+    return 0;
   }
+
+  const std::string &query = sargs.query;
+  int limit = sargs.limit;
+  bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
 
   std::vector<int64_t> candidate_user_ids;
 
@@ -527,8 +553,6 @@ App::cmd_search_users(const std::vector<std::string> &args) {
   return 0;
 }
 
-
-
 std::expected<int, std::string>
 App::cmd_search_supergroups(const std::vector<std::string> &args) {
   if (args.empty() || is_help_requested(args)) {
@@ -540,19 +564,16 @@ App::cmd_search_supergroups(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
-  const std::string &query = args[0];
-  int limit = 20;
-  bool verbose = (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
-
-  for (size_t i = 1; i < args.size(); ++i) {
-    if (args[i] == "-n" || args[i] == "--limit") {
-      if (i + 1 < args.size()) {
-        limit = std::atoi(args[++i].c_str());
-      }
-    } else if (args[i] == "-v" || args[i] == "--verbose") {
-      verbose = true;
-    }
+  SearchArgs sargs = parse_search_args(args, 20);
+  if (sargs.query.empty()) {
+    print_search_help(options_.format);
+    return 0;
   }
+
+  const std::string &query = sargs.query;
+  int limit = sargs.limit;
+  bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
+
 
   std::vector<int64_t> candidate_chat_ids;
 
