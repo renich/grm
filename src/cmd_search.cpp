@@ -294,19 +294,48 @@ struct ResolvedChatItems {
   std::vector<fmt::ChatItem> channels;
 };
 
+static std::vector<std::string> expand_search_query_variants(const std::string &query) {
+  std::vector<std::string> variants;
+  variants.push_back(query);
+
+  std::string lower = query;
+  std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+  if (lower == "bit") {
+    variants.push_back("bitcoin");
+    variants.push_back("bits");
+    variants.push_back("btc");
+  } else if (lower == "eth") {
+    variants.push_back("ethereum");
+    variants.push_back("ether");
+  } else if (lower == "dev") {
+    variants.push_back("developer");
+    variants.push_back("development");
+    variants.push_back("devops");
+  } else if (lower == "doc") {
+    variants.push_back("document");
+    variants.push_back("documentation");
+    variants.push_back("docs");
+  } else if (lower.length() <= 3 && !lower.empty() && lower.find(' ') == std::string::npos) {
+    variants.push_back(lower + "s");
+  }
+
+  return variants;
+}
+
 static ResolvedChatItems resolve_chat_candidates(
     TdClient *client,
     const std::string &query,
     int limit,
     std::function<void(int64_t)> ensure_chat_loaded_fn) {
 
-  (void)client->send_request("loadChats", R"({"limit": 100})", 0.5);
+  (void)client->send_request("loadChats", R"({"limit": 500})", 1.0);
 
   const std::string escaped_query = escape_json_string(query);
   std::vector<int64_t> candidate_ids;
 
   // 1. Query searchChats (local database)
-  const std::string req_local = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
+  const std::string req_local = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 3);
   if (auto res_local = client->send_request("searchChats", req_local, 2.0)) {
     for (const auto &id_val : res_local->get_array("chat_ids")) {
       if (auto id = id_val.as_int64()) {
@@ -316,7 +345,7 @@ static ResolvedChatItems resolve_chat_candidates(
   }
 
   // 2. Query searchChatsOnServer (server-side joined chat search)
-  const std::string req_server = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
+  const std::string req_server = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 3);
   if (auto res_server = client->send_request("searchChatsOnServer", req_server, 2.0)) {
     for (const auto &id_val : res_server->get_array("chat_ids")) {
       if (auto id = id_val.as_int64()) {
@@ -327,11 +356,31 @@ static ResolvedChatItems resolve_chat_candidates(
     }
   }
 
-  // 3. Query searchPublicChats (global public chats/channels/supergroups)
-  const std::string req_pub = std::format(R"({{"query": "{}"}})", escaped_query);
-  if (auto res_pub = client->send_request("searchPublicChats", req_pub, 2.0)) {
-    for (const auto &id_val : res_pub->get_array("chat_ids")) {
-      if (auto id = id_val.as_int64()) {
+  // 3. Query searchPublicChats with query variants for global public chats/channels/supergroups
+  std::vector<std::string> search_variants = expand_search_query_variants(query);
+  for (const auto &var : search_variants) {
+    const std::string req_pub = std::format(R"({{"query": "{}"}})", escape_json_string(var));
+    if (auto res_pub = client->send_request("searchPublicChats", req_pub, 2.0)) {
+      for (const auto &id_val : res_pub->get_array("chat_ids")) {
+        if (auto id = id_val.as_int64()) {
+          if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
+            candidate_ids.push_back(*id);
+          }
+        }
+      }
+    }
+  }
+
+
+  // 4. Query searchPublicChat if single word or handle provided
+  std::string handle = query;
+  if (handle.starts_with('@')) {
+    handle = handle.substr(1);
+  }
+  if (!handle.empty() && handle.find(' ') == std::string::npos) {
+    const std::string pub_chat_req = std::format(R"({{"username": "{}"}})", escape_json_string(handle));
+    if (auto chat_res = client->send_request("searchPublicChat", pub_chat_req, 2.0)) {
+      if (auto id = chat_res->get_int("id")) {
         if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
           candidate_ids.push_back(*id);
         }
@@ -339,8 +388,8 @@ static ResolvedChatItems resolve_chat_candidates(
     }
   }
 
-  // 4. Query getChats and filter joined chat titles locally
-  const int get_chats_limit = std::max(limit * 2, 200);
+  // 5. Query getChats and filter joined chat titles locally across up to 500 chats
+  const int get_chats_limit = std::max(limit * 5, 500);
   const std::string get_chats_req = std::format(R"({{"limit": {}}})", get_chats_limit);
   if (auto res_get = client->send_request("getChats", get_chats_req, 2.0)) {
     std::string lower_query = query;
@@ -349,7 +398,7 @@ static ResolvedChatItems resolve_chat_candidates(
       if (auto id = id_val.as_int64()) {
         if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
           const std::string info_req = std::format(R"({{"chat_id": {}}})", *id);
-          if (auto info_res = client->send_request("getChat", info_req, 1.0)) {
+          if (auto info_res = client->send_request("getChat", info_req, 0.3)) {
             std::string title = info_res->get_string("title").value_or("");
             std::string lower_title = title;
             std::transform(lower_title.begin(), lower_title.end(), lower_title.begin(), ::tolower);
@@ -361,6 +410,20 @@ static ResolvedChatItems resolve_chat_candidates(
       }
     }
   }
+
+  // 6. Global Message Discovery: Search messages to discover active chats/channels discussing query
+  const std::string msg_req = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, std::max(limit * 3, 50));
+  if (auto res_msg = client->send_request("searchMessages", msg_req, 3.0)) {
+    for (const auto &m : res_msg->get_array("messages")) {
+      if (auto cid = m.get_int("chat_id")) {
+        if (std::find(candidate_ids.begin(), candidate_ids.end(), *cid) == candidate_ids.end()) {
+          candidate_ids.push_back(*cid);
+        }
+      }
+    }
+  }
+
+
 
   ResolvedChatItems result;
   for (int64_t id : candidate_ids) {
