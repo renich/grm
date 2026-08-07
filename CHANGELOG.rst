@@ -9,8 +9,23 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 [Unreleased]
 ============
 
-[0.5.2] — 2026-08-06
+[0.6.0] — 2026-08-06
 ====================
+
+.. rubric:: Added
+
+* Chat Folder Management CLI suite (``grm folder ls``, ``create``, ``edit``, ``delete``) supporting category filter flags (``--include-groups``, ``--include-channels``, ``--include-bots``, ``--include-contacts``, ``--include-non-contacts``, ``--exclude-muted``, ``--exclude-read``, ``--exclude-archived``) and explicit chat ID inclusions/exclusions/pins.
+* Chat List Folder Filtering via ``grm chat ls --folder <id>`` / ``-F <id>`` flag to inspect chats scoped to a specific ``chatListFolder``.
+* Automated ``updateChatFolders`` event caching in ``TdClient`` with fallback probing for instant folder discovery.
+* Human TTY color badges, AI Markdown, and AI JSON envelope formatting for chat folder summaries.
+* Development Workflow & Engineering Procedures specification in ``docs/project/development-workflow.rst`` defining step-by-step Feature Addition (9-step protocol) and Bug Repair (7-step protocol) procedures.
+* Unit test suite ``tests/test_folder.cpp`` verifying chat folder spec registration and multi-format rendering.
+
+.. rubric:: Changed
+
+* Registered ``get_folder_spec()`` in ``CommandRegistry`` to automatically power ``grm folder --help``, ``grm -F json --help``, and shell completion generators.
+
+
 
 .. rubric:: Fixed
 

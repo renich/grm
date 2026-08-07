@@ -11,7 +11,7 @@ namespace grm {
 App::App(Config config, CliOptions options)
     : config_(std::move(config)), options_(std::move(options)) {}
 
-void App::print_version() { std::cout << "grm 0.5.2\n"; }
+void App::print_version() { std::cout << "grm 0.6.0\n"; }
 
 void App::print_usage(fmt::OutputFormat format) {
   if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
@@ -167,7 +167,7 @@ void App::send_tdlib_parameters() {
         "system_language_code": "en",
         "device_model": "grm",
         "system_version": "Linux x86_64",
-        "application_version": "0.5.2"
+        "application_version": "0.6.0"
       }})",
       options_.use_test_dc ? "true" : "false", db_path.string(),
       db_path.string(), config_.api_id, config_.api_hash);

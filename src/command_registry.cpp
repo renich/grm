@@ -26,7 +26,7 @@ const CommandRegistry &CommandRegistry::get_instance() {
 
 std::string CommandRegistry::render_global_help() const {
   std::stringstream ss;
-  ss << "grm: Telegram CLI client v0.5.2\n\n"
+  ss << "grm: Telegram CLI client v0.6.0\n\n"
      << "Usage: grm [OPTION]... [COMMAND] [ARGS]...\n\n"
      << "Global Options:\n"
      << "  -h, --help            Show summary help screen\n"
@@ -91,7 +91,7 @@ std::string CommandRegistry::render_command_help(const std::string &cmd_name) co
 
 std::string CommandRegistry::render_all_help() const {
   std::stringstream ss;
-  ss << "grm: Telegram CLI client v0.5.2\n\n"
+  ss << "grm: Telegram CLI client v0.6.0\n\n"
      << "Usage: grm [OPTION]... [COMMAND] [ARGS]...\n\n"
      << "Global Options:\n"
      << "  -h, --help            Show summary help screen\n"
@@ -162,7 +162,7 @@ std::string CommandRegistry::render_global_help_json(bool pretty) const {
   json_object *root = json_object_new_object();
   json_object_object_add(root, "program", json_object_new_string("grm"));
   json_object_object_add(root, "description", json_object_new_string("Telegram CLI client"));
-  json_object_object_add(root, "version", json_object_new_string("0.5.2"));
+  json_object_object_add(root, "version", json_object_new_string("0.6.0"));
 
   json_object *global_opts_arr = json_object_new_array();
   const std::vector<OptionSpec> global_opts = {
@@ -256,7 +256,7 @@ std::string CommandRegistry::render_all_help_json(bool pretty) const {
   json_object *root = json_object_new_object();
   json_object_object_add(root, "program", json_object_new_string("grm"));
   json_object_object_add(root, "description", json_object_new_string("Telegram CLI client"));
-  json_object_object_add(root, "version", json_object_new_string("0.5.2"));
+  json_object_object_add(root, "version", json_object_new_string("0.6.0"));
 
   json_object *global_opts_arr = json_object_new_array();
   const std::vector<OptionSpec> global_opts = {
