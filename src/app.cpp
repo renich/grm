@@ -180,13 +180,14 @@ std::expected<void, std::string> App::ensure_authenticated() {
     return std::unexpected(res.error());
   }
 
-  // Block and wait up to 5 seconds for TDLib session database to load and reach authorizationStateReady
+  // Block and wait up to 10 seconds for TDLib session database to load and reach authorizationStateReady
   {
     std::unique_lock<std::mutex> lock(auth_mutex_);
-    auth_cv_.wait_for(lock, std::chrono::seconds(5), [this] {
+    auth_cv_.wait_for(lock, std::chrono::seconds(10), [this] {
       return auth_state_ == "authorizationStateReady" || is_closed_;
     });
   }
+
 
   const std::string current_state = get_auth_state();
 

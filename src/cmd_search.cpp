@@ -311,7 +311,7 @@ struct ResolvedChatItems {
   std::vector<fmt::ChatItem> channels;
 };
 
-static std::vector<std::string> expand_search_query_variants(const std::string &query) {
+static std::vector<std::string> expand_search_query_variants(const std::string &query, int limit) {
   std::vector<std::string> variants;
   variants.push_back(query);
 
@@ -335,6 +335,14 @@ static std::vector<std::string> expand_search_query_variants(const std::string &
     variants.push_back("docs");
   } else if (lower.length() <= 3 && !lower.empty() && lower.find(' ') == std::string::npos) {
     variants.push_back(lower + "s");
+  }
+
+  // Deep probing: when user requests large limits (e.g. -n 50 or -n 100), iterate alphabet suffix probes
+  if (limit >= 20 && lower.find(' ') == std::string::npos && !lower.empty()) {
+    for (char c = 'a'; c <= 'z'; ++c) {
+      variants.push_back(std::format("{} {}", lower, c));
+      if (static_cast<int>(variants.size()) >= std::min(limit, 30)) break;
+    }
   }
 
   return variants;
@@ -374,10 +382,10 @@ static ResolvedChatItems resolve_chat_candidates(
   }
 
   // 3. Query searchPublicChats with query variants for global public chats/channels/supergroups
-  std::vector<std::string> search_variants = expand_search_query_variants(query);
+  std::vector<std::string> search_variants = expand_search_query_variants(query, limit);
   for (const auto &var : search_variants) {
     const std::string req_pub = std::format(R"({{"query": "{}"}})", escape_json_string(var));
-    if (auto res_pub = client->send_request("searchPublicChats", req_pub, 2.0)) {
+    if (auto res_pub = client->send_request("searchPublicChats", req_pub, 1.0)) {
       for (const auto &id_val : res_pub->get_array("chat_ids")) {
         if (auto id = id_val.as_int64()) {
           if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
@@ -387,6 +395,7 @@ static ResolvedChatItems resolve_chat_candidates(
       }
     }
   }
+
 
 
   // 4. Query searchPublicChat if single word or handle provided
