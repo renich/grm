@@ -337,16 +337,24 @@ static std::vector<std::string> expand_search_query_variants(const std::string &
     variants.push_back(lower + "s");
   }
 
-  // Deep probing: when user requests large limits (e.g. -n 50 or -n 100), iterate alphabet suffix probes
+  // Suffix/Prefix probes without spaces for global public handle/username directory search
   if (limit >= 20 && lower.find(' ') == std::string::npos && !lower.empty()) {
+    variants.push_back(lower + "s");
+    variants.push_back(lower + "_");
+    variants.push_back(lower + "bot");
+    variants.push_back(lower + "hub");
+    variants.push_back(lower + "link");
+    variants.push_back(lower + "club");
+    variants.push_back(lower + "hd");
     for (char c = 'a'; c <= 'z'; ++c) {
-      variants.push_back(std::format("{} {}", lower, c));
-      if (static_cast<int>(variants.size()) >= std::min(limit, 30)) break;
+      variants.push_back(lower + c);
+      if (static_cast<int>(variants.size()) >= std::min(limit, 35)) break;
     }
   }
 
   return variants;
 }
+
 
 static ResolvedChatItems resolve_chat_candidates(
     TdClient *client,
@@ -470,18 +478,27 @@ static ResolvedChatItems resolve_chat_candidates(
       }
       item.unread_count = static_cast<int32_t>(info_res->get_int("unread_count").value_or(0));
 
-      if (is_supergroup) {
-        result.supergroups.push_back(item);
-      } else if (is_channel) {
-        result.channels.push_back(item);
-      } else {
-        result.chats.push_back(item);
+      std::string lower_query = query;
+      std::transform(lower_query.begin(), lower_query.end(), lower_query.begin(), ::tolower);
+
+      std::string lower_title = item.title;
+      std::transform(lower_title.begin(), lower_title.end(), lower_title.begin(), ::tolower);
+
+      if (lower_title.find(lower_query) != std::string::npos) {
+        if (is_supergroup) {
+          result.supergroups.push_back(item);
+        } else if (is_channel) {
+          result.channels.push_back(item);
+        } else {
+          result.chats.push_back(item);
+        }
       }
     }
   }
 
   return result;
 }
+
 
 
 std::expected<int, std::string>
