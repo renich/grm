@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(grm VERSION 0.5.0 LANGUAGES CXX)
+project(grm VERSION 0.5.2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -233,6 +233,16 @@ add_executable(test_msg_crud
 )
 target_link_libraries(test_msg_crud PRIVATE ${JSONC_LIBRARIES})
 add_test(NAME test_msg_crud COMMAND test_msg_crud)
+
+add_executable(test_td_client_flush
+    tests/test_td_client_flush.cpp
+    src/td_client.cpp
+    src/config.cpp
+    src/logger.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_td_client_flush PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
+add_test(NAME test_td_client_flush COMMAND test_td_client_flush)
 
 endif()
 

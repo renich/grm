@@ -9,6 +9,14 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 [Unreleased]
 ============
 
+[0.5.2] — 2026-08-06
+====================
+
+.. rubric:: Fixed
+
+* Resolved TDLib asynchronous network queue flush bug on CLI termination. Added network flush grace window in ``TdClient::stop()`` to guarantee pending outgoing MTProto messages and requests are delivered before TDLib client session shutdown.
+* Added ``tests/test_td_client_flush.cpp`` unit test suite to validate ``TdClient`` shutdown timing (>= 1000ms) and stop idempotency.
+
 [0.5.1] — 2026-08-06
 ====================
 

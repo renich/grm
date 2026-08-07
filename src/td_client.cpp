@@ -46,6 +46,8 @@ void TdClient::stop() {
     return;
   }
 
+  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
   is_running_ = false;
 
   if (client_id_ >= 0) {

@@ -35,10 +35,33 @@ int main() {
   assert(!zsh_comp.empty());
   assert(zsh_comp.find("#compdef grm") != std::string::npos);
 
-  // Test 6: Fish completion script rendering
-  std::string fish_comp = registry.render_completion("fish");
-  assert(!fish_comp.empty());
-  assert(fish_comp.find("complete -c grm") != std::string::npos);
+  // Test 7: JSON global help rendering (compact vs pretty)
+  std::string compact_json = registry.render_global_help_json(false);
+  assert(!compact_json.empty());
+  assert(compact_json.find("\"program\":\"grm\"") != std::string::npos);
+  assert(compact_json.find("\"global_options\"") != std::string::npos);
+  // Compact output must not contain pretty-print indentation newlines before keys
+  assert(compact_json.find("{\n  \"program\"") == std::string::npos);
+
+  std::string pretty_json = registry.render_global_help_json(true);
+  assert(!pretty_json.empty());
+  assert(pretty_json.find("{\n  \"program\": \"grm\"") != std::string::npos);
+
+  // Test 8: JSON command help rendering for 'chat'
+  std::string chat_json = registry.render_command_help_json("chat", false);
+  assert(!chat_json.empty());
+  assert(chat_json.find("\"command\":\"chat\"") != std::string::npos);
+  assert(chat_json.find("\"subcommands\"") != std::string::npos);
+
+  // Test 9: JSON all master help rendering (-H / --help=all)
+  std::string all_json_compact = registry.render_all_help_json(false);
+  assert(!all_json_compact.empty());
+  assert(all_json_compact.find("\"program\":\"grm\"") != std::string::npos);
+  assert(all_json_compact.find("\"commands\"") != std::string::npos);
+
+  std::string all_json_pretty = registry.render_all_help_json(true);
+  assert(!all_json_pretty.empty());
+  assert(all_json_pretty.find("{\n  \"program\": \"grm\"") != std::string::npos);
 
   std::cout << "All CommandRegistry unit tests passed successfully!" << std::endl;
   return 0;

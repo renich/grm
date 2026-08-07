@@ -75,6 +75,28 @@ int main() {
   assert(res9.error().find("Unknown command: unknown_command") !=
          std::string::npos);
 
+  // Test 10: -H / --help=all master help returns 0
+  auto res10a = app.run({"-H"});
+  assert(res10a.has_value());
+  assert(*res10a == 0);
+
+  auto res10b = app.run({"--help=all"});
+  assert(res10b.has_value());
+  assert(*res10b == 0);
+
+  // Test 11: Gibberish command strings return unexpected error
+  auto res11a = app.run({"12345_gibberish_#$%^"});
+  assert(!res11a.has_value());
+  assert(res11a.error().find("Unknown command") != std::string::npos);
+
+  auto res11b = app.run({"chat", "gibberish_action"});
+  assert(!res11b.has_value());
+  assert(res11b.error().find("Unknown chat subcommand") != std::string::npos);
+
+  auto res11c = app.run({"completion", "invalid_shell"});
+  assert(!res11c.has_value());
+  assert(res11c.error().find("Unknown shell: invalid_shell") != std::string::npos);
+
   std::cout << "test_cli_routing passed successfully!\n";
   return 0;
 }
