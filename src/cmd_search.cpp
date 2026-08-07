@@ -17,23 +17,29 @@ CommandSpec App::get_search_spec() {
   spec.subcommands = {
       {"chats", "<query> [options]", "Search public and private chats, supergroups, and channels",
        {{"-n", "--limit", "<count>", "Maximum search results (default: 20)", {}},
+        {"-o", "--offset", "<count>", "Offset starting result index (default: 0)", {}},
         {"-v", "--verbose", "", "Show verbose search metadata", {}}}},
       {"supergroups", "<query> [options]", "Search supergroups specifically (including forum supergroups)",
        {{"-n", "--limit", "<count>", "Maximum search results (default: 20)", {}},
+        {"-o", "--offset", "<count>", "Offset starting result index (default: 0)", {}},
         {"-v", "--verbose", "", "Show verbose search metadata", {}}}},
       {"channels", "<query> [options]", "Search broadcast channels specifically",
        {{"-n", "--limit", "<count>", "Maximum search results (default: 20)", {}},
+        {"-o", "--offset", "<count>", "Offset starting result index (default: 0)", {}},
         {"-v", "--verbose", "", "Show verbose search metadata", {}}}},
       {"msgs", "<query> [options]", "Search message history across all chats or scoped to a target chat",
        {{"-c", "--chat", "<chat_id>", "Restrict message search to target chat", {}},
         {"-n", "--limit", "<count>", "Maximum search results (default: 20)", {}},
+        {"-o", "--offset", "<count>", "Offset starting result index (default: 0)", {}},
         {"-v", "--verbose", "", "Show verbose search metadata", {}}}},
       {"users", "<query> [options]", "Search contacts, DMs, and public user profiles",
        {{"-n", "--limit", "<count>", "Maximum search results (default: 20)", {}},
+        {"-o", "--offset", "<count>", "Offset starting result index (default: 0)", {}},
         {"-v", "--verbose", "", "Show verbose search metadata", {}}}},
       {"files", "<query> [options]", "Search file and media attachments",
        {{"-t", "--type", "<doc|photo|video|audio|all>", "Filter attachment type (default: doc)", {"doc", "photo", "video", "audio", "all"}},
         {"-n", "--limit", "<count>", "Maximum search results (default: 20)", {}},
+        {"-o", "--offset", "<count>", "Offset starting result index (default: 0)", {}},
         {"-v", "--verbose", "", "Show verbose search metadata", {}}}}
   };
 
@@ -51,6 +57,7 @@ void App::print_search_help(fmt::OutputFormat format) {
 struct SearchArgs {
   std::string query;
   int limit{20};
+  int offset{0};
   int64_t chat_id{0};
   std::string type_filter{"doc"};
   bool verbose{false};
@@ -71,6 +78,14 @@ static SearchArgs parse_search_args(const std::vector<std::string> &args, int de
       result.limit = std::atoi(arg.substr(8).c_str());
     } else if (arg.starts_with("-n=")) {
       result.limit = std::atoi(arg.substr(3).c_str());
+    } else if (arg == "-o" || arg == "--offset") {
+      if (i + 1 < args.size()) {
+        result.offset = std::atoi(args[++i].c_str());
+      }
+    } else if (arg.starts_with("--offset=")) {
+      result.offset = std::atoi(arg.substr(9).c_str());
+    } else if (arg.starts_with("-o=")) {
+      result.offset = std::atoi(arg.substr(3).c_str());
     } else if (arg == "-c" || arg == "--chat") {
       if (i + 1 < args.size()) {
         result.chat_id = std::stoll(args[++i]);
@@ -93,8 +108,10 @@ static SearchArgs parse_search_args(const std::vector<std::string> &args, int de
   }
 
   if (result.limit <= 0) result.limit = default_limit;
+  if (result.offset < 0) result.offset = 0;
   return result;
 }
+
 
 std::expected<int, std::string>
 App::cmd_search(const std::vector<std::string> &args) {
@@ -494,15 +511,22 @@ App::cmd_search_chats(const std::vector<std::string> &args) {
   }
 
   bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
-  ResolvedChatItems res_items = resolve_chat_candidates(client_.get(), sargs.query, sargs.limit, [this](int64_t id) { ensure_chat_loaded(id); });
+  int needed = sargs.offset + sargs.limit;
+  ResolvedChatItems res_items = resolve_chat_candidates(client_.get(), sargs.query, needed, [this](int64_t id) { ensure_chat_loaded(id); });
 
   std::vector<fmt::ChatItem> combined = res_items.chats;
   combined.insert(combined.end(), res_items.supergroups.begin(), res_items.supergroups.end());
-  if (static_cast<int>(combined.size()) > sargs.limit) {
-    combined.resize(sargs.limit);
+  combined.insert(combined.end(), res_items.channels.begin(), res_items.channels.end());
+
+  std::vector<fmt::ChatItem> sliced;
+  if (static_cast<int>(combined.size()) > sargs.offset) {
+    sliced = std::vector<fmt::ChatItem>(combined.begin() + sargs.offset, combined.end());
+    if (static_cast<int>(sliced.size()) > sargs.limit) {
+      sliced.resize(sargs.limit);
+    }
   }
 
-  fmt::Formatter::print_chats(combined, options_.format, options_.color_mode, std::cout, verbose);
+  fmt::Formatter::print_chats(sliced, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
 
@@ -524,9 +548,18 @@ App::cmd_search_supergroups(const std::vector<std::string> &args) {
   }
 
   bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
-  ResolvedChatItems res_items = resolve_chat_candidates(client_.get(), sargs.query, sargs.limit, [this](int64_t id) { ensure_chat_loaded(id); });
+  int needed = sargs.offset + sargs.limit;
+  ResolvedChatItems res_items = resolve_chat_candidates(client_.get(), sargs.query, needed, [this](int64_t id) { ensure_chat_loaded(id); });
 
-  fmt::Formatter::print_chats(res_items.supergroups, options_.format, options_.color_mode, std::cout, verbose);
+  std::vector<fmt::ChatItem> sliced;
+  if (static_cast<int>(res_items.supergroups.size()) > sargs.offset) {
+    sliced = std::vector<fmt::ChatItem>(res_items.supergroups.begin() + sargs.offset, res_items.supergroups.end());
+    if (static_cast<int>(sliced.size()) > sargs.limit) {
+      sliced.resize(sargs.limit);
+    }
+  }
+
+  fmt::Formatter::print_chats(sliced, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
 
@@ -549,47 +582,67 @@ App::cmd_search_msgs(const std::vector<std::string> &args) {
 
   const std::string &query = sargs.query;
   int64_t chat_id = sargs.chat_id;
-  int limit = sargs.limit;
+  int target_needed = sargs.offset + sargs.limit;
   bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
 
-  std::optional<JsonValue> res;
-  if (chat_id != 0) {
-    ensure_chat_loaded(chat_id);
-    const std::string req = std::format(R"({{"chat_id": {}, "query": "{}", "limit": {}}})", chat_id, escape_json_string(query), limit);
-    if (auto call = client_->send_request("searchChatMessages", req, 5.0)) {
-      res = *call;
+  std::vector<fmt::MessageItem> all_messages;
+  int64_t from_message_id = 0;
+  int64_t from_chat_id = 0;
+
+  while (static_cast<int>(all_messages.size()) < target_needed) {
+    std::string req;
+    if (chat_id != 0) {
+      req = std::format(
+          R"({{"chat_id": {}, "query": "{}", "from_message_id": {}, "limit": 100}})",
+          chat_id, escape_json_string(query), from_message_id);
+    } else {
+      req = std::format(
+          R"({{"query": "{}", "offset_chat_id": {}, "offset_message_id": {}, "limit": 100}})",
+          escape_json_string(query), from_chat_id, from_message_id);
     }
-  } else {
-    const std::string req = std::format(R"({{"query": "{}", "limit": {}}})", escape_json_string(query), limit);
-    if (auto call = client_->send_request("searchMessages", req, 5.0)) {
-      res = *call;
-    }
-  }
 
-  if (!res) {
-    return std::unexpected("Failed to search messages");
-  }
+    auto call = client_->send_request(chat_id != 0 ? "searchChatMessages" : "searchMessages", req, 5.0);
+    if (!call) break;
 
-  std::vector<fmt::MessageItem> messages;
-  for (const auto &m : res->get_array("messages")) {
-    fmt::MessageItem item;
-    item.id = m.get_int("id").value_or(0);
-    item.chat_id = m.get_int("chat_id").value_or(0);
-    item.date = m.get_int("date").value_or(0);
-    item.sender = resolve_sender_name(m);
+    auto msgs_arr = call->get_array("messages");
+    if (msgs_arr.empty()) break;
 
-    if (auto content = m.get_object("content")) {
-      if (auto text_obj = content->get_object("text")) {
-        item.text = text_obj->get_string("text").value_or("");
-      } else if (auto caption_obj = content->get_object("caption")) {
-        item.text = caption_obj->get_string("text").value_or("");
+    int new_msgs = 0;
+    for (const auto &m : msgs_arr) {
+      fmt::MessageItem item;
+      item.id = m.get_int("id").value_or(0);
+      item.chat_id = m.get_int("chat_id").value_or(0);
+      item.date = m.get_int("date").value_or(0);
+      item.sender = resolve_sender_name(m);
+
+      if (auto content = m.get_object("content")) {
+        if (auto text_obj = content->get_object("text")) {
+          item.text = text_obj->get_string("text").value_or("");
+        } else if (auto caption_obj = content->get_object("caption")) {
+          item.text = caption_obj->get_string("text").value_or("");
+        }
       }
+
+      all_messages.push_back(item);
+      from_message_id = item.id;
+      from_chat_id = item.chat_id;
+      new_msgs++;
     }
 
-    messages.push_back(item);
+    if (new_msgs == 0) break;
   }
 
-  fmt::Formatter::print_messages(messages, options_.format, options_.color_mode, std::cout, verbose);
+  std::vector<fmt::MessageItem> result_messages;
+  if (static_cast<int>(all_messages.size()) > sargs.offset) {
+    result_messages = std::vector<fmt::MessageItem>(
+        all_messages.begin() + sargs.offset,
+        all_messages.end());
+    if (static_cast<int>(result_messages.size()) > sargs.limit) {
+      result_messages.resize(sargs.limit);
+    }
+  }
+
+  fmt::Formatter::print_messages(result_messages, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
 
@@ -611,17 +664,17 @@ App::cmd_search_users(const std::vector<std::string> &args) {
   }
 
   const std::string &query = sargs.query;
-  int limit = sargs.limit;
+  int target_needed = sargs.offset + sargs.limit;
   bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
 
   // 1. Warm TDLib chat cache
-  (void)client_->send_request("loadChats", R"({"limit": 100})", 0.5);
+  (void)client_->send_request("loadChats", R"({"limit": 500})", 0.5);
 
   std::vector<int64_t> candidate_user_ids;
   const std::string escaped_query = escape_json_string(query);
 
   // 2. Search local contacts
-  const std::string req = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
+  const std::string req = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, target_needed * 2);
   if (auto res_contacts = client_->send_request("searchContacts", req, 1.5)) {
     for (const auto &user_val : res_contacts->get_array("users")) {
       if (auto id = user_val.as_int64()) {
@@ -631,7 +684,7 @@ App::cmd_search_users(const std::vector<std::string> &args) {
   }
 
   // 3. Query searchChatsOnServer for private user chats
-  const std::string req_server = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
+  const std::string req_server = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, target_needed * 2);
   if (auto res_server = client_->send_request("searchChatsOnServer", req_server, 1.5)) {
     for (const auto &id_val : res_server->get_array("chat_ids")) {
       if (auto cid = id_val.as_int64()) {
@@ -693,9 +746,9 @@ App::cmd_search_users(const std::vector<std::string> &args) {
   }
 
   // 6. Search members inside joined supergroups dynamically until target limit is reached
-  if (auto res_chats = client_->send_request("getChats", R"({"limit": 100})", 1.0)) {
+  if (auto res_chats = client_->send_request("getChats", R"({"limit": 200})", 1.0)) {
     for (const auto &id_val : res_chats->get_array("chat_ids")) {
-      if (static_cast<int>(candidate_user_ids.size()) >= limit * 2) break;
+      if (static_cast<int>(candidate_user_ids.size()) >= target_needed * 2) break;
       if (auto cid = id_val.as_int64()) {
         const std::string info_req = std::format(R"({{"chat_id": {}}})", *cid);
         if (auto info_res = client_->send_request("getChat", info_req, 0.3)) {
@@ -704,7 +757,7 @@ App::cmd_search_users(const std::vector<std::string> &args) {
               if (!type_obj->get_bool("is_channel").value_or(false)) {
                 const std::string mem_req = std::format(
                     R"({{"chat_id": {}, "query": "{}", "limit": {}}})",
-                    *cid, escaped_query, limit);
+                    *cid, escaped_query, target_needed);
                 if (auto mem_res = client_->send_request("searchChatMembers", mem_req, 0.5)) {
                   for (const auto &m : mem_res->get_array("members")) {
                     if (auto member_id = m.get_object("member_id")) {
@@ -727,22 +780,29 @@ App::cmd_search_users(const std::vector<std::string> &args) {
   }
 
   std::vector<fmt::UserItem> users;
-  for (int64_t id : candidate_user_ids) {
-    const std::string info_req = std::format(R"({{"user_id": {}}})", id);
-    if (auto u = client_->send_request("getUser", info_req, 3.0)) {
-      fmt::UserItem item;
-      item.id = id;
-      item.first_name = u->get_string("first_name").value_or("");
-      item.last_name = u->get_string("last_name").value_or("");
-      item.username = u->get_string("username").value_or("");
-      item.phone_number = u->get_string("phone_number").value_or("");
+  if (static_cast<int>(candidate_user_ids.size()) > sargs.offset) {
+    std::vector<int64_t> sliced_ids(
+        candidate_user_ids.begin() + sargs.offset,
+        candidate_user_ids.end());
+    if (static_cast<int>(sliced_ids.size()) > sargs.limit) {
+      sliced_ids.resize(sargs.limit);
+    }
+    for (int64_t id : sliced_ids) {
+      const std::string info_req = std::format(R"({{"user_id": {}}})", id);
+      if (auto u = client_->send_request("getUser", info_req, 3.0)) {
+        fmt::UserItem item;
+        item.id = id;
+        item.first_name = u->get_string("first_name").value_or("");
+        item.last_name = u->get_string("last_name").value_or("");
+        item.username = u->get_string("username").value_or("");
+        item.phone_number = u->get_string("phone_number").value_or("");
 
-      if (auto status_obj = u->get_object("status")) {
-        item.status = status_obj->get_string("@type").value_or("Unknown");
+        if (auto status_obj = u->get_object("status")) {
+          item.status = status_obj->get_string("@type").value_or("Unknown");
+        }
+
+        users.push_back(item);
       }
-
-      users.push_back(item);
-      if (static_cast<int>(users.size()) >= limit) break;
     }
   }
 
@@ -768,9 +828,18 @@ App::cmd_search_channels(const std::vector<std::string> &args) {
   }
 
   bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
-  ResolvedChatItems res_items = resolve_chat_candidates(client_.get(), sargs.query, sargs.limit, [this](int64_t id) { ensure_chat_loaded(id); });
+  int needed = sargs.offset + sargs.limit;
+  ResolvedChatItems res_items = resolve_chat_candidates(client_.get(), sargs.query, needed, [this](int64_t id) { ensure_chat_loaded(id); });
 
-  fmt::Formatter::print_chats(res_items.channels, options_.format, options_.color_mode, std::cout, verbose);
+  std::vector<fmt::ChatItem> sliced;
+  if (static_cast<int>(res_items.channels.size()) > sargs.offset) {
+    sliced = std::vector<fmt::ChatItem>(res_items.channels.begin() + sargs.offset, res_items.channels.end());
+    if (static_cast<int>(sliced.size()) > sargs.limit) {
+      sliced.resize(sargs.limit);
+    }
+  }
+
+  fmt::Formatter::print_chats(sliced, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
 
@@ -792,8 +861,8 @@ App::cmd_search_files(const std::vector<std::string> &args) {
   }
 
   const std::string &query = sargs.query;
-  int limit = sargs.limit;
   const std::string &type = sargs.type_filter;
+  int target_needed = sargs.offset + sargs.limit;
   bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
 
   std::vector<std::string> filter_types;
@@ -803,15 +872,25 @@ App::cmd_search_files(const std::vector<std::string> &args) {
   else if (type == "all") filter_types = {"searchMessagesFilterDocument", "searchMessagesFilterPhoto", "searchMessagesFilterVideo", "searchMessagesFilterAudio"};
   else filter_types = {"searchMessagesFilterDocument"};
 
-  std::vector<fmt::MessageItem> files;
+  std::vector<fmt::MessageItem> all_files;
   const std::string escaped_query = escape_json_string(query);
 
   for (const auto &ft : filter_types) {
-    const std::string file_req = std::format(
-        R"({{"query": "{}", "filter": {{"@type": "{}"}}, "limit": {}}})",
-        escaped_query, ft, limit);
-    if (auto file_res = client_->send_request("searchMessages", file_req, 5.0)) {
-      for (const auto &m : file_res->get_array("messages")) {
+    int64_t from_message_id = 0;
+    int64_t from_chat_id = 0;
+
+    while (static_cast<int>(all_files.size()) < target_needed) {
+      const std::string file_req = std::format(
+          R"({{"query": "{}", "filter": {{"@type": "{}"}}, "offset_chat_id": {}, "offset_message_id": {}, "limit": 100}})",
+          escaped_query, ft, from_chat_id, from_message_id);
+      auto file_res = client_->send_request("searchMessages", file_req, 5.0);
+      if (!file_res) break;
+
+      auto msgs_arr = file_res->get_array("messages");
+      if (msgs_arr.empty()) break;
+
+      int new_msgs = 0;
+      for (const auto &m : msgs_arr) {
         fmt::MessageItem item;
         item.id = m.get_int("id").value_or(0);
         item.chat_id = m.get_int("chat_id").value_or(0);
@@ -830,16 +909,32 @@ App::cmd_search_files(const std::vector<std::string> &args) {
           }
         }
 
-        files.push_back(item);
-        if (static_cast<int>(files.size()) >= limit) break;
+        all_files.push_back(item);
+        from_message_id = item.id;
+        from_chat_id = item.chat_id;
+        new_msgs++;
       }
+
+      if (new_msgs == 0) break;
     }
-    if (static_cast<int>(files.size()) >= limit) break;
+
+    if (static_cast<int>(all_files.size()) >= target_needed) break;
   }
 
-  fmt::Formatter::print_messages(files, options_.format, options_.color_mode, std::cout, verbose);
+  std::vector<fmt::MessageItem> result_files;
+  if (static_cast<int>(all_files.size()) > sargs.offset) {
+    result_files = std::vector<fmt::MessageItem>(
+        all_files.begin() + sargs.offset,
+        all_files.end());
+    if (static_cast<int>(result_files.size()) > sargs.limit) {
+      result_files.resize(sargs.limit);
+    }
+  }
+
+  fmt::Formatter::print_messages(result_files, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
 
 } // namespace grm
+
 
