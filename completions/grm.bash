@@ -1,13 +1,13 @@
 #!/usr/bin/bash
 # Bash completion script for grm (Group & Telegram Manager CLI)
-# Generated dynamically by 'grm completion bash'
+# Generated dynamically by introspection of CommandRegistry
 
 _grm_completions() {
   local cur prev words cword
   _init_completion || return
 
   local global_opts="-h --help --help=all -V --version -v --verbose -d --debug -q --quiet -c --config -T --test-dc -F --format --color --no-color"
-  local commands="login chat folder search msg topic file completion"
+  local commands="login chat msg topic file folder search completion"
 
   if [[ ${cword} -eq 1 ]]; then
     if [[ "${cur}" == -* ]]; then
@@ -22,7 +22,15 @@ _grm_completions() {
 
   case "${command}" in
     login)
-      COMPREPLY=($(compgen -W "-p --phone -k --code -h --help" -- "${cur}"))
+      if [[ ${cword} -eq 2 ]]; then
+        if [[ "${cur}" == -* ]]; then
+          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
+        else
+          COMPREPLY=($(compgen -W "login" -- "${cur}"))
+        fi
+      elif [[ "${words[2]}" == "login" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -p --phone -k --code -h --help" -- "${cur}"))
+      fi
       ;;
     chat)
       if [[ ${cword} -eq 2 ]]; then
@@ -32,39 +40,21 @@ _grm_completions() {
           COMPREPLY=($(compgen -W "ls create info set-title set-desc pin unpin delete" -- "${cur}"))
         fi
       elif [[ "${words[2]}" == "ls" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -S --since -f --filter --folder -h --help" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-h --help -n --limit -S --since -f --filter -F --folder -h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "create" ]]; then
-        if [[ ${cword} -eq 3 ]]; then
-          COMPREPLY=($(compgen -W "group channel" -- "${cur}"))
-        else
-          COMPREPLY=($(compgen -W "--private --public -h --help" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "info" || "${words[2]}" == "delete" || "${words[2]}" == "pin" || "${words[2]}" == "unpin" || "${words[2]}" == "set-title" || "${words[2]}" == "set-desc" ]]; then
-        COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
-      fi
-      ;;
-    folder)
-      if [[ ${cword} -eq 2 ]]; then
-        if [[ "${cur}" == -* ]]; then
-          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
-        else
-          COMPREPLY=($(compgen -W "ls create edit delete" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "ls" || "${words[2]}" == "create" || "${words[2]}" == "edit" || "${words[2]}" == "delete" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -h --help" -- "${cur}"))
-      fi
-      ;;
-    search)
-      if [[ ${cword} -eq 2 ]]; then
-        if [[ "${cur}" == -* ]]; then
-          COMPREPLY=($(compgen -W "-n --limit -v --verbose -h --help" -- "${cur}"))
-        else
-          COMPREPLY=($(compgen -W "chats supergroups msgs users files" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "chats" || "${words[2]}" == "supergroups" || "${words[2]}" == "users" || "${words[2]}" == "files" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -v --verbose -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "msgs" ]]; then
-        COMPREPLY=($(compgen -W "-c --chat -n --limit -v --verbose -h --help" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-h --help --private --public -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "info" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "set-title" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "set-desc" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "pin" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "unpin" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "delete" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
       fi
       ;;
     msg)
@@ -72,32 +62,26 @@ _grm_completions() {
         if [[ "${cur}" == -* ]]; then
           COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
         else
-          COMPREPLY=($(compgen -W "ls export search send info edit pin unpin delete" -- "${cur}"))
+          COMPREPLY=($(compgen -W "ls send info edit search export pin unpin delete" -- "${cur}"))
         fi
       elif [[ "${words[2]}" == "ls" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -t --topic -S --since -f --filter --sender -r --reverse -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "export" ]]; then
-        if [[ "${prev}" == "-f" || "${prev}" == "--format" ]]; then
-          COMPREPLY=($(compgen -W "csv json" -- "${cur}"))
-        elif [[ "${prev}" == "-o" || "${prev}" == "--output" ]]; then
-          _filedir
-        else
-          COMPREPLY=($(compgen -W "-f --format -o --output -t --topic -n --limit -h --help" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "search" ]]; then
-        COMPREPLY=($(compgen -W "-q --query -n --limit -t --topic -S --since -f --filter --sender -h --help" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-h --help -t --topic -n --limit -S --since -f --filter -r --reverse -h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "send" ]]; then
-        if [[ "${prev}" == "-a" || "${prev}" == "--attach" ]]; then
-          _filedir
-        else
-          COMPREPLY=($(compgen -W "-a --attach -m --media -C --caption -t --topic -h --help" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "edit" || "${words[2]}" == "info" || "${words[2]}" == "pin" ]]; then
-        COMPREPLY=($(compgen -W "-t --topic -h --help" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-h --help -a --attach -m --media -C --caption -t --topic -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "info" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -t --topic -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "edit" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -t --topic -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "search" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -q --query -t --topic -n --limit -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "export" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -f --format -o --output -t --topic -n --limit -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "pin" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -t --topic -h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "unpin" ]]; then
-        COMPREPLY=($(compgen -W "-a --all -h --help" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-h --help -a --all -h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "delete" ]]; then
-        COMPREPLY=($(compgen -W "--for-everyone -e -h --help" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-h --help -e --for-everyone -h --help" -- "${cur}"))
       fi
       ;;
     topic)
@@ -108,11 +92,23 @@ _grm_completions() {
           COMPREPLY=($(compgen -W "ls create info edit close reopen pin unpin delete" -- "${cur}"))
         fi
       elif [[ "${words[2]}" == "ls" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -S --since -f --filter -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "create" || "${words[2]}" == "edit" ]]; then
-        COMPREPLY=($(compgen -W "-e --emoji --icon --icon-color -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "info" || "${words[2]}" == "close" || "${words[2]}" == "reopen" || "${words[2]}" == "pin" || "${words[2]}" == "unpin" || "${words[2]}" == "delete" ]]; then
-        COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-h --help -n --limit -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "create" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -e --emoji --icon-color -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "info" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "edit" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -e --emoji -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "close" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "reopen" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "pin" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "unpin" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "delete" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
       fi
       ;;
     file)
@@ -123,20 +119,56 @@ _grm_completions() {
           COMPREPLY=($(compgen -W "get" -- "${cur}"))
         fi
       elif [[ "${words[2]}" == "get" ]]; then
-        if [[ "${prev}" == "--type" ]]; then
-          COMPREPLY=($(compgen -W "photo video doc audio all" -- "${cur}"))
-        elif [[ "${prev}" == "-o" || "${prev}" == "--output" ]]; then
-          _filedir
+        COMPREPLY=($(compgen -W "-h --help -a --all -A -o --output -t --topic -n --limit --type -h --help" -- "${cur}"))
+      fi
+      ;;
+    folder)
+      if [[ ${cword} -eq 2 ]]; then
+        if [[ "${cur}" == -* ]]; then
+          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
         else
-          COMPREPLY=($(compgen -W "-a --all -A -o --output -t --topic -n --limit --type -h --help" -- "${cur}"))
+          COMPREPLY=($(compgen -W "ls create edit delete" -- "${cur}"))
         fi
+      elif [[ "${words[2]}" == "ls" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -v --verbose -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "create" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -g --include-groups -c --include-channels -b --include-bots -C --include-contacts -N --include-non-contacts --exclude-muted --exclude-read --exclude-archived -i --include-chats -p --pinned-chats -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "edit" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -t --title -a --add-chat -r --remove-chat -P --pin-chat -U --unpin-chat -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "delete" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
+      fi
+      ;;
+    search)
+      if [[ ${cword} -eq 2 ]]; then
+        if [[ "${cur}" == -* ]]; then
+          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
+        else
+          COMPREPLY=($(compgen -W "chats supergroups msgs users" -- "${cur}"))
+        fi
+      elif [[ "${words[2]}" == "chats" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -n --limit -v --verbose" -- "${cur}"))
+      elif [[ "${words[2]}" == "supergroups" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -n --limit -v --verbose" -- "${cur}"))
+      elif [[ "${words[2]}" == "msgs" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -c --chat -n --limit -v --verbose" -- "${cur}"))
+      elif [[ "${words[2]}" == "users" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -n --limit -v --verbose" -- "${cur}"))
       fi
       ;;
     completion)
-      if [[ "${cur}" == -* ]]; then
+      if [[ ${cword} -eq 2 ]]; then
+        if [[ "${cur}" == -* ]]; then
+          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
+        else
+          COMPREPLY=($(compgen -W "bash zsh fish" -- "${cur}"))
+        fi
+      elif [[ "${words[2]}" == "bash" ]]; then
         COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
-      else
-        COMPREPLY=($(compgen -W "bash zsh fish" -- "${cur}"))
+      elif [[ "${words[2]}" == "zsh" ]]; then
+        COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "fish" ]]; then
+        COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
       fi
       ;;
     *)

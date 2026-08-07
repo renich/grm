@@ -330,20 +330,32 @@ std::string CommandRegistry::render_all_help_json(bool pretty) const {
 }
 
 std::string CommandRegistry::render_completion(const std::string &shell) const {
+
   if (shell == "bash") {
     std::stringstream ss;
-    ss << R"(#!/usr/bin/bash
-# Bash completion script for grm (Group & Telegram Manager CLI)
-# Generated dynamically by 'grm completion bash'
+    ss << "#!/usr/bin/bash\n"
+       << "# Bash completion script for grm (Group & Telegram Manager CLI)\n"
+       << "# Generated dynamically by introspection of CommandRegistry\n\n"
+       << "_grm_completions() {\n"
+       << "  local cur prev words cword\n"
+       << "  _init_completion || return\n\n";
 
-_grm_completions() {
-  local cur prev words cword
-  _init_completion || return
+    std::string global_opts =
+        "-h --help --help=all -V --version -v --verbose -d --debug -q --quiet "
+        "-c --config -T --test-dc -F --format --color --no-color";
 
-  local global_opts="-h --help --help=all -V --version -v --verbose -d --debug -q --quiet -c --config -T --test-dc -F --format --color --no-color"
-  local commands="login chat folder search msg topic file completion"
+    std::string cmd_list_str;
+    for (size_t i = 0; i < commands_.size(); ++i) {
+      if (i > 0) {
+        cmd_list_str += " ";
+      }
+      cmd_list_str += commands_[i].name;
+    }
 
-  if [[ ${cword} -eq 1 ]]; then
+    ss << "  local global_opts=\"" << global_opts << "\"\n";
+    ss << "  local commands=\"" << cmd_list_str << "\"\n\n";
+
+    ss << R"(  if [[ ${cword} -eq 1 ]]; then
     if [[ "${cur}" == -* ]]; then
       COMPREPLY=($(compgen -W "${global_opts}" -- "${cur}"))
     else
@@ -355,125 +367,46 @@ _grm_completions() {
   local command="${words[1]}"
 
   case "${command}" in
-    login)
-      COMPREPLY=($(compgen -W "-p --phone -k --code -h --help" -- "${cur}"))
-      ;;
-    chat)
-      if [[ ${cword} -eq 2 ]]; then
-        if [[ "${cur}" == -* ]]; then
-          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
-        else
-          COMPREPLY=($(compgen -W "ls create info set-title set-desc pin unpin delete" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "ls" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -S --since -f --filter --folder -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "create" ]]; then
-        if [[ ${cword} -eq 3 ]]; then
-          COMPREPLY=($(compgen -W "group channel" -- "${cur}"))
-        else
-          COMPREPLY=($(compgen -W "--private --public -h --help" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "info" || "${words[2]}" == "delete" || "${words[2]}" == "pin" || "${words[2]}" == "unpin" || "${words[2]}" == "set-title" || "${words[2]}" == "set-desc" ]]; then
-        COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
-      fi
-      ;;
-    folder)
-      if [[ ${cword} -eq 2 ]]; then
-        if [[ "${cur}" == -* ]]; then
-          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
-        else
-          COMPREPLY=($(compgen -W "ls create edit delete" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "ls" || "${words[2]}" == "create" || "${words[2]}" == "edit" || "${words[2]}" == "delete" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -h --help" -- "${cur}"))
-      fi
-      ;;
-    search)
-      if [[ ${cword} -eq 2 ]]; then
-        if [[ "${cur}" == -* ]]; then
-          COMPREPLY=($(compgen -W "-n --limit -v --verbose -h --help" -- "${cur}"))
-        else
-          COMPREPLY=($(compgen -W "chats supergroups msgs users files" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "chats" || "${words[2]}" == "supergroups" || "${words[2]}" == "users" || "${words[2]}" == "files" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -v --verbose -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "msgs" ]]; then
-        COMPREPLY=($(compgen -W "-c --chat -n --limit -v --verbose -h --help" -- "${cur}"))
-      fi
-      ;;
-    msg)
-      if [[ ${cword} -eq 2 ]]; then
-        if [[ "${cur}" == -* ]]; then
-          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
-        else
-          COMPREPLY=($(compgen -W "ls export search send info edit pin unpin delete" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "ls" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -t --topic -S --since -f --filter --sender -r --reverse -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "export" ]]; then
-        if [[ "${prev}" == "-f" || "${prev}" == "--format" ]]; then
-          COMPREPLY=($(compgen -W "csv json" -- "${cur}"))
-        elif [[ "${prev}" == "-o" || "${prev}" == "--output" ]]; then
-          _filedir
-        else
-          COMPREPLY=($(compgen -W "-f --format -o --output -t --topic -n --limit -h --help" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "search" ]]; then
-        COMPREPLY=($(compgen -W "-q --query -n --limit -t --topic -S --since -f --filter --sender -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "send" ]]; then
-        if [[ "${prev}" == "-a" || "${prev}" == "--attach" ]]; then
-          _filedir
-        else
-          COMPREPLY=($(compgen -W "-a --attach -m --media -C --caption -t --topic -h --help" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "edit" || "${words[2]}" == "info" || "${words[2]}" == "pin" ]]; then
-        COMPREPLY=($(compgen -W "-t --topic -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "unpin" ]]; then
-        COMPREPLY=($(compgen -W "-a --all -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "delete" ]]; then
-        COMPREPLY=($(compgen -W "--for-everyone -e -h --help" -- "${cur}"))
-      fi
-      ;;
-    topic)
-      if [[ ${cword} -eq 2 ]]; then
-        if [[ "${cur}" == -* ]]; then
-          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
-        else
-          COMPREPLY=($(compgen -W "ls create info edit close reopen pin unpin delete" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "ls" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -S --since -f --filter -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "create" || "${words[2]}" == "edit" ]]; then
-        COMPREPLY=($(compgen -W "-e --emoji --icon --icon-color -h --help" -- "${cur}"))
-      elif [[ "${words[2]}" == "info" || "${words[2]}" == "close" || "${words[2]}" == "reopen" || "${words[2]}" == "pin" || "${words[2]}" == "unpin" || "${words[2]}" == "delete" ]]; then
-        COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
-      fi
-      ;;
-    file)
-      if [[ ${cword} -eq 2 ]]; then
-        if [[ "${cur}" == -* ]]; then
-          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
-        else
-          COMPREPLY=($(compgen -W "get" -- "${cur}"))
-        fi
-      elif [[ "${words[2]}" == "get" ]]; then
-        if [[ "${prev}" == "--type" ]]; then
-          COMPREPLY=($(compgen -W "photo video doc audio all" -- "${cur}"))
-        elif [[ "${prev}" == "-o" || "${prev}" == "--output" ]]; then
-          _filedir
-        else
-          COMPREPLY=($(compgen -W "-a --all -A -o --output -t --topic -n --limit --type -h --help" -- "${cur}"))
-        fi
-      fi
-      ;;
-    completion)
-      if [[ "${cur}" == -* ]]; then
-        COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
-      else
-        COMPREPLY=($(compgen -W "bash zsh fish" -- "${cur}"))
-      fi
-      ;;
-    *)
+)";
+
+    for (const auto &cmd : commands_) {
+      ss << "    " << cmd.name << ")\n";
+      if (!cmd.subcommands.empty()) {
+        std::string sub_names;
+        for (size_t j = 0; j < cmd.subcommands.size(); ++j) {
+          if (j > 0) {
+            sub_names += " ";
+          }
+          sub_names += cmd.subcommands[j].name;
+        }
+        ss << "      if [[ ${cword} -eq 2 ]]; then\n";
+        ss << "        if [[ \"${cur}\" == -* ]]; then\n";
+        ss << "          COMPREPLY=($(compgen -W \"-h --help\" -- \"${cur}\"))\n";
+        ss << "        else\n";
+        ss << "          COMPREPLY=($(compgen -W \"" << sub_names << "\" -- \"${cur}\"))\n";
+        ss << "        fi\n";
+
+        for (const auto &sub : cmd.subcommands) {
+          std::string flags = "-h --help";
+          for (const auto &opt : sub.options) {
+            if (!opt.short_flag.empty()) {
+              flags += " " + opt.short_flag;
+            }
+            if (!opt.long_flag.empty()) {
+              flags += " " + opt.long_flag;
+            }
+          }
+          ss << "      elif [[ \"${words[2]}\" == \"" << sub.name << "\" ]]; then\n";
+          ss << "        COMPREPLY=($(compgen -W \"" << flags << "\" -- \"${cur}\"))\n";
+        }
+        ss << "      fi\n";
+      } else {
+        ss << "      COMPREPLY=($(compgen -W \"-h --help\" -- \"${cur}\"))\n";
+      }
+      ss << "      ;;\n";
+    }
+
+    ss << R"(    *)
       ;;
   esac
 
@@ -487,22 +420,24 @@ complete -F _grm_completions grm
 
   if (shell == "zsh") {
     std::stringstream ss;
-    ss << R"(#compdef grm
-# Zsh completion script for grm (Group & Telegram Manager CLI)
-# Generated dynamically by 'grm completion zsh'
+    ss << "#compdef grm\n"
+       << "# Zsh completion script for grm (Group & Telegram Manager CLI)\n"
+       << "# Generated dynamically by introspection of CommandRegistry\n\n"
+       << "_grm() {\n"
+       << "  local -a commands\n"
+       << "  commands=(\n";
 
-_grm() {
-  local -a commands
-  commands=(
-    'login:Authenticate Telegram account'
-    'chat:Manage Telegram chats, groups, and channels'
-    'folder:Manage chat folders and custom filters'
-    'search:Universal cross-domain search across chats, supergroups, users, messages, and files'
-    'msg:Inspect, send, edit, search, pin, and export messages'
-    'topic:Manage supergroup forum topics'
-    'file:Download media and file attachments'
-    'completion:Generate shell autocompletion script'
-  )
+    for (const auto &cmd : commands_) {
+      std::string desc = cmd.description;
+      size_t pos = 0;
+      while ((pos = desc.find("'", pos)) != std::string::npos) {
+        desc.replace(pos, 1, "'\\''");
+        pos += 4;
+      }
+      ss << "    '" << cmd.name << ":" << desc << "'\n";
+    }
+
+    ss << R"(  )
 
   _arguments -s \
     '(-h --help)'{-h,--help}'[Show help screen]' \
@@ -524,19 +459,24 @@ _grm() {
       ;;
     args)
       case $words[1] in
-        folder)
-          _arguments '1:subcommand:(ls create edit delete)'
-          ;;
-        search)
-          _arguments '1:subcommand:(chats supergroups msgs users files)'
-          ;;
-        file)
-          _arguments '1:subcommand:(get)'
-          ;;
-        completion)
-          _arguments '1:shell:(bash zsh fish)'
-          ;;
-      esac
+)";
+
+    for (const auto &cmd : commands_) {
+      if (!cmd.subcommands.empty()) {
+        std::string sub_list;
+        for (size_t j = 0; j < cmd.subcommands.size(); ++j) {
+          if (j > 0) {
+            sub_list += " ";
+          }
+          sub_list += cmd.subcommands[j].name;
+        }
+        ss << "        " << cmd.name << ")\n";
+        ss << "          _arguments '1:subcommand:(" << sub_list << ")'\n";
+        ss << "          ;;\n";
+      }
+    }
+
+    ss << R"(      esac
       ;;
   esac
 }
@@ -548,18 +488,21 @@ _grm "$@"
 
   if (shell == "fish") {
     std::stringstream ss;
-    ss << R"(# Fish completion script for grm
-complete -c grm -f -n '__fish_use_subcommand' -a 'login' -d 'Authenticate Telegram account'
-complete -c grm -f -n '__fish_use_subcommand' -a 'chat' -d 'Manage Telegram chats'
-complete -c grm -f -n '__fish_use_subcommand' -a 'folder' -d 'Manage chat folders'
-complete -c grm -f -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell autocompletion script'
-)";
+    ss << "# Fish completion script for grm\n"
+       << "# Generated dynamically by introspection of CommandRegistry\n";
+
+    for (const auto &cmd : commands_) {
+      ss << "complete -c grm -f -n '__fish_use_subcommand' -a '" << cmd.name
+         << "' -d '" << cmd.description << "'\n";
+      for (const auto &sub : cmd.subcommands) {
+        ss << "complete -c grm -f -n '__fish_seen_subcommand_from " << cmd.name
+           << "' -a '" << sub.name << "' -d '" << sub.description << "'\n";
+      }
+    }
     return ss.str();
   }
-
 
   return "";
 }
 
 } // namespace grm
-
