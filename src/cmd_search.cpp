@@ -325,6 +325,30 @@ static ResolvedChatItems resolve_chat_candidates(
     }
   }
 
+  // 4. Query getChats and filter joined chat titles locally
+  const int get_chats_limit = std::max(limit * 2, 200);
+  const std::string get_chats_req = std::format(R"({{"limit": {}}})", get_chats_limit);
+  if (auto res_get = client->send_request("getChats", get_chats_req, 2.0)) {
+    std::string lower_query = query;
+    std::transform(lower_query.begin(), lower_query.end(), lower_query.begin(), ::tolower);
+    for (const auto &id_val : res_get->get_array("chat_ids")) {
+      if (auto id = id_val.as_int64()) {
+        if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
+          const std::string info_req = std::format(R"({{"chat_id": {}}})", *id);
+          if (auto info_res = client->send_request("getChat", info_req, 1.0)) {
+            std::string title = info_res->get_string("title").value_or("");
+            std::string lower_title = title;
+            std::transform(lower_title.begin(), lower_title.end(), lower_title.begin(), ::tolower);
+            if (lower_title.find(lower_query) != std::string::npos) {
+              candidate_ids.push_back(*id);
+            }
+          }
+        }
+      }
+    }
+  }
+
+
   ResolvedChatItems result;
   for (int64_t id : candidate_ids) {
     ensure_chat_loaded_fn(id);
