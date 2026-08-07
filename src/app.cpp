@@ -375,9 +375,18 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     return cmd_folder(sub_args);
   }
 
+  if (cmd == "search") {
+    if (is_help_requested(sub_args)) {
+      print_search_help(options_.format);
+      return 0;
+    }
+    return cmd_search(sub_args);
+  }
+
   if (cmd == "completion") {
     return cmd_completion(sub_args);
   }
+
 
 
   print_usage();

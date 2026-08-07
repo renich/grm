@@ -47,6 +47,8 @@ public:
   static void print_usage(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void print_version();
   static void print_login_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  [[nodiscard]] static CommandSpec get_search_spec();
+  static void print_search_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void print_chat_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void print_msg_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void print_topic_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
@@ -60,6 +62,20 @@ private:
   [[nodiscard]] std::expected<int, std::string> cmd_login();
   [[nodiscard]] std::expected<int, std::string>
   cmd_completion(const std::vector<std::string> &args);
+
+  // Universal Search Suite
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_search(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_search_chats(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_search_supergroups(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_search_msgs(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_search_users(const std::vector<std::string> &args);
+
+
 
   // Chat Folder Management
   [[nodiscard]] std::expected<int, std::string>

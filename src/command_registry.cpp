@@ -15,8 +15,11 @@ CommandRegistry::CommandRegistry() {
   commands_.push_back(get_topic_spec());
   commands_.push_back(get_file_spec());
   commands_.push_back(get_folder_spec());
+  commands_.push_back(App::get_search_spec());
   commands_.push_back(get_completion_spec());
 }
+
+
 
 
 const CommandRegistry &CommandRegistry::get_instance() {

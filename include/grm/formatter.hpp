@@ -66,6 +66,25 @@ struct ChatFolderSummary {
   std::vector<int64_t> excluded_chat_ids;
 };
 
+struct UserItem {
+  int64_t id{0};
+  std::string first_name;
+  std::string last_name;
+  std::string username;
+  std::string phone_number;
+  std::string status;
+};
+
+struct SearchSummary {
+  std::string query;
+  std::vector<ChatItem> chats;
+  std::vector<ChatItem> supergroups;
+  std::vector<UserItem> users;
+  std::vector<MessageItem> messages;
+  std::vector<MessageItem> files;
+};
+
+
 struct ErrorPayload {
   int code{1};
   std::string error_type;
@@ -75,7 +94,9 @@ struct ErrorPayload {
 
 using RenderablePayload =
     std::variant<std::vector<ChatItem>, std::vector<TopicItem>,
-                 std::vector<MessageItem>, std::vector<ChatFolderSummary>, ErrorPayload>;
+                 std::vector<MessageItem>, std::vector<ChatFolderSummary>,
+                 std::vector<UserItem>, SearchSummary, ErrorPayload>;
+
 
 
 [[nodiscard]] std::string_view humanize_chat_type(std::string_view tdlib_type);
@@ -113,6 +134,19 @@ public:
                             ColorMode color_mode = ColorMode::Auto,
                             std::ostream &out = std::cout,
                             bool verbose = false);
+
+  static void print_users(const std::vector<UserItem> &users,
+                          OutputFormat format = OutputFormat::Auto,
+                          ColorMode color_mode = ColorMode::Auto,
+                          std::ostream &out = std::cout,
+                          bool verbose = false);
+
+  static void print_search_summary(const SearchSummary &summary,
+                                   OutputFormat format = OutputFormat::Auto,
+                                   ColorMode color_mode = ColorMode::Auto,
+                                   std::ostream &out = std::cout,
+                                   bool verbose = false);
+
 
   static void print_error(const ErrorPayload &err,
 

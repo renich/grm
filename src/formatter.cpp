@@ -579,6 +579,116 @@ void Formatter::print_folders(const std::vector<ChatFolderSummary> &folders,
   }
 }
 
+void Formatter::print_users(const std::vector<UserItem> &users,
+                        OutputFormat format, ColorMode color_mode,
+                        std::ostream &out, bool verbose) {
+  (void)verbose;
+  const bool is_tty =
+      (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
+  const OutputFormat fmt = resolve_format(format, is_tty);
+  const bool use_color = should_use_color(color_mode);
+
+
+  if (fmt == OutputFormat::Json || fmt == OutputFormat::JsonL) {
+    out << "[\n";
+    for (size_t i = 0; i < users.size(); ++i) {
+      const auto &u = users[i];
+      out << std::format("  {{\n"
+                         "    \"id\": {},\n"
+                         "    \"first_name\": \"{}\",\n"
+                         "    \"last_name\": \"{}\",\n"
+                         "    \"username\": \"{}\",\n"
+                         "    \"phone_number\": \"{}\",\n"
+                         "    \"status\": \"{}\"\n"
+                         "  }}{}",
+                         u.id, escape_json_string(u.first_name), escape_json_string(u.last_name),
+                         escape_json_string(u.username), escape_json_string(u.phone_number),
+                         escape_json_string(u.status),
+                         (i + 1 < users.size()) ? ",\n" : "\n");
+    }
+    out << "]\n";
+    return;
+  }
+
+  if (fmt == OutputFormat::Markdown) {
+    out << "| User ID | Name | Username | Phone | Status |\n";
+    out << "|---|---|---|---|---|\n";
+    for (const auto &u : users) {
+      std::string fullname = u.first_name + (u.last_name.empty() ? "" : " " + u.last_name);
+      out << std::format("| {} | {} | {} | {} | {} |\n", u.id, fullname, u.username, u.phone_number, u.status);
+    }
+    return;
+  }
+
+  if (users.empty()) {
+    out << "[INFO] No users found.\n";
+    return;
+  }
+
+  out << std::format("{:<15} {:<25} {:<20} {:<15}\n", "USER ID", "NAME", "USERNAME", "STATUS");
+  out << std::string(75, '-') << "\n";
+
+  for (const auto &u : users) {
+    std::string fullname = u.first_name + (u.last_name.empty() ? "" : " " + u.last_name);
+    std::string uname = u.username.empty() ? "-" : "@" + u.username;
+    if (use_color) {
+      out << std::format("{}{:<15}{} {}{:<25}{} {}{:<20}{} {}{:<15}{}\n",
+                         COLOR_CYAN, u.id, COLOR_RESET,
+                         COLOR_BOLD, fullname, COLOR_RESET,
+                         COLOR_GREEN, uname, COLOR_RESET,
+                         COLOR_DIM, u.status, COLOR_RESET);
+    } else {
+      out << std::format("{:<15} {:<25} {:<20} {:<15}\n", u.id, fullname, uname, u.status);
+    }
+  }
+}
+
+void Formatter::print_search_summary(const SearchSummary &summary,
+                                   OutputFormat format, ColorMode color_mode,
+                                   std::ostream &out, bool verbose) {
+  const bool is_tty =
+      (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
+  const OutputFormat fmt = resolve_format(format, is_tty);
+
+  if (fmt == OutputFormat::Json || fmt == OutputFormat::JsonL) {
+    out << std::format("{{\n  \"query\": \"{}\",\n  \"chats_count\": {},\n  \"supergroups_count\": {},\n  \"users_count\": {},\n  \"messages_count\": {},\n  \"files_count\": {}\n}}\n",
+                       escape_json_string(summary.query), summary.chats.size(), summary.supergroups.size(), summary.users.size(), summary.messages.size(), summary.files.size());
+    return;
+  }
+
+  out << "=== SEARCH RESULTS FOR: \"" << summary.query << "\" ===\n\n";
+  if (!summary.chats.empty()) {
+    out << "--- CHATS (" << summary.chats.size() << ") ---\n";
+    print_chats(summary.chats, format, color_mode, out, verbose);
+    out << "\n";
+  }
+  if (!summary.supergroups.empty()) {
+    out << "--- SUPERGROUPS (" << summary.supergroups.size() << ") ---\n";
+    print_chats(summary.supergroups, format, color_mode, out, verbose);
+    out << "\n";
+  }
+  if (!summary.users.empty()) {
+    out << "--- USERS (" << summary.users.size() << ") ---\n";
+    print_users(summary.users, format, color_mode, out, verbose);
+    out << "\n";
+  }
+  if (!summary.messages.empty()) {
+    out << "--- MESSAGES (" << summary.messages.size() << ") ---\n";
+    print_messages(summary.messages, format, color_mode, out, verbose);
+    out << "\n";
+  }
+  if (!summary.files.empty()) {
+    out << "--- FILES & ATTACHMENTS (" << summary.files.size() << ") ---\n";
+    print_messages(summary.files, format, color_mode, out, verbose);
+    out << "\n";
+  }
+
+  if (summary.chats.empty() && summary.supergroups.empty() && summary.users.empty() && summary.messages.empty() && summary.files.empty()) {
+    out << "[INFO] No search results matching query.\n";
+  }
+}
+
+
 void Formatter::print_error(const ErrorPayload &err, OutputFormat format,
                             ColorMode color_mode, std::ostream &out) {
   const bool is_tty =
@@ -630,12 +740,17 @@ void Formatter::render(const RenderablePayload &payload,
           print_messages(data, format, color_mode, out, verbose);
         } else if constexpr (std::is_same_v<T, std::vector<ChatFolderSummary>>) {
           print_folders(data, format, color_mode, out, verbose);
+        } else if constexpr (std::is_same_v<T, std::vector<UserItem>>) {
+          print_users(data, format, color_mode, out, verbose);
+        } else if constexpr (std::is_same_v<T, SearchSummary>) {
+          print_search_summary(data, format, color_mode, out, verbose);
         } else if constexpr (std::is_same_v<T, ErrorPayload>) {
           print_error(data, format, color_mode, out);
         }
       },
       payload);
 }
+
 
 } // namespace grm::fmt
 
