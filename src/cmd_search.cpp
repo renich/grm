@@ -318,6 +318,13 @@ static std::vector<std::string> expand_search_query_variants(const std::string &
   std::string lower = query;
   std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
 
+  if (lower.ends_with('s') && lower.length() > 3) {
+    std::string stem = lower.substr(0, lower.length() - 1);
+    variants.push_back(stem);
+  } else if (!lower.ends_with('s') && lower.length() >= 3) {
+    variants.push_back(lower + "s");
+  }
+
   if (lower == "bit") {
     variants.push_back("bitcoin");
     variants.push_back("bits");
@@ -333,13 +340,10 @@ static std::vector<std::string> expand_search_query_variants(const std::string &
     variants.push_back("document");
     variants.push_back("documentation");
     variants.push_back("docs");
-  } else if (lower.length() <= 3 && !lower.empty() && lower.find(' ') == std::string::npos) {
-    variants.push_back(lower + "s");
   }
 
   // Suffix/Prefix probes without spaces for global public handle/username directory search
   if (limit >= 20 && lower.find(' ') == std::string::npos && !lower.empty()) {
-    variants.push_back(lower + "s");
     variants.push_back(lower + "_");
     variants.push_back(lower + "bot");
     variants.push_back(lower + "hub");
@@ -354,7 +358,6 @@ static std::vector<std::string> expand_search_query_variants(const std::string &
 
   return variants;
 }
-
 
 static ResolvedChatItems resolve_chat_candidates(
     TdClient *client,
@@ -389,7 +392,33 @@ static ResolvedChatItems resolve_chat_candidates(
     }
   }
 
-  // 3. Query searchPublicChats with query variants for global public chats/channels/supergroups
+  // 3. Scan getChats (all joined chats in memory) to guarantee joined matching chats are never missed
+  if (auto res_get = client->send_request("getChats", R"({"limit": 300})", 1.0)) {
+    std::string lower_q = query;
+    std::transform(lower_q.begin(), lower_q.end(), lower_q.begin(), ::tolower);
+    std::string stem = lower_q;
+    if (stem.ends_with('s') && stem.length() > 3) {
+      stem = stem.substr(0, stem.length() - 1);
+    }
+
+    for (const auto &id_val : res_get->get_array("chat_ids")) {
+      if (auto id = id_val.as_int64()) {
+        if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
+          const std::string info_req = std::format(R"({{"chat_id": {}}})", *id);
+          if (auto info_res = client->send_request("getChat", info_req, 0.1)) {
+            std::string title = info_res->get_string("title").value_or("");
+            std::string lower_title = title;
+            std::transform(lower_title.begin(), lower_title.end(), lower_title.begin(), ::tolower);
+            if (lower_title.find(lower_q) != std::string::npos || lower_title.find(stem) != std::string::npos) {
+              candidate_ids.push_back(*id);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 4. Query searchPublicChats with query variants for global public chats/channels/supergroups
   std::vector<std::string> search_variants = expand_search_query_variants(query, limit);
   for (const auto &var : search_variants) {
     if (static_cast<int>(candidate_ids.size()) >= limit * 3) break;
@@ -405,14 +434,14 @@ static ResolvedChatItems resolve_chat_candidates(
     }
   }
 
-  // 4. Query searchPublicChat if single word or handle provided
+  // 5. Query searchPublicChat if single word or handle provided
   std::string handle = query;
   if (handle.starts_with('@')) {
     handle = handle.substr(1);
   }
   if (!handle.empty() && handle.find(' ') == std::string::npos) {
     const std::string pub_chat_req = std::format(R"({{"username": "{}"}})", escape_json_string(handle));
-    if (auto chat_res = client->send_request("searchPublicChat", pub_chat_req, 1.0)) {
+    if (auto chat_res = client->send_request("searchPublicChat", pub_chat_req, 0.5)) {
       if (auto id = chat_res->get_int("id")) {
         if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
           candidate_ids.push_back(*id);
@@ -420,6 +449,7 @@ static ResolvedChatItems resolve_chat_candidates(
       }
     }
   }
+
 
   // 5. Global Message Discovery: Paginate searchMessages to discover active chats & channels discussing query
   int64_t from_msg_id = 0;
@@ -484,7 +514,12 @@ static ResolvedChatItems resolve_chat_candidates(
       std::string lower_title = item.title;
       std::transform(lower_title.begin(), lower_title.end(), lower_title.begin(), ::tolower);
 
-      if (lower_title.find(lower_query) != std::string::npos) {
+      std::string stem = lower_query;
+      if (stem.ends_with('s') && stem.length() > 3) {
+        stem = stem.substr(0, stem.length() - 1);
+      }
+
+      if (lower_title.find(lower_query) != std::string::npos || lower_title.find(stem) != std::string::npos) {
         if (is_supergroup) {
           result.supergroups.push_back(item);
         } else if (is_channel) {
@@ -495,6 +530,7 @@ static ResolvedChatItems resolve_chat_candidates(
       }
     }
   }
+
 
   return result;
 }
