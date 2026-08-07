@@ -9,6 +9,7 @@ grm Technical Architecture
    specs/file-uploader-architecture
    specs/forum-topics-architecture
    specs/chat-folder-architecture
+   specs/search-architecture
 
 
 Architectural Blueprint
@@ -45,5 +46,8 @@ Technical Traceability Matrix
 +-------------------+----------------------------+-----------------------+
 | ``[TECH-006]``    | Chat Folder Engine         | ``[FUNC-013]``        |
 +-------------------+----------------------------+-----------------------+
+| ``[TECH-007]``    | Search Engine              | ``[FUNC-014]``        |
++-------------------+----------------------------+-----------------------+
+
 
 
