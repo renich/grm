@@ -9,6 +9,19 @@
 
 namespace grm {
 
+namespace {
+
+static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
+  int64_t val = 0;
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), val);
+  if (ec != std::errc{} || ptr != str.data() + str.size()) {
+    return std::unexpected(std::format("Invalid integer: '{}'", str));
+  }
+  return val;
+}
+
+} // namespace
+
 CommandSpec App::get_search_spec() {
   CommandSpec spec;
   spec.name = "search";
@@ -88,10 +101,14 @@ static SearchArgs parse_search_args(const std::vector<std::string> &args, int de
       result.offset = std::atoi(arg.substr(3).c_str());
     } else if (arg == "-c" || arg == "--chat") {
       if (i + 1 < args.size()) {
-        result.chat_id = std::stoll(args[++i]);
+        if (auto cid_res = parse_int64(args[++i])) {
+          result.chat_id = *cid_res;
+        }
       }
     } else if (arg.starts_with("--chat=")) {
-      result.chat_id = std::stoll(arg.substr(7));
+      if (auto cid_res = parse_int64(arg.substr(7))) {
+        result.chat_id = *cid_res;
+      }
     } else if (arg == "-t" || arg == "--type") {
       if (i + 1 < args.size()) {
         result.type_filter = args[++i];

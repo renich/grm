@@ -218,7 +218,9 @@ void App::ensure_chat_loaded(int64_t chat_id) {
       }
     }
   }
-  (void)client_->send_request("openChat", chat_req, 2.0);
+  if (auto open_res = client_->send_request("openChat", chat_req, 2.0); !open_res) {
+    grm::log::debug("openChat failed for chat " + std::to_string(chat_id) + ": " + open_res.error());
+  }
 }
 
 std::expected<int, std::string> App::run(const std::vector<std::string> &args) {

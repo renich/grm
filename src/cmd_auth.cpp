@@ -27,24 +27,36 @@ CommandSpec get_login_spec() {
 
 namespace {
 
+struct TermiosGuard {
+  termios oldt;
+  TermiosGuard() {
+    tcgetattr(STDIN_FILENO, &oldt);
+    termios newt = oldt;
+    newt.c_lflag &= static_cast<tcflag_t>(~ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+  }
+  ~TermiosGuard() {
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+  }
+};
+
 std::string read_secure_password(std::string_view prompt) {
   std::cout << prompt;
   std::cout.flush();
 
-  termios oldt{};
-  tcgetattr(STDIN_FILENO, &oldt);
-  termios newt = oldt;
-  newt.c_lflag &= static_cast<tcflag_t>(~ECHO);
-  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-
   std::string password;
-  std::cin >> password;
+  {
+    TermiosGuard guard;
+    std::getline(std::cin, password);
+    if (!password.empty() && password.back() == '\r') {
+      password.pop_back();
+    }
+  }
 
-  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
   std::cout << '\n';
-
   return password;
 }
+
 
 } // namespace
 

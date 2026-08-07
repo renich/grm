@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
       command_args.emplace_back("--help=all");
     } else if (arg == "-p" || arg == "-P" || arg == "--pretty") {
       options.pretty = true;
+      command_args.emplace_back(arg);
     } else if (arg == "-V" || arg == "--version") {
       options.version = true;
     } else if (arg == "-v" || arg == "--verbose") {

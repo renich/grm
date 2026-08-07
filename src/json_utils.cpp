@@ -1,4 +1,5 @@
 #include "grm/json_utils.hpp"
+#include <format>
 #include <json-c/json.h>
 
 namespace grm {
@@ -233,7 +234,11 @@ std::string escape_json_string(std::string_view input) {
       escaped += "\\t";
       break;
     default:
-      escaped += c;
+      if (static_cast<unsigned char>(c) < 0x20) {
+        escaped += std::format("\\u{:04x}", static_cast<unsigned char>(c));
+      } else {
+        escaped += c;
+      }
       break;
     }
   }

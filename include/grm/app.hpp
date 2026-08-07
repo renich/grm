@@ -176,6 +176,7 @@ private:
   std::string auth_state_;
   bool is_closed_{false};
   std::unordered_map<int64_t, SenderInfo> sender_cache_;
+  mutable std::mutex sender_cache_mutex_;
 };
 
 } // namespace grm

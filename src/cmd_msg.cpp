@@ -131,8 +131,11 @@ SenderInfo App::resolve_sender_info(const JsonValue &message_obj) {
       return SenderInfo{};
     }
 
-    if (auto it = sender_cache_.find(user_id); it != sender_cache_.end()) {
-      return it->second;
+    {
+      std::lock_guard<std::mutex> lock(sender_cache_mutex_);
+      if (auto it = sender_cache_.find(user_id); it != sender_cache_.end()) {
+        return it->second;
+      }
     }
 
     std::string payload = std::format(R"({{"user_id": {}}})", user_id);
@@ -142,6 +145,7 @@ SenderInfo App::resolve_sender_info(const JsonValue &message_obj) {
                           .full_name = "",
                           .username = "",
                           .id = user_id};
+      std::lock_guard<std::mutex> lock(sender_cache_mutex_);
       sender_cache_[user_id] = fallback;
       return fallback;
     }
@@ -192,7 +196,10 @@ SenderInfo App::resolve_sender_info(const JsonValue &message_obj) {
                     .full_name = full_name,
                     .username = username,
                     .id = user_id};
-    sender_cache_[user_id] = info;
+    {
+      std::lock_guard<std::mutex> lock(sender_cache_mutex_);
+      sender_cache_[user_id] = info;
+    }
     return info;
   } else if (type_str == "messageSenderChat") {
     int64_t sender_chat_id = sender_obj->get_int("chat_id").value_or(0);
@@ -200,9 +207,12 @@ SenderInfo App::resolve_sender_info(const JsonValue &message_obj) {
       return SenderInfo{};
     }
 
-    if (auto it = sender_cache_.find(sender_chat_id);
-        it != sender_cache_.end()) {
-      return it->second;
+    {
+      std::lock_guard<std::mutex> lock(sender_cache_mutex_);
+      if (auto it = sender_cache_.find(sender_chat_id);
+          it != sender_cache_.end()) {
+        return it->second;
+      }
     }
 
     std::string payload = std::format(R"({{"chat_id": {}}})", sender_chat_id);
@@ -212,6 +222,7 @@ SenderInfo App::resolve_sender_info(const JsonValue &message_obj) {
                           .full_name = "",
                           .username = "",
                           .id = sender_chat_id};
+      std::lock_guard<std::mutex> lock(sender_cache_mutex_);
       sender_cache_[sender_chat_id] = fallback;
       return fallback;
     }
@@ -223,7 +234,10 @@ SenderInfo App::resolve_sender_info(const JsonValue &message_obj) {
                     .full_name = name,
                     .username = "",
                     .id = sender_chat_id};
-    sender_cache_[sender_chat_id] = info;
+    {
+      std::lock_guard<std::mutex> lock(sender_cache_mutex_);
+      sender_cache_[sender_chat_id] = info;
+    }
     return info;
   }
 
@@ -1199,6 +1213,11 @@ App::cmd_msg_delete(const std::vector<std::string> &args) {
         "revoke": {}
       }})",
       chat_id, ids_json, revoke ? "true" : "false");
+
+  auto res = client_->send_request("deleteMessages", payload, 5.0);
+  if (!res) {
+    return std::unexpected(res.error());
+  }
 
   grm::log::info("Message(s) deleted successfully.");
   return 0;

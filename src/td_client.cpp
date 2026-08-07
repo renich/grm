@@ -46,13 +46,13 @@ void TdClient::stop() {
     return;
   }
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
-
-  is_running_ = false;
-
   if (client_id_ >= 0) {
     send_async("close", "{}");
   }
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  is_running_ = false;
 
   if (receiver_thread_.joinable()) {
     receiver_thread_.join();
@@ -71,11 +71,9 @@ void TdClient::send_async(const std::string &type,
   if (client_id_ < 0)
     return;
 
-  json_object *raw_obj = nullptr;
-  auto parsed = JsonValue::parse(payload_json);
-  if (parsed && parsed->is_object()) {
-    raw_obj = json_tokener_parse(std::string(payload_json).c_str());
-  } else {
+  json_object *raw_obj = json_tokener_parse(std::string(payload_json).c_str());
+  if (!raw_obj || !json_object_is_type(raw_obj, json_type_object)) {
+    if (raw_obj) json_object_put(raw_obj);
     raw_obj = json_object_new_object();
   }
 
@@ -189,8 +187,9 @@ void TdClient::handle_incoming(const JsonValue &value) {
 
     if (found) {
       prom.set_value(value);
-      return;
     }
+    // Early return for @extra responses so timed-out requests don't leak into subscriber update callbacks
+    return;
   }
 
   // Dispatch to subscriber callbacks

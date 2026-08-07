@@ -181,9 +181,9 @@ App::cmd_folder_ls(const std::vector<std::string> &args) {
       folders.push_back(summary);
     }
   } else {
-    for (int32_t fid = 1; fid <= 20; ++fid) {
+    for (int32_t fid = 1; fid <= 10; ++fid) {
       const std::string detail_req = std::format(R"({{"chat_folder_id": {}}})", fid);
-      if (auto detail_res = client_->send_request("getChatFolder", detail_req, 1.5)) {
+      if (auto detail_res = client_->send_request("getChatFolder", detail_req, 0.1)) {
         fmt::ChatFolderSummary summary;
         summary.id = fid;
         summary.title = extract_folder_title(*detail_res);

@@ -103,8 +103,17 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
 
   int32_t folder_id = -1;
   for (size_t i = 0; i < args.size(); ++i) {
-    if ((args[i] == "-F" || args[i] == "--folder") && i + 1 < args.size()) {
+    std::string_view arg(args[i]);
+    if ((arg == "-F" || arg == "--folder") && i + 1 < args.size()) {
       if (auto fid = parse_int32(args[i + 1])) {
+        folder_id = *fid;
+      }
+    } else if (arg.starts_with("--folder=")) {
+      if (auto fid = parse_int32(std::string(arg.substr(9)))) {
+        folder_id = *fid;
+      }
+    } else if (arg.starts_with("-F=")) {
+      if (auto fid = parse_int32(std::string(arg.substr(3)))) {
         folder_id = *fid;
       }
     }
