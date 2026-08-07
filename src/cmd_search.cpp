@@ -452,14 +452,14 @@ App::cmd_search_users(const std::vector<std::string> &args) {
   bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
 
   // 1. Warm TDLib chat cache
-  (void)client_->send_request("loadChats", R"({"limit": 100})", 3.0);
+  (void)client_->send_request("loadChats", R"({"limit": 100})", 0.5);
 
   std::vector<int64_t> candidate_user_ids;
   const std::string escaped_query = escape_json_string(query);
 
   // 2. Search local contacts
   const std::string req = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
-  if (auto res_contacts = client_->send_request("searchContacts", req, 5.0)) {
+  if (auto res_contacts = client_->send_request("searchContacts", req, 1.5)) {
     for (const auto &user_val : res_contacts->get_array("users")) {
       if (auto id = user_val.as_int64()) {
         candidate_user_ids.push_back(*id);
@@ -469,7 +469,8 @@ App::cmd_search_users(const std::vector<std::string> &args) {
 
   // 3. Query searchChatsOnServer for private user chats
   const std::string req_server = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
-  if (auto res_server = client_->send_request("searchChatsOnServer", req_server, 5.0)) {
+  if (auto res_server = client_->send_request("searchChatsOnServer", req_server, 1.5)) {
+
     for (const auto &id_val : res_server->get_array("chat_ids")) {
       if (auto cid = id_val.as_int64()) {
         const std::string info_req = std::format(R"({{"chat_id": {}}})", *cid);
@@ -529,29 +530,39 @@ App::cmd_search_users(const std::vector<std::string> &args) {
     }
   }
 
-  // 6. Search members inside joined supergroups (searchChatMembers)
-  if (auto res_chats = client_->send_request("getChats", R"({"limit": 100})", 3.0)) {
+  // 6. Search members inside top active supergroups (searchChatMembers)
+  int supergroup_count = 0;
+  if (auto res_chats = client_->send_request("getChats", R"({"limit": 20})", 3.0)) {
     for (const auto &id_val : res_chats->get_array("chat_ids")) {
       if (auto cid = id_val.as_int64()) {
-        const std::string mem_req = std::format(
-            R"({{"chat_id": {}, "query": "{}", "limit": {}}})",
-            *cid, escaped_query, limit);
-        if (auto mem_res = client_->send_request("searchChatMembers", mem_req, 2.0)) {
-          for (const auto &m : mem_res->get_array("members")) {
-            if (auto member_id = m.get_object("member_id")) {
-              if (member_id->get_string("@type").value_or("") == "messageSenderUser") {
-                if (auto uid = member_id->get_int("user_id")) {
-                  if (std::find(candidate_user_ids.begin(), candidate_user_ids.end(), *uid) == candidate_user_ids.end()) {
-                    candidate_user_ids.push_back(*uid);
+        const std::string info_req = std::format(R"({{"chat_id": {}}})", *cid);
+        if (auto info_res = client_->send_request("getChat", info_req, 2.0)) {
+          if (auto type_obj = info_res->get_object("type")) {
+            if (type_obj->get_string("@type").value_or("") == "chatTypeSupergroup") {
+              const std::string mem_req = std::format(
+                  R"({{"chat_id": {}, "query": "{}", "limit": {}}})",
+                  *cid, escaped_query, limit);
+              if (auto mem_res = client_->send_request("searchChatMembers", mem_req, 2.0)) {
+                for (const auto &m : mem_res->get_array("members")) {
+                  if (auto member_id = m.get_object("member_id")) {
+                    if (member_id->get_string("@type").value_or("") == "messageSenderUser") {
+                      if (auto uid = member_id->get_int("user_id")) {
+                        if (std::find(candidate_user_ids.begin(), candidate_user_ids.end(), *uid) == candidate_user_ids.end()) {
+                          candidate_user_ids.push_back(*uid);
+                        }
+                      }
+                    }
                   }
                 }
               }
+              if (++supergroup_count >= 5) break;
             }
           }
         }
       }
     }
   }
+
 
   std::vector<fmt::UserItem> users;
   for (int64_t id : candidate_user_ids) {
