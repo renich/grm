@@ -471,10 +471,42 @@ static ResolvedChatItems resolve_chat_candidates(
           candidate_ids.push_back(*cid);
         }
       }
+
+      std::string text;
+      if (auto content = m.get_object("content")) {
+        if (auto text_obj = content->get_object("text")) {
+          text = text_obj->get_string("text").value_or("");
+        } else if (auto caption_obj = content->get_object("caption")) {
+          text = caption_obj->get_string("text").value_or("");
+        }
+      }
+
+      // Extract @username handles mentioned in messages
+      size_t pos = 0;
+      while ((pos = text.find('@', pos)) != std::string::npos) {
+        size_t end = pos + 1;
+        while (end < text.length() && (std::isalnum(text[end]) || text[end] == '_')) {
+          end++;
+        }
+        if (end - pos > 4 && end - pos < 33) {
+          std::string h = text.substr(pos + 1, end - pos - 1);
+          const std::string pub_h_req = std::format(R"({{"username": "{}"}})", escape_json_string(h));
+          if (auto pub_res = client->send_request("searchPublicChat", pub_h_req, 0.2)) {
+            if (auto pid = pub_res->get_int("id")) {
+              if (std::find(candidate_ids.begin(), candidate_ids.end(), *pid) == candidate_ids.end()) {
+                candidate_ids.push_back(*pid);
+              }
+            }
+          }
+        }
+        pos = end;
+      }
+
       from_msg_id = m.get_int("id").value_or(0);
       from_c_id = m.get_int("chat_id").value_or(0);
     }
   }
+
 
   ResolvedChatItems result;
   for (int64_t id : candidate_ids) {
@@ -595,9 +627,12 @@ App::cmd_search_supergroups(const std::vector<std::string> &args) {
   int needed = sargs.offset + sargs.limit;
   ResolvedChatItems res_items = resolve_chat_candidates(client_.get(), sargs.query, needed, [this](int64_t id) { ensure_chat_loaded(id); });
 
+  std::vector<fmt::ChatItem> supergroup_list = res_items.supergroups;
+  supergroup_list.insert(supergroup_list.end(), res_items.channels.begin(), res_items.channels.end());
+
   std::vector<fmt::ChatItem> sliced;
-  if (static_cast<int>(res_items.supergroups.size()) > sargs.offset) {
-    sliced = std::vector<fmt::ChatItem>(res_items.supergroups.begin() + sargs.offset, res_items.supergroups.end());
+  if (static_cast<int>(supergroup_list.size()) > sargs.offset) {
+    sliced = std::vector<fmt::ChatItem>(supergroup_list.begin() + sargs.offset, supergroup_list.end());
     if (static_cast<int>(sliced.size()) > sargs.limit) {
       sliced.resize(sargs.limit);
     }
@@ -606,6 +641,7 @@ App::cmd_search_supergroups(const std::vector<std::string> &args) {
   fmt::Formatter::print_chats(sliced, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
+
 
 std::expected<int, std::string>
 App::cmd_search_msgs(const std::vector<std::string> &args) {
