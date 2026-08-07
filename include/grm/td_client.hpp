@@ -39,6 +39,8 @@ public:
 
   void on_update(UpdateCallback callback);
 
+  [[nodiscard]] std::vector<JsonValue> get_cached_chat_folders() const;
+
   [[nodiscard]] const Config &config() const noexcept { return config_; }
   [[nodiscard]] int client_id() const noexcept { return client_id_; }
 
@@ -58,6 +60,10 @@ private:
 
   std::mutex callback_mutex_;
   std::vector<UpdateCallback> callbacks_;
+
+  mutable std::mutex chat_folders_mutex_;
+  std::vector<JsonValue> cached_chat_folders_;
 };
 
 } // namespace grm
+

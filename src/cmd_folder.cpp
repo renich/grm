@@ -98,6 +98,17 @@ App::cmd_folder(const std::vector<std::string> &args) {
   return std::unexpected("Unknown folder subcommand: " + sub);
 }
 
+static std::string extract_folder_title(const JsonValue &item) {
+  if (auto name_obj = item.get_object("name")) {
+    if (auto text_obj = name_obj->get_object("text")) {
+      if (auto t = text_obj->get_string("text")) {
+        return *t;
+      }
+    }
+  }
+  return item.get_string("title").value_or("");
+}
+
 std::expected<int, std::string>
 App::cmd_folder_ls(const std::vector<std::string> &args) {
   bool verbose = (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
@@ -114,61 +125,98 @@ App::cmd_folder_ls(const std::vector<std::string> &args) {
     return std::unexpected(res.error());
   }
 
-  auto list_res = client_->send_request("getChatFolders", R"({"main_chat_list_position": 0})", 10.0);
-  if (!list_res) {
-    return std::unexpected("Failed to fetch chat folders: " + list_res.error());
+  auto folders_arr = client_->get_cached_chat_folders();
+  if (folders_arr.empty()) {
+    (void)client_->send_request("loadChats", R"({"limit": 100})", 3.0);
+    for (int i = 0; i < 5; ++i) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      folders_arr = client_->get_cached_chat_folders();
+      if (!folders_arr.empty()) break;
+    }
   }
 
-  auto folders_arr = list_res->get_array("chat_folders");
   std::vector<fmt::ChatFolderSummary> folders;
 
-  for (const auto &item : folders_arr) {
-    auto id_opt = item.get_int("id");
-    if (!id_opt) continue;
+  if (!folders_arr.empty()) {
+    for (const auto &item : folders_arr) {
+      auto id_opt = item.get_int("id");
+      if (!id_opt) continue;
 
-    int32_t fid = static_cast<int32_t>(*id_opt);
-    std::string title = item.get_string("title").value_or("Folder " + std::to_string(fid));
-    std::string icon = "Custom";
+      int32_t fid = static_cast<int32_t>(*id_opt);
+      std::string title = extract_folder_title(item);
+      if (title.empty()) title = "Folder " + std::to_string(fid);
+      std::string icon = "Custom";
 
-    if (auto icon_val = item.get_object("icon")) {
-      icon = icon_val->get_string("name").value_or("Custom");
+      if (auto icon_val = item.get_object("icon")) {
+        icon = icon_val->get_string("name").value_or("Custom");
+      }
+
+      fmt::ChatFolderSummary summary;
+      summary.id = fid;
+      summary.title = title;
+      summary.icon = icon;
+      summary.color_id = static_cast<int32_t>(item.get_int("color_id").value_or(-1));
+
+      const std::string detail_req = std::format(R"({{"chat_folder_id": {}}})", fid);
+      if (auto detail_res = client_->send_request("getChatFolder", detail_req, 5.0)) {
+        summary.include_groups = detail_res->get_bool("include_groups").value_or(false);
+        summary.include_channels = detail_res->get_bool("include_channels").value_or(false);
+        summary.include_bots = detail_res->get_bool("include_bots").value_or(false);
+        summary.include_contacts = detail_res->get_bool("include_contacts").value_or(false);
+        summary.include_non_contacts = detail_res->get_bool("include_non_contacts").value_or(false);
+        summary.exclude_muted = detail_res->get_bool("exclude_muted").value_or(false);
+        summary.exclude_read = detail_res->get_bool("exclude_read").value_or(false);
+        summary.exclude_archived = detail_res->get_bool("exclude_archived").value_or(false);
+
+        for (const auto &cid : detail_res->get_array("pinned_chat_ids")) {
+          if (auto id = cid.as_int64()) summary.pinned_chat_ids.push_back(*id);
+        }
+        for (const auto &cid : detail_res->get_array("included_chat_ids")) {
+          if (auto id = cid.as_int64()) summary.included_chat_ids.push_back(*id);
+        }
+        for (const auto &cid : detail_res->get_array("excluded_chat_ids")) {
+          if (auto id = cid.as_int64()) summary.excluded_chat_ids.push_back(*id);
+        }
+      }
+
+      folders.push_back(summary);
     }
+  } else {
+    for (int32_t fid = 1; fid <= 20; ++fid) {
+      const std::string detail_req = std::format(R"({{"chat_folder_id": {}}})", fid);
+      if (auto detail_res = client_->send_request("getChatFolder", detail_req, 1.5)) {
+        fmt::ChatFolderSummary summary;
+        summary.id = fid;
+        summary.title = extract_folder_title(*detail_res);
+        if (summary.title.empty()) summary.title = "Folder " + std::to_string(fid);
+        summary.include_groups = detail_res->get_bool("include_groups").value_or(false);
+        summary.include_channels = detail_res->get_bool("include_channels").value_or(false);
+        summary.include_bots = detail_res->get_bool("include_bots").value_or(false);
+        summary.include_contacts = detail_res->get_bool("include_contacts").value_or(false);
+        summary.include_non_contacts = detail_res->get_bool("include_non_contacts").value_or(false);
+        summary.exclude_muted = detail_res->get_bool("exclude_muted").value_or(false);
+        summary.exclude_read = detail_res->get_bool("exclude_read").value_or(false);
+        summary.exclude_archived = detail_res->get_bool("exclude_archived").value_or(false);
 
-    fmt::ChatFolderSummary summary;
-    summary.id = fid;
-    summary.title = title;
-    summary.icon = icon;
-    summary.color_id = static_cast<int32_t>(item.get_int("color_id").value_or(-1));
+        for (const auto &cid : detail_res->get_array("pinned_chat_ids")) {
+          if (auto id = cid.as_int64()) summary.pinned_chat_ids.push_back(*id);
+        }
+        for (const auto &cid : detail_res->get_array("included_chat_ids")) {
+          if (auto id = cid.as_int64()) summary.included_chat_ids.push_back(*id);
+        }
+        for (const auto &cid : detail_res->get_array("excluded_chat_ids")) {
+          if (auto id = cid.as_int64()) summary.excluded_chat_ids.push_back(*id);
+        }
 
-    // Query detailed settings for folder
-    const std::string detail_req = std::format(R"({{"chat_folder_id": {}}})", fid);
-    if (auto detail_res = client_->send_request("getChatFolder", detail_req, 5.0)) {
-      summary.include_groups = detail_res->get_bool("include_groups").value_or(false);
-      summary.include_channels = detail_res->get_bool("include_channels").value_or(false);
-      summary.include_bots = detail_res->get_bool("include_bots").value_or(false);
-      summary.include_contacts = detail_res->get_bool("include_contacts").value_or(false);
-      summary.include_non_contacts = detail_res->get_bool("include_non_contacts").value_or(false);
-      summary.exclude_muted = detail_res->get_bool("exclude_muted").value_or(false);
-      summary.exclude_read = detail_res->get_bool("exclude_read").value_or(false);
-      summary.exclude_archived = detail_res->get_bool("exclude_archived").value_or(false);
-
-      for (const auto &cid : detail_res->get_array("pinned_chat_ids")) {
-        if (auto id = cid.as_int64()) summary.pinned_chat_ids.push_back(*id);
-      }
-      for (const auto &cid : detail_res->get_array("included_chat_ids")) {
-        if (auto id = cid.as_int64()) summary.included_chat_ids.push_back(*id);
-      }
-      for (const auto &cid : detail_res->get_array("excluded_chat_ids")) {
-        if (auto id = cid.as_int64()) summary.excluded_chat_ids.push_back(*id);
+        folders.push_back(summary);
       }
     }
-
-    folders.push_back(summary);
   }
 
   fmt::Formatter::print_folders(folders, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
+
 
 std::expected<int, std::string>
 App::cmd_folder_create(const std::vector<std::string> &args) {

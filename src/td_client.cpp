@@ -166,6 +166,13 @@ void TdClient::receiver_loop() {
 }
 
 void TdClient::handle_incoming(const JsonValue &value) {
+  if (auto type = value.get_type()) {
+    if (*type == "updateChatFolders") {
+      std::scoped_lock lock(chat_folders_mutex_);
+      cached_chat_folders_ = value.get_array("chat_folders");
+    }
+  }
+
   if (auto extra = value.get_string("@extra")) {
     std::promise<JsonValue> prom;
     bool found = false;
@@ -198,4 +205,10 @@ void TdClient::handle_incoming(const JsonValue &value) {
   }
 }
 
+std::vector<JsonValue> TdClient::get_cached_chat_folders() const {
+  std::scoped_lock lock(chat_folders_mutex_);
+  return cached_chat_folders_;
+}
+
 } // namespace grm
+
