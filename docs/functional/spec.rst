@@ -34,4 +34,3 @@ Core Functional Requirements
 * **[FUNC-013]**: Chat Folder Management (Create/List/Edit/Delete chat folders and filter chat listings by folder).
 * **[FUNC-014]**: Universal Cross-Domain Search (Unified server-side and local search across chats, messages, and contacts).
 
-

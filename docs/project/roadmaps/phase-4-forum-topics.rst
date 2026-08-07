@@ -19,7 +19,6 @@ Milestone 4.1: Forum Topics Discovery & Thread-Scoped Messaging
   * *Status*: ``[x]`` Completed
   * *Unblocks*: Task 4.1.2
 
-
 * **Task 4.1.2**: Extend ``grm send``, ``grm msg ls``, and ``grm send file`` with ``--topic <topic_id>`` (``message_thread_id``) support.
   * *Delivers*: ``src/cmd_msg.cpp``, ``src/cmd_file.cpp``
   * *Fulfills*: ``[FUNC-008]``

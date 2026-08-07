@@ -34,7 +34,6 @@ Key Features & Requirements
    - **Automatic Color Suppression**: ANSI color codes are automatically disabled when stdout is redirected to a pipe or file (via ``isatty(STDOUT_FILENO)``).
    - **Environment & Flags**: Honor the standard ``NO_COLOR`` environment variable and explicit CLI flags (``--color=always|never|auto``).
 
-
 Output Format Matrix
 --------------------
 

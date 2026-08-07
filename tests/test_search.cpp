@@ -10,7 +10,6 @@ void test_search_spec_registration() {
   (void)registry;
   auto spec = grm::App::get_search_spec();
 
-
   assert(spec.name == "search");
   assert(!spec.subcommands.empty());
 
@@ -35,7 +34,6 @@ void test_search_spec_registration() {
   (void)has_supergroups;
   (void)has_msgs;
   (void)has_users;
-
 
   std::cout << "[TEST PASS] test_search_spec_registration\n";
 }

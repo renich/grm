@@ -18,4 +18,3 @@ The system must support Telegram Supergroup Forum Topics (message threads):
 2. **Topic Message Inspection**: Allow filtering message inspection by topic thread ID using ``grm msg ls -t <topic_id> [-n|--limit <N>] <supergroup_id>``.
 3. **Topic Message & File Dispatch**: Allow targeting specific topic thread IDs when dispatching text messages or uploading files (``grm msg send -t <topic_id>``).
 
-

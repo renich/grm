@@ -30,7 +30,6 @@ Subcommand Target Help Examples:
 - ``grm topic -h, --help``:
   Displays forum topic thread listing parameters.
 
-
 Shell Autocompletion Architecture
 ---------------------------------
 

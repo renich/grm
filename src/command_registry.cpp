@@ -19,9 +19,6 @@ CommandRegistry::CommandRegistry() {
   commands_.push_back(get_completion_spec());
 }
 
-
-
-
 const CommandRegistry &CommandRegistry::get_instance() {
   static const CommandRegistry instance;
   return instance;

@@ -387,8 +387,6 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     return cmd_completion(sub_args);
   }
 
-
-
   print_usage();
   return std::unexpected("Unknown command: " + cmd);
 }

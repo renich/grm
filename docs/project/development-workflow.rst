@@ -95,7 +95,6 @@ When introducing a new CLI subcommand, flag, or core subsystem to **grm**, follo
 * Push feature branch to remote and verify GitLab CI/CD container pipeline execution.
 * Merge feature branch into `master` after pipeline passes.
 
-
 Bug Repair Procedure
 ====================
 

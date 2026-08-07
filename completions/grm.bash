@@ -144,16 +144,20 @@ _grm_completions() {
         if [[ "${cur}" == -* ]]; then
           COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
         else
-          COMPREPLY=($(compgen -W "chats supergroups msgs users" -- "${cur}"))
+          COMPREPLY=($(compgen -W "chats supergroups channels msgs users files" -- "${cur}"))
         fi
       elif [[ "${words[2]}" == "chats" ]]; then
         COMPREPLY=($(compgen -W "-h --help -n --limit -v --verbose" -- "${cur}"))
       elif [[ "${words[2]}" == "supergroups" ]]; then
         COMPREPLY=($(compgen -W "-h --help -n --limit -v --verbose" -- "${cur}"))
+      elif [[ "${words[2]}" == "channels" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -n --limit -v --verbose" -- "${cur}"))
       elif [[ "${words[2]}" == "msgs" ]]; then
         COMPREPLY=($(compgen -W "-h --help -c --chat -n --limit -v --verbose" -- "${cur}"))
       elif [[ "${words[2]}" == "users" ]]; then
         COMPREPLY=($(compgen -W "-h --help -n --limit -v --verbose" -- "${cur}"))
+      elif [[ "${words[2]}" == "files" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -t --type -n --limit -v --verbose" -- "${cur}"))
       fi
       ;;
     completion)

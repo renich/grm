@@ -72,7 +72,6 @@ void App::print_folder_help(fmt::OutputFormat format) {
   }
 }
 
-
 std::expected<int, std::string>
 App::cmd_folder(const std::vector<std::string> &args) {
   if (args.empty()) {
@@ -216,7 +215,6 @@ App::cmd_folder_ls(const std::vector<std::string> &args) {
   fmt::Formatter::print_folders(folders, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
-
 
 std::expected<int, std::string>
 App::cmd_folder_create(const std::vector<std::string> &args) {

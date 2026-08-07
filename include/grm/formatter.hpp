@@ -84,7 +84,6 @@ struct SearchSummary {
   std::vector<MessageItem> files;
 };
 
-
 struct ErrorPayload {
   int code{1};
   std::string error_type;
@@ -96,8 +95,6 @@ using RenderablePayload =
     std::variant<std::vector<ChatItem>, std::vector<TopicItem>,
                  std::vector<MessageItem>, std::vector<ChatFolderSummary>,
                  std::vector<UserItem>, SearchSummary, ErrorPayload>;
-
-
 
 [[nodiscard]] std::string_view humanize_chat_type(std::string_view tdlib_type);
 [[nodiscard]] std::string_view
@@ -146,7 +143,6 @@ public:
                                    ColorMode color_mode = ColorMode::Auto,
                                    std::ostream &out = std::cout,
                                    bool verbose = false);
-
 
   static void print_error(const ErrorPayload &err,
 

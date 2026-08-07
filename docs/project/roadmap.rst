@@ -15,7 +15,6 @@ grm Project Roadmap
    roadmaps/phase-8-packaging
    development-workflow
 
-
 Executive Summary
 =================
 

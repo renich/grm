@@ -588,7 +588,6 @@ void Formatter::print_users(const std::vector<UserItem> &users,
   const OutputFormat fmt = resolve_format(format, is_tty);
   const bool use_color = should_use_color(color_mode);
 
-
   if (fmt == OutputFormat::Json || fmt == OutputFormat::JsonL) {
     out << "[\n";
     for (size_t i = 0; i < users.size(); ++i) {
@@ -688,7 +687,6 @@ void Formatter::print_search_summary(const SearchSummary &summary,
   }
 }
 
-
 void Formatter::print_error(const ErrorPayload &err, OutputFormat format,
                             ColorMode color_mode, std::ostream &out) {
   const bool is_tty =
@@ -750,7 +748,6 @@ void Formatter::render(const RenderablePayload &payload,
       },
       payload);
 }
-
 
 } // namespace grm::fmt
 

@@ -9,7 +9,6 @@ Context
 =======
 The team required a fast, highly reliable command-line tool for Telegram personal account management, chat discovery, message history inspection, and group data management. Third-party MTProto wrappers (such as ``kaosb/tgcli``) suffered from unresolved ``AccessHash`` peer resolution defects when querying supergroups (IDs starting with ``-100...``), resulting in ``CHANNEL_INVALID`` API errors.
 
-
 Decision
 ========
 We decided to build **grm** as a native **C++23** CLI application linking directly against Telegram's official C++ engine **TDLib** (``libtdjson.so``).

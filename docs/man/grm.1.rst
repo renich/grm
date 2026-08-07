@@ -264,7 +264,6 @@ grm file get [-A] [-o *OUTPUT*] [-t *TOPIC_ID*] [-n *LIMIT*] [--type photo|video
    -t, --topic *TOPIC_ID*
       Target specific forum topic ID.
 
-
    -n, --limit *LIMIT*
       Maximum messages to scan (default: 100).
 

@@ -71,11 +71,13 @@ private:
   [[nodiscard]] std::expected<int, std::string>
   cmd_search_supergroups(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
+  cmd_search_channels(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
   cmd_search_msgs(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
   cmd_search_users(const std::vector<std::string> &args);
-
-
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_search_files(const std::vector<std::string> &args);
 
   // Chat Folder Management
   [[nodiscard]] std::expected<int, std::string>
@@ -88,7 +90,6 @@ private:
   cmd_folder_edit(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
   cmd_folder_delete(const std::vector<std::string> &args);
-
 
   // Chat & Group CRUD
   [[nodiscard]] std::expected<int, std::string>

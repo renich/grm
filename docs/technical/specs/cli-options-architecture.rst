@@ -57,8 +57,6 @@ Subcommands parse GNU options using clean helper loops with ``std::from_chars`` 
   - Option ``-t, --topic``: topic ID (int64)
   - Operands: ``chat_id`` (int64), optional ``message`` text
 
-
-
 Logging Utility API
 -------------------
 

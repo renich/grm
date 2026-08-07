@@ -103,4 +103,3 @@ Upload Document with Caption to Forum Topic:
 
    grm msg send -a /path/to/report.pdf -C "Monthly Report" -t 42 -1001789902965
 
-

@@ -19,7 +19,6 @@ Audit Sources of Truth:
 * **The Schedule**: ``docs/project/roadmaps/`` (Phases 1 through 8)
 * **The Reality**: Source code in ``src/``, headers in ``include/grm/``, tests in ``tests/``, build automation in ``GNUmakefile`` and ``CMakeLists.txt``, and container infrastructure in ``Containerfile.ci``.
 
-
 Bidirectional Traceability Verification
 ========================================
 
@@ -81,7 +80,6 @@ Code-to-Spec Traceability (Scope Verification)
 
 All physical source files in ``src/`` map directly to approved functional requirements and architectural specifications. No un-specced or unauthorized third-party integrations were detected.
 
-
 Hallucination & Shortcut Eradication
 ====================================
 
@@ -94,7 +92,6 @@ Hallucination & Shortcut Eradication
 * **Silenced Errors**:
   * Regex compilation and input parsing in ``src/list_options.cpp`` and ``src/cmd_msg.cpp`` explicitly capture ``std::regex_error`` exceptions and return structured ``std::unexpected`` error results rather than swallowing exceptions.
 
-
 Architectural Integrity & Drift Check
 =====================================
 
@@ -106,7 +103,6 @@ Architectural Integrity & Drift Check
   * CTest execution (14/14 test binaries) passed with a 100% success rate.
 * **Documentation Verification**:
   * Syntax validation via ``make doc-check`` (``rstcheck``) passed cleanly with 0 syntax errors.
-
 
 Audit Verdict
 =============

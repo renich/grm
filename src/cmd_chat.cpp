@@ -127,7 +127,6 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
       return std::unexpected("Failed to get chats: " + chats_res.error());
     }
 
-
     auto chat_ids = chats_res->get_array("chat_ids");
     for (const auto &id_val : chat_ids) {
       if (auto cid = id_val.as_int64()) {

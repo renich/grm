@@ -76,7 +76,6 @@ All feature additions, refactorings, and bug fixes **must** be accompanied by un
 2. **Implement minimal code** in `src/` to satisfy the tests.
 3. **Refactor** while ensuring all CTest targets continue to pass 100%.
 
-
 Git Pre-Push Hook & Quality Automation
 ---------------------------------------
 

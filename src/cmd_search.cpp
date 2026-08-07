@@ -12,7 +12,7 @@ namespace grm {
 CommandSpec App::get_search_spec() {
   CommandSpec spec;
   spec.name = "search";
-  spec.description = "Universal cross-domain search across chats, supergroups, messages, and contacts";
+  spec.description = "Universal cross-domain search across chats, supergroups, channels, users, messages, and files";
 
   spec.subcommands = {
       {"chats", "<query> [options]", "Search public and private chats, supergroups, and channels",
@@ -21,12 +21,19 @@ CommandSpec App::get_search_spec() {
       {"supergroups", "<query> [options]", "Search supergroups specifically (including forum supergroups)",
        {{"-n", "--limit", "<count>", "Maximum search results (default: 20)", {}},
         {"-v", "--verbose", "", "Show verbose search metadata", {}}}},
+      {"channels", "<query> [options]", "Search broadcast channels specifically",
+       {{"-n", "--limit", "<count>", "Maximum search results (default: 20)", {}},
+        {"-v", "--verbose", "", "Show verbose search metadata", {}}}},
       {"msgs", "<query> [options]", "Search message history across all chats or scoped to a target chat",
        {{"-c", "--chat", "<chat_id>", "Restrict message search to target chat", {}},
         {"-n", "--limit", "<count>", "Maximum search results (default: 20)", {}},
         {"-v", "--verbose", "", "Show verbose search metadata", {}}}},
-      {"users", "<query> [options]", "Search contacts and public user profiles",
+      {"users", "<query> [options]", "Search contacts, DMs, and public user profiles",
        {{"-n", "--limit", "<count>", "Maximum search results (default: 20)", {}},
+        {"-v", "--verbose", "", "Show verbose search metadata", {}}}},
+      {"files", "<query> [options]", "Search file and media attachments",
+       {{"-t", "--type", "<doc|photo|video|audio|all>", "Filter attachment type (default: doc)", {"doc", "photo", "video", "audio", "all"}},
+        {"-n", "--limit", "<count>", "Maximum search results (default: 20)", {}},
         {"-v", "--verbose", "", "Show verbose search metadata", {}}}}
   };
 
@@ -102,8 +109,9 @@ App::cmd_search(const std::vector<std::string> &args) {
   for (size_t i = 0; i < args.size(); ++i) {
     const std::string &arg = args[i];
     if (sub.empty() && (arg == "chats" || arg == "supergroups" || arg == "supergroup" ||
-                        arg == "groups" || arg == "msgs" || arg == "messages" ||
-                        arg == "users" || arg == "contacts")) {
+                        arg == "groups" || arg == "channels" || arg == "channel" ||
+                        arg == "msgs" || arg == "messages" ||
+                        arg == "users" || arg == "contacts" || arg == "files")) {
       sub = arg;
     } else {
       sub_args.push_back(arg);
@@ -116,11 +124,17 @@ App::cmd_search(const std::vector<std::string> &args) {
   if (sub == "supergroups" || sub == "supergroup" || sub == "groups") {
     return cmd_search_supergroups(sub_args);
   }
+  if (sub == "channels" || sub == "channel") {
+    return cmd_search_channels(sub_args);
+  }
   if (sub == "msgs" || sub == "messages") {
     return cmd_search_msgs(sub_args);
   }
   if (sub == "users" || sub == "contacts") {
     return cmd_search_users(sub_args);
+  }
+  if (sub == "files") {
+    return cmd_search_files(sub_args);
   }
 
   // Universal multi-domain query
@@ -140,7 +154,6 @@ App::cmd_search(const std::vector<std::string> &args) {
 
   fmt::SearchSummary summary;
   summary.query = query;
-
 
   // 1. Search chats & supergroups
   std::vector<int64_t> candidate_chat_ids;
@@ -278,6 +291,7 @@ App::cmd_search(const std::vector<std::string> &args) {
 struct ResolvedChatItems {
   std::vector<fmt::ChatItem> chats;
   std::vector<fmt::ChatItem> supergroups;
+  std::vector<fmt::ChatItem> channels;
 };
 
 static ResolvedChatItems resolve_chat_candidates(
@@ -348,7 +362,6 @@ static ResolvedChatItems resolve_chat_candidates(
     }
   }
 
-
   ResolvedChatItems result;
   for (int64_t id : candidate_ids) {
     ensure_chat_loaded_fn(id);
@@ -358,15 +371,17 @@ static ResolvedChatItems resolve_chat_candidates(
       item.id = id;
       item.title = info_res->get_string("title").value_or("Chat " + std::to_string(id));
       bool is_supergroup = false;
+      bool is_channel = false;
 
       if (auto type_obj = info_res->get_object("type")) {
         std::string t = type_obj->get_string("@type").value_or("chat");
         if (t == "chatTypeSupergroup") {
-          bool is_channel = type_obj->get_bool("is_channel").value_or(false);
-          if (!is_channel) {
+          bool ch = type_obj->get_bool("is_channel").value_or(false);
+          if (!ch) {
             is_supergroup = true;
             item.type = type_obj->get_bool("is_forum").value_or(false) ? "Forum Supergroup" : "Supergroup";
           } else {
+            is_channel = true;
             item.type = "Channel";
           }
         } else if (t == "chatTypeBasicGroup") {
@@ -382,6 +397,10 @@ static ResolvedChatItems resolve_chat_candidates(
       if (is_supergroup) {
         if (static_cast<int>(result.supergroups.size()) < limit) {
           result.supergroups.push_back(item);
+        }
+      } else if (is_channel) {
+        if (static_cast<int>(result.channels.size()) < limit) {
+          result.channels.push_back(item);
         }
       } else {
         if (static_cast<int>(result.chats.size()) < limit) {
@@ -668,7 +687,96 @@ App::cmd_search_users(const std::vector<std::string> &args) {
   return 0;
 }
 
+std::expected<int, std::string>
+App::cmd_search_channels(const std::vector<std::string> &args) {
+  if (args.empty() || is_help_requested(args)) {
+    print_search_help(options_.format);
+    return 0;
+  }
 
+  if (auto res = ensure_authenticated(); !res) {
+    return std::unexpected(res.error());
+  }
+
+  SearchArgs sargs = parse_search_args(args, 20);
+  if (sargs.query.empty()) {
+    print_search_help(options_.format);
+    return 0;
+  }
+
+  bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
+  ResolvedChatItems res_items = resolve_chat_candidates(client_.get(), sargs.query, sargs.limit, [this](int64_t id) { ensure_chat_loaded(id); });
+
+  fmt::Formatter::print_chats(res_items.channels, options_.format, options_.color_mode, std::cout, verbose);
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_search_files(const std::vector<std::string> &args) {
+  if (args.empty() || is_help_requested(args)) {
+    print_search_help(options_.format);
+    return 0;
+  }
+
+  if (auto res = ensure_authenticated(); !res) {
+    return std::unexpected(res.error());
+  }
+
+  SearchArgs sargs = parse_search_args(args, 20);
+  if (sargs.query.empty()) {
+    print_search_help(options_.format);
+    return 0;
+  }
+
+  const std::string &query = sargs.query;
+  int limit = sargs.limit;
+  const std::string &type = sargs.type_filter;
+  bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
+
+  std::vector<std::string> filter_types;
+  if (type == "photo") filter_types = {"searchMessagesFilterPhoto"};
+  else if (type == "video") filter_types = {"searchMessagesFilterVideo"};
+  else if (type == "audio") filter_types = {"searchMessagesFilterAudio"};
+  else if (type == "all") filter_types = {"searchMessagesFilterDocument", "searchMessagesFilterPhoto", "searchMessagesFilterVideo", "searchMessagesFilterAudio"};
+  else filter_types = {"searchMessagesFilterDocument"};
+
+  std::vector<fmt::MessageItem> files;
+  const std::string escaped_query = escape_json_string(query);
+
+  for (const auto &ft : filter_types) {
+    const std::string file_req = std::format(
+        R"({{"query": "{}", "filter": {{"@type": "{}"}}, "limit": {}}})",
+        escaped_query, ft, limit);
+    if (auto file_res = client_->send_request("searchMessages", file_req, 5.0)) {
+      for (const auto &m : file_res->get_array("messages")) {
+        fmt::MessageItem item;
+        item.id = m.get_int("id").value_or(0);
+        item.chat_id = m.get_int("chat_id").value_or(0);
+        item.date = m.get_int("date").value_or(0);
+        item.sender = resolve_sender_name(m);
+        item.has_attachment = true;
+
+        if (auto content = m.get_object("content")) {
+          if (auto doc_obj = content->get_object("document")) {
+            item.attachment_type = doc_obj->get_string("file_name").value_or("Document");
+          } else {
+            item.attachment_type = ft.substr(20);
+          }
+          if (auto text_obj = content->get_object("caption")) {
+            item.text = text_obj->get_string("text").value_or("");
+          }
+        }
+
+        files.push_back(item);
+        if (static_cast<int>(files.size()) >= limit) break;
+      }
+    }
+    if (static_cast<int>(files.size()) >= limit) break;
+  }
+
+  fmt::Formatter::print_messages(files, options_.format, options_.color_mode, std::cout, verbose);
+  return 0;
+}
 
 } // namespace grm
 

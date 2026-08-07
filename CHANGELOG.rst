@@ -25,8 +25,6 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 
 * Registered ``get_folder_spec()`` in ``CommandRegistry`` to automatically power ``grm folder --help``, ``grm -F json --help``, and shell completion generators.
 
-
-
 .. rubric:: Fixed
 
 * Resolved TDLib asynchronous network queue flush bug on CLI termination. Added network flush grace window in ``TdClient::stop()`` to guarantee pending outgoing MTProto messages and requests are delivered before TDLib client session shutdown.

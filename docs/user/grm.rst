@@ -12,7 +12,6 @@ C++23 / TDLib Telegram CLI User & Operator Guide
 :Manual section: 1
 :Manual group: User Commands
 
-
 Description
 ===========
 

@@ -12,7 +12,6 @@ grm Technical Architecture
    specs/search-architecture
    specs/search-refactoring-and-hardening
 
-
 Architectural Blueprint
 =======================
 
@@ -51,7 +50,4 @@ Technical Traceability Matrix
 +-------------------+----------------------------+-----------------------+
 | ``[TECH-008]``    | Search Hardening Engine    | ``[FUNC-014]``        |
 +-------------------+----------------------------+-----------------------+
-
-
-
 

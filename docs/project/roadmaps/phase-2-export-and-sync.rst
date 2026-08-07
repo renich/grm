@@ -23,8 +23,6 @@ Milestone 2.1: Test Infrastructure & App Modularization
   * *Status*: ``[x]`` Completed
   * *Unblocks*: Task 2.2.1
 
-
-
 Milestone 2.2: Data Export & Search Filtering Engine
 ----------------------------------------------------
 
