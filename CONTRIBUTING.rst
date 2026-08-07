@@ -38,8 +38,34 @@ Getting Started
 
       make check
 
-Development Workflow
-====================
+Development Workflow & Engineering Procedures
+================================================
+
+For complete step-by-step procedures, refer to the authoritative specification: `docs/project/development-workflow.rst <docs/project/development-workflow.rst>`_.
+
+Feature Addition Procedure (9-Step Protocol)
+--------------------------------------------
+
+1. **Branching**: Create topic branch `git checkout -b feat/<feature-name>`.
+2. **Domain Interfaces**: Define clean C++23 interfaces in `include/grm/` (SOLID/KISS).
+3. **Single-Source Help**: Register `get_<module>_spec()` in `CommandRegistry` (`src/cmd_<module>.cpp` & `src/command_registry.cpp`) to auto-generate `--help`, `-F json --help`, and shell completions (`grm completion bash`).
+4. **Documentation Sync**: Update man page (`docs/man/grm.1.rst`), user guide (`docs/user/grm.rst`), and `README.rst` (succinct & general). Verify syntax with `make doc-check`.
+5. **Automated Testing**: Add TDD test suite in `tests/` and register target in `CMakeLists.txt`.
+6. **Local Build & Test**: Run `make check` (100% CTest pass) and test `./build/grm` with live account.
+7. **Local User Installation**: Run `make install-user` (PREFIX `~/.local`) and verify `~/.local/bin/grm`.
+8. **Static Analysis**: Run `make format` (`clang-format`), `make lint` (`clang-tidy`), and `make analyze`.
+9. **Commit & MR**: Conventional Commit (`feat(...)`), push, verify GitLab CI, and merge.
+
+Bug Repair Procedure (Practical 7-Step Protocol)
+------------------------------------------------
+
+1. **Branching**: Create fix branch `git checkout -b fix/<bug-name>`.
+2. **Reproduction**: Write a minimal failing test in `tests/` reproducing the bug.
+3. **Root-Cause Fix**: Resolve the underlying defect in `src/` (no symptom masking or swallowed errors).
+4. **Regression Check**: Run `make check` to ensure 100% test pass rate.
+5. **Help/Doc Sync**: Update `CommandRegistry` or man page if flag behavior was modified.
+6. **Local Install**: Run `make install-user` and verify live behavior.
+7. **Commit & MR**: Conventional Commit (`fix(...)`), push, and merge.
 
 Test-Driven Development (TDD)
 -----------------------------
@@ -49,6 +75,7 @@ All feature additions, refactorings, and bug fixes **must** be accompanied by un
 1. **Write failing test(s)** in `tests/` reproducing the bug or asserting new capability.
 2. **Implement minimal code** in `src/` to satisfy the tests.
 3. **Refactor** while ensuring all CTest targets continue to pass 100%.
+
 
 Git Pre-Push Hook & Quality Automation
 ---------------------------------------
