@@ -387,6 +387,23 @@ App::cmd_search_msgs(const std::vector<std::string> &args) {
   return 0;
 }
 
+static int parse_limit_option(const std::vector<std::string> &args, int default_limit) {
+  int limit = default_limit;
+  for (size_t i = 0; i < args.size(); ++i) {
+    const std::string &arg = args[i];
+    if (arg == "-n" || arg == "--limit") {
+      if (i + 1 < args.size()) {
+        limit = std::atoi(args[++i].c_str());
+      }
+    } else if (arg.starts_with("--limit=")) {
+      limit = std::atoi(arg.substr(8).c_str());
+    } else if (arg.starts_with("-n=")) {
+      limit = std::atoi(arg.substr(3).c_str());
+    }
+  }
+  return limit > 0 ? limit : default_limit;
+}
+
 std::expected<int, std::string>
 App::cmd_search_users(const std::vector<std::string> &args) {
   if (args.empty() || is_help_requested(args)) {
@@ -399,15 +416,11 @@ App::cmd_search_users(const std::vector<std::string> &args) {
   }
 
   const std::string &query = args[0];
-  int limit = 20;
+  int limit = parse_limit_option(args, 20);
   bool verbose = (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
 
   for (size_t i = 1; i < args.size(); ++i) {
-    if (args[i] == "-n" || args[i] == "--limit") {
-      if (i + 1 < args.size()) {
-        limit = std::atoi(args[++i].c_str());
-      }
-    } else if (args[i] == "-v" || args[i] == "--verbose") {
+    if (args[i] == "-v" || args[i] == "--verbose") {
       verbose = true;
     }
   }
@@ -466,6 +479,30 @@ App::cmd_search_users(const std::vector<std::string> &args) {
     }
   }
 
+  // 4. Search members inside joined supergroups (searchChatMembers)
+  if (auto res_chats = client_->send_request("searchChats", R"({"limit": 50})", 3.0)) {
+    for (const auto &id_val : res_chats->get_array("chat_ids")) {
+      if (auto cid = id_val.as_int64()) {
+        const std::string mem_req = std::format(
+            R"({{"chat_id": {}, "query": "{}", "limit": {}}})",
+            *cid, escaped_query, limit);
+        if (auto mem_res = client_->send_request("searchChatMembers", mem_req, 2.0)) {
+          for (const auto &m : mem_res->get_array("members")) {
+            if (auto member_id = m.get_object("member_id")) {
+              if (member_id->get_string("@type").value_or("") == "messageSenderUser") {
+                if (auto uid = member_id->get_int("user_id")) {
+                  if (std::find(candidate_user_ids.begin(), candidate_user_ids.end(), *uid) == candidate_user_ids.end()) {
+                    candidate_user_ids.push_back(*uid);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   std::vector<fmt::UserItem> users;
   for (int64_t id : candidate_user_ids) {
     const std::string info_req = std::format(R"({{"user_id": {}}})", id);
@@ -489,6 +526,7 @@ App::cmd_search_users(const std::vector<std::string> &args) {
   fmt::Formatter::print_users(users, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
+
 
 
 std::expected<int, std::string>
