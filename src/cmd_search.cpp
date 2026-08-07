@@ -245,33 +245,76 @@ App::cmd_search_chats(const std::vector<std::string> &args) {
     }
   }
 
-  const std::string req = std::format(R"({{"query": "{}", "limit": {}}})", query, limit);
-  auto res = client_->send_request("searchChats", req, 5.0);
-  if (!res) {
-    return std::unexpected("Failed to search chats: " + res.error());
+  // 1. Warm TDLib memory cache
+  (void)client_->send_request("loadChats", R"({"limit": 100})", 3.0);
+
+  const std::string escaped_query = escape_json_string(query);
+  std::vector<int64_t> candidate_ids;
+
+  // 2. Query searchChats (local database)
+  const std::string req_local = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
+  if (auto res_local = client_->send_request("searchChats", req_local, 5.0)) {
+    for (const auto &id_val : res_local->get_array("chat_ids")) {
+      if (auto id = id_val.as_int64()) {
+        candidate_ids.push_back(*id);
+      }
+    }
+  }
+
+  // 3. Query searchChatsOnServer (server-side joined chat search)
+  const std::string req_server = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
+  if (auto res_server = client_->send_request("searchChatsOnServer", req_server, 5.0)) {
+    for (const auto &id_val : res_server->get_array("chat_ids")) {
+      if (auto id = id_val.as_int64()) {
+        if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
+          candidate_ids.push_back(*id);
+        }
+      }
+    }
+  }
+
+  // 4. Query searchPublicChats (global public chats/channels/supergroups)
+  const std::string req_pub = std::format(R"({{"query": "{}"}})", escaped_query);
+  if (auto res_pub = client_->send_request("searchPublicChats", req_pub, 5.0)) {
+    for (const auto &id_val : res_pub->get_array("chat_ids")) {
+      if (auto id = id_val.as_int64()) {
+        if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
+          candidate_ids.push_back(*id);
+        }
+      }
+    }
   }
 
   std::vector<fmt::ChatItem> chats;
-  for (const auto &id_val : res->get_array("chat_ids")) {
-    if (auto id = id_val.as_int64()) {
-      ensure_chat_loaded(*id);
-      const std::string info_req = std::format(R"({{"chat_id": {}}})", *id);
-      if (auto info_res = client_->send_request("getChat", info_req, 3.0)) {
-        fmt::ChatItem item;
-        item.id = *id;
-        item.title = info_res->get_string("title").value_or("Chat " + std::to_string(*id));
-        if (auto type_obj = info_res->get_object("type")) {
-          item.type = type_obj->get_string("@type").value_or("chat");
+  for (int64_t id : candidate_ids) {
+    ensure_chat_loaded(id);
+    const std::string info_req = std::format(R"({{"chat_id": {}}})", id);
+    if (auto info_res = client_->send_request("getChat", info_req, 3.0)) {
+      fmt::ChatItem item;
+      item.id = id;
+      item.title = info_res->get_string("title").value_or("Chat " + std::to_string(id));
+      if (auto type_obj = info_res->get_object("type")) {
+        std::string t = type_obj->get_string("@type").value_or("chat");
+        if (t == "chatTypeSupergroup") {
+          item.type = type_obj->get_bool("is_channel").value_or(false) ? "Channel" : "Supergroup";
+        } else if (t == "chatTypeBasicGroup") {
+          item.type = "Basic Group";
+        } else if (t == "chatTypePrivate") {
+          item.type = "Private Chat";
+        } else {
+          item.type = t;
         }
-        item.unread_count = static_cast<int32_t>(info_res->get_int("unread_count").value_or(0));
-        chats.push_back(item);
       }
+      item.unread_count = static_cast<int32_t>(info_res->get_int("unread_count").value_or(0));
+      chats.push_back(item);
+      if (static_cast<int>(chats.size()) >= limit) break;
     }
   }
 
   fmt::Formatter::print_chats(chats, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
+
 
 std::expected<int, std::string>
 App::cmd_search_msgs(const std::vector<std::string> &args) {
@@ -369,36 +412,84 @@ App::cmd_search_users(const std::vector<std::string> &args) {
     }
   }
 
-  const std::string req = std::format(R"({{"query": "{}", "limit": {}}})", query, limit);
-  auto res = client_->send_request("searchContacts", req, 5.0);
-  if (!res) {
-    return std::unexpected("Failed to search contacts: " + res.error());
+  std::vector<int64_t> candidate_user_ids;
+
+  // 1. Search local contacts
+  const std::string escaped_query = escape_json_string(query);
+  const std::string req = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit);
+  if (auto res_contacts = client_->send_request("searchContacts", req, 5.0)) {
+    for (const auto &user_val : res_contacts->get_array("users")) {
+      if (auto id = user_val.as_int64()) {
+        candidate_user_ids.push_back(*id);
+      }
+    }
+  }
+
+  // 2. Query searchPublicChat if handle provided or single word
+  std::string handle = query;
+  if (handle.starts_with('@')) {
+    handle = handle.substr(1);
+  }
+  if (!handle.empty() && handle.find(' ') == std::string::npos) {
+    const std::string pub_user_req = std::format(R"({{"username": "{}"}})", escape_json_string(handle));
+    if (auto chat_res = client_->send_request("searchPublicChat", pub_user_req, 3.0)) {
+      if (auto type_obj = chat_res->get_object("type")) {
+        if (type_obj->get_string("@type").value_or("") == "chatTypePrivate") {
+          if (auto uid = type_obj->get_int("user_id")) {
+            if (std::find(candidate_user_ids.begin(), candidate_user_ids.end(), *uid) == candidate_user_ids.end()) {
+              candidate_user_ids.push_back(*uid);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 3. Query searchPublicChats for user profiles
+  const std::string pub_chats_req = std::format(R"({{"query": "{}"}})", escaped_query);
+  if (auto pub_chats_res = client_->send_request("searchPublicChats", pub_chats_req, 3.0)) {
+    for (const auto &id_val : pub_chats_res->get_array("chat_ids")) {
+      if (auto id = id_val.as_int64()) {
+        const std::string info_req = std::format(R"({{"chat_id": {}}})", *id);
+        if (auto info_res = client_->send_request("getChat", info_req, 3.0)) {
+          if (auto type_obj = info_res->get_object("type")) {
+            if (type_obj->get_string("@type").value_or("") == "chatTypePrivate") {
+              if (auto uid = type_obj->get_int("user_id")) {
+                if (std::find(candidate_user_ids.begin(), candidate_user_ids.end(), *uid) == candidate_user_ids.end()) {
+                  candidate_user_ids.push_back(*uid);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   std::vector<fmt::UserItem> users;
-  for (const auto &user_val : res->get_array("users")) {
-    if (auto id = user_val.as_int64()) {
-      const std::string info_req = std::format(R"({{"user_id": {}}})", *id);
-      if (auto u = client_->send_request("getUser", info_req, 3.0)) {
-        fmt::UserItem item;
-        item.id = *id;
-        item.first_name = u->get_string("first_name").value_or("");
-        item.last_name = u->get_string("last_name").value_or("");
-        item.username = u->get_string("username").value_or("");
-        item.phone_number = u->get_string("phone_number").value_or("");
+  for (int64_t id : candidate_user_ids) {
+    const std::string info_req = std::format(R"({{"user_id": {}}})", id);
+    if (auto u = client_->send_request("getUser", info_req, 3.0)) {
+      fmt::UserItem item;
+      item.id = id;
+      item.first_name = u->get_string("first_name").value_or("");
+      item.last_name = u->get_string("last_name").value_or("");
+      item.username = u->get_string("username").value_or("");
+      item.phone_number = u->get_string("phone_number").value_or("");
 
-        if (auto status_obj = u->get_object("status")) {
-          item.status = status_obj->get_string("@type").value_or("Unknown");
-        }
-
-        users.push_back(item);
+      if (auto status_obj = u->get_object("status")) {
+        item.status = status_obj->get_string("@type").value_or("Unknown");
       }
+
+      users.push_back(item);
+      if (static_cast<int>(users.size()) >= limit) break;
     }
   }
 
   fmt::Formatter::print_users(users, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
+
 
 std::expected<int, std::string>
 App::cmd_search_supergroups(const std::vector<std::string> &args) {
