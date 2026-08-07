@@ -367,9 +367,18 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     return std::unexpected("Unknown file subcommand: " + sub);
   }
 
+  if (cmd == "folder") {
+    if (is_help_requested(sub_args)) {
+      print_folder_help(options_.format);
+      return 0;
+    }
+    return cmd_folder(sub_args);
+  }
+
   if (cmd == "completion") {
     return cmd_completion(sub_args);
   }
+
 
   print_usage();
   return std::unexpected("Unknown command: " + cmd);

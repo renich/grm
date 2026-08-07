@@ -21,6 +21,7 @@ CommandSpec get_chat_spec();
 CommandSpec get_msg_spec();
 CommandSpec get_topic_spec();
 CommandSpec get_file_spec();
+CommandSpec get_folder_spec();
 CommandSpec get_completion_spec();
 
 struct SenderInfo {
@@ -50,6 +51,7 @@ public:
   static void print_msg_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void print_topic_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void print_file_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void print_folder_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static bool is_help_requested(const std::vector<std::string> &args);
   [[nodiscard]] static std::expected<int64_t, std::string>
   parse_since_timestamp(std::string_view raw_str);
@@ -58,6 +60,19 @@ private:
   [[nodiscard]] std::expected<int, std::string> cmd_login();
   [[nodiscard]] std::expected<int, std::string>
   cmd_completion(const std::vector<std::string> &args);
+
+  // Chat Folder Management
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_folder(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_folder_ls(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_folder_create(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_folder_edit(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_folder_delete(const std::vector<std::string> &args);
+
 
   // Chat & Group CRUD
   [[nodiscard]] std::expected<int, std::string>

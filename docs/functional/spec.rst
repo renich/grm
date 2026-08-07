@@ -10,11 +10,12 @@ grm Functional Specification
    specs/file-uploads-and-downloads
    specs/forum-topics-crud
    specs/rich-text-emojis-and-branding
+   specs/chat-folder-management
 
 Overview
 ========
 
-The **grm** (Group & Telegram Manager CLI) utility provides a fast, dependable command-line interface for full CRUD management across Telegram entities: Chats, Private/Public Groups, Channels, Forum Topics, Messages, and File Downloads/Uploads.
+The **grm** (Group & Telegram Manager CLI) utility provides a fast, dependable command-line interface for full CRUD management across Telegram entities: Chats, Private/Public Groups, Channels, Forum Topics, Messages, File Downloads/Uploads, and Chat Folder Organization.
 
 Core Functional Requirements
 ============================
@@ -29,3 +30,5 @@ Core Functional Requirements
 * **[FUNC-010]**: Telegram Rich Text Entity Formatting (Markdown V2 / HTML via TDLib ``parseTextEntities``).
 * **[FUNC-011]**: Supergroup Forum Topic Custom Emoji Icons (``-e | --emoji``).
 * **[FUNC-012]**: Project Branding & Visual Logo Assets (Crystal Shard / Facet Visual Identity).
+* **[FUNC-013]**: Chat Folder Management (Create/List/Edit/Delete chat folders and filter chat listings by folder).
+

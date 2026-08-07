@@ -65,6 +65,7 @@ add_executable(grm
     src/cmd_msg.cpp
     src/cmd_topic.cpp
     src/cmd_file.cpp
+    src/cmd_folder.cpp
     src/cmd_completion.cpp
     src/command_registry.cpp
     src/list_options.cpp
@@ -74,18 +75,10 @@ add_executable(grm
     src/formatter.cpp
 )
 
-
-
-
-
-
 target_link_libraries(grm PRIVATE
     ${TDJSON_LDFLAGS}
     ${JSONC_LIBRARIES}
 )
-
-
-
 
 include(CTest)
 if(BUILD_TESTING)
@@ -106,6 +99,7 @@ add_executable(test_cli_routing
     src/cmd_msg.cpp
     src/cmd_topic.cpp
     src/cmd_file.cpp
+    src/cmd_folder.cpp
     src/cmd_completion.cpp
     src/command_registry.cpp
     src/list_options.cpp
@@ -129,6 +123,7 @@ add_executable(test_completion
     src/cmd_msg.cpp
     src/cmd_topic.cpp
     src/cmd_file.cpp
+    src/cmd_folder.cpp
     src/cmd_completion.cpp
     src/command_registry.cpp
     src/list_options.cpp
@@ -153,6 +148,7 @@ add_executable(test_command_registry
     src/cmd_msg.cpp
     src/cmd_topic.cpp
     src/cmd_file.cpp
+    src/cmd_folder.cpp
     src/cmd_completion.cpp
     src/list_options.cpp
     src/exporter.cpp
@@ -166,6 +162,30 @@ add_executable(test_command_registry
 target_link_libraries(test_command_registry PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
 add_test(NAME test_command_registry COMMAND test_command_registry)
 
+add_executable(test_folder
+    tests/test_folder.cpp
+    src/cmd_folder.cpp
+    src/command_registry.cpp
+    src/app.cpp
+    src/td_client.cpp
+    src/cmd_auth.cpp
+    src/cmd_chat.cpp
+    src/cmd_msg.cpp
+    src/cmd_topic.cpp
+    src/cmd_file.cpp
+    src/cmd_completion.cpp
+    src/list_options.cpp
+    src/exporter.cpp
+    src/uploader.cpp
+    src/downloader.cpp
+    src/formatter.cpp
+    src/config.cpp
+    src/logger.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_folder PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
+add_test(NAME test_folder COMMAND test_folder)
+
 add_executable(test_export
     tests/test_export.cpp
     src/exporter.cpp
@@ -173,6 +193,7 @@ add_executable(test_export
 )
 target_link_libraries(test_export PRIVATE ${JSONC_LIBRARIES})
 add_test(NAME test_export COMMAND test_export)
+
 
 add_executable(test_file
     tests/test_file.cpp

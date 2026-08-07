@@ -475,6 +475,110 @@ void Formatter::print_messages(const std::vector<MessageItem> &messages,
   }
 }
 
+void Formatter::print_folders(const std::vector<ChatFolderSummary> &folders,
+                            OutputFormat format, ColorMode color_mode,
+                            std::ostream &out, bool verbose) {
+  const bool is_tty =
+      (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
+  const OutputFormat fmt = resolve_format(format, is_tty);
+  const bool use_color = should_use_color(color_mode);
+
+  if (fmt == OutputFormat::Json || fmt == OutputFormat::JsonL) {
+    out << "[\n";
+    for (size_t i = 0; i < folders.size(); ++i) {
+      const auto &f = folders[i];
+      out << std::format("  {{\n"
+                         "    \"id\": {},\n"
+                         "    \"title\": \"{}\",\n"
+                         "    \"icon\": \"{}\",\n"
+                         "    \"color_id\": {},\n"
+                         "    \"include_groups\": {},\n"
+                         "    \"include_channels\": {},\n"
+                         "    \"include_bots\": {},\n"
+                         "    \"include_contacts\": {},\n"
+                         "    \"include_non_contacts\": {},\n"
+                         "    \"exclude_muted\": {},\n"
+                         "    \"exclude_read\": {},\n"
+                         "    \"exclude_archived\": {}\n"
+                         "  }}{}",
+                         f.id, escape_json_string(f.title), escape_json_string(f.icon),
+                         f.color_id, f.include_groups ? "true" : "false",
+                         f.include_channels ? "true" : "false", f.include_bots ? "true" : "false",
+                         f.include_contacts ? "true" : "false", f.include_non_contacts ? "true" : "false",
+                         f.exclude_muted ? "true" : "false", f.exclude_read ? "true" : "false",
+                         f.exclude_archived ? "true" : "false",
+                         (i + 1 < folders.size()) ? ",\n" : "\n");
+    }
+    out << "]\n";
+    return;
+  }
+
+  if (fmt == OutputFormat::Markdown) {
+    out << "| Folder ID | Title | Categories | Pinned Chats | Included Chats |\n";
+    out << "|---|---|---|---|---|\n";
+    for (const auto &f : folders) {
+      std::string cats;
+      if (f.include_groups) cats += "Groups ";
+      if (f.include_channels) cats += "Channels ";
+      if (f.include_bots) cats += "Bots ";
+      if (f.include_contacts) cats += "Contacts ";
+      if (f.include_non_contacts) cats += "Non-Contacts ";
+      if (cats.empty()) cats = "Explicit IDs";
+
+      out << std::format("| {} | {} | {} | {} | {} |\n", f.id, f.title, cats,
+                         f.pinned_chat_ids.size(), f.included_chat_ids.size());
+    }
+    return;
+  }
+
+  if (folders.empty()) {
+    out << "[INFO] No chat folders configured.\n";
+    return;
+  }
+
+  out << std::format("{:<6} {:<24} {:<32} {:<12}\n", "ID", "TITLE", "CATEGORIES", "CHATS");
+  out << std::string(76, '-') << "\n";
+
+  for (const auto &f : folders) {
+    std::string cats;
+    if (f.include_groups) cats += "[Groups] ";
+    if (f.include_channels) cats += "[Channels] ";
+    if (f.include_bots) cats += "[Bots] ";
+    if (f.include_contacts) cats += "[Contacts] ";
+    if (f.include_non_contacts) cats += "[NonContacts] ";
+    if (cats.empty()) cats = "[Custom]";
+
+    std::string counts = std::format("{} pinned / {} incl", f.pinned_chat_ids.size(), f.included_chat_ids.size());
+
+    if (use_color) {
+      out << std::format("{}{:<6}{} {}{:<24}{} {}{:<32}{} {}{:<12}{}\n",
+                         COLOR_CYAN, f.id, COLOR_RESET,
+                         COLOR_BOLD, f.title, COLOR_RESET,
+                         COLOR_GREEN, cats, COLOR_RESET,
+                         COLOR_DIM, counts, COLOR_RESET);
+    } else {
+      out << std::format("{:<6} {:<24} {:<32} {:<12}\n", f.id, f.title, cats, counts);
+    }
+
+    if (verbose && (!f.pinned_chat_ids.empty() || !f.included_chat_ids.empty())) {
+      if (!f.pinned_chat_ids.empty()) {
+        out << "       Pinned Chat IDs: ";
+        for (size_t i = 0; i < f.pinned_chat_ids.size(); ++i) {
+          out << (i > 0 ? ", " : "") << f.pinned_chat_ids[i];
+        }
+        out << "\n";
+      }
+      if (!f.included_chat_ids.empty()) {
+        out << "       Included Chat IDs: ";
+        for (size_t i = 0; i < f.included_chat_ids.size(); ++i) {
+          out << (i > 0 ? ", " : "") << f.included_chat_ids[i];
+        }
+        out << "\n";
+      }
+    }
+  }
+}
+
 void Formatter::print_error(const ErrorPayload &err, OutputFormat format,
                             ColorMode color_mode, std::ostream &out) {
   const bool is_tty =
@@ -524,6 +628,8 @@ void Formatter::render(const RenderablePayload &payload,
           print_topics(data, format, color_mode, out, verbose);
         } else if constexpr (std::is_same_v<T, std::vector<MessageItem>>) {
           print_messages(data, format, color_mode, out, verbose);
+        } else if constexpr (std::is_same_v<T, std::vector<ChatFolderSummary>>) {
+          print_folders(data, format, color_mode, out, verbose);
         } else if constexpr (std::is_same_v<T, ErrorPayload>) {
           print_error(data, format, color_mode, out);
         }
@@ -532,3 +638,4 @@ void Formatter::render(const RenderablePayload &payload,
 }
 
 } // namespace grm::fmt
+

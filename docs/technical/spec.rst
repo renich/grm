@@ -8,6 +8,7 @@ grm Technical Architecture
    specs/tdlib-client-architecture
    specs/file-uploader-architecture
    specs/forum-topics-architecture
+   specs/chat-folder-architecture
 
 
 Architectural Blueprint
@@ -42,4 +43,7 @@ Technical Traceability Matrix
 +-------------------+----------------------------+-----------------------+
 | ``[TECH-005]``    | Forum Topics Engine        | ``[FUNC-008]``        |
 +-------------------+----------------------------+-----------------------+
+| ``[TECH-006]``    | Chat Folder Engine         | ``[FUNC-013]``        |
++-------------------+----------------------------+-----------------------+
+
 

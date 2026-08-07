@@ -14,12 +14,14 @@ CommandSpec get_chat_spec() {
       "chat",
       "Manage Telegram chats, groups, and channels",
       {
-          SubcommandSpec{"ls", "[-n|--limit <N>] [-S|--since <time>] [-f|--filter <pattern>]", "List active conversations, groups, channels, and private chats", {
+          SubcommandSpec{"ls", "[-n|--limit <N>] [-S|--since <time>] [-f|--filter <pattern>] [-F|--folder <id>]", "List active conversations, groups, channels, and private chats", {
               OptionSpec{"-n", "--limit", "<N>", "Maximum number of chats to display (default: 100)", {}},
               OptionSpec{"-S", "--since", "<time>", "Filter chats active since duration (e.g. '1 day ago')", {}},
               OptionSpec{"-f", "--filter", "<pattern>", "Filter chats by title or ID pattern filter", {}},
+              OptionSpec{"-F", "--folder", "<id>", "Filter chat listing to specific chat folder ID", {}},
               OptionSpec{"-h", "--help", "", "Show list help message", {}}
           }},
+
           SubcommandSpec{"create", "<group|channel> [--private|--public] \"<title>\"", "Create a new basic group, supergroup, or broadcast channel", {
               OptionSpec{"", "--private", "", "Create as a private chat/channel", {}},
               OptionSpec{"", "--public", "", "Create as a public chat/channel", {}},
@@ -48,7 +50,17 @@ CommandSpec get_chat_spec() {
   };
 }
 
+static std::expected<int32_t, std::string> parse_int32(std::string_view str) {
+  int32_t val = 0;
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), val);
+  if (ec != std::errc{} || ptr != str.data() + str.size()) {
+    return std::unexpected("Invalid integer: " + std::string(str));
+  }
+  return val;
+}
+
 static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
+
   int64_t val = 0;
   auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), val);
   if (ec != std::errc{} || ptr != str.data() + str.size()) {
@@ -89,16 +101,32 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
     }
   }
 
+  int32_t folder_id = -1;
+  for (size_t i = 0; i < args.size(); ++i) {
+    if ((args[i] == "-F" || args[i] == "--folder") && i + 1 < args.size()) {
+      if (auto fid = parse_int32(args[i + 1])) {
+        folder_id = *fid;
+      }
+    }
+  }
+
   if (target_chat_ids.empty()) {
-    auto load_res = client_->send_request("loadChats", R"({"limit": 100})", 5.0);
+    std::string load_req = (folder_id >= 0)
+        ? std::format(R"({{"chat_list": {{"@type": "chatListFolder", "chat_folder_id": {}}}, "limit": 100}})", folder_id)
+        : R"({"limit": 100})";
+    auto load_res = client_->send_request("loadChats", load_req, 5.0);
     if (!load_res) {
       grm::log::debug("loadChats: " + load_res.error());
     }
 
-    auto chats_res = client_->send_request("getChats", R"({"limit": 100})", 10.0);
+    std::string chats_req = (folder_id >= 0)
+        ? std::format(R"({{"chat_list": {{"@type": "chatListFolder", "chat_folder_id": {}}}, "limit": 100}})", folder_id)
+        : R"({"limit": 100})";
+    auto chats_res = client_->send_request("getChats", chats_req, 10.0);
     if (!chats_res) {
       return std::unexpected("Failed to get chats: " + chats_res.error());
     }
+
 
     auto chat_ids = chats_res->get_array("chat_ids");
     for (const auto &id_val : chat_ids) {

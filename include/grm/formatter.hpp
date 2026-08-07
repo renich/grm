@@ -48,6 +48,24 @@ struct MessageItem {
   std::string attachment_type;
 };
 
+struct ChatFolderSummary {
+  int32_t id{0};
+  std::string title;
+  std::string icon;
+  int32_t color_id{-1};
+  bool include_groups{false};
+  bool include_channels{false};
+  bool include_bots{false};
+  bool include_contacts{false};
+  bool include_non_contacts{false};
+  bool exclude_muted{false};
+  bool exclude_read{false};
+  bool exclude_archived{false};
+  std::vector<int64_t> pinned_chat_ids;
+  std::vector<int64_t> included_chat_ids;
+  std::vector<int64_t> excluded_chat_ids;
+};
+
 struct ErrorPayload {
   int code{1};
   std::string error_type;
@@ -57,7 +75,8 @@ struct ErrorPayload {
 
 using RenderablePayload =
     std::variant<std::vector<ChatItem>, std::vector<TopicItem>,
-                 std::vector<MessageItem>, ErrorPayload>;
+                 std::vector<MessageItem>, std::vector<ChatFolderSummary>, ErrorPayload>;
+
 
 [[nodiscard]] std::string_view humanize_chat_type(std::string_view tdlib_type);
 [[nodiscard]] std::string_view
@@ -89,7 +108,14 @@ public:
                              std::ostream &out = std::cout,
                              bool verbose = false);
 
+  static void print_folders(const std::vector<ChatFolderSummary> &folders,
+                            OutputFormat format = OutputFormat::Auto,
+                            ColorMode color_mode = ColorMode::Auto,
+                            std::ostream &out = std::cout,
+                            bool verbose = false);
+
   static void print_error(const ErrorPayload &err,
+
                           OutputFormat format = OutputFormat::Auto,
                           ColorMode color_mode = ColorMode::Auto,
                           std::ostream &out = std::cerr);
