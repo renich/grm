@@ -733,18 +733,22 @@ App::cmd_search_users(const std::vector<std::string> &args) {
     }
   }
 
-  // 5. Query searchPublicChats for public user profiles
-  const std::string pub_chats_req = std::format(R"({{"query": "{}"}})", escaped_query);
-  if (auto pub_chats_res = client_->send_request("searchPublicChats", pub_chats_req, 3.0)) {
-    for (const auto &id_val : pub_chats_res->get_array("chat_ids")) {
-      if (auto id = id_val.as_int64()) {
-        const std::string info_req = std::format(R"({{"chat_id": {}}})", *id);
-        if (auto info_res = client_->send_request("getChat", info_req, 3.0)) {
-          if (auto type_obj = info_res->get_object("type")) {
-            if (type_obj->get_string("@type").value_or("") == "chatTypePrivate") {
-              if (auto uid = type_obj->get_int("user_id")) {
-                if (std::find(candidate_user_ids.begin(), candidate_user_ids.end(), *uid) == candidate_user_ids.end()) {
-                  candidate_user_ids.push_back(*uid);
+  // 5. Query searchPublicChats with query variants for public user profiles
+  std::vector<std::string> user_variants = expand_search_query_variants(query, target_needed);
+  for (const auto &var : user_variants) {
+    if (static_cast<int>(candidate_user_ids.size()) >= target_needed * 2) break;
+    const std::string pub_chats_req = std::format(R"({{"query": "{}"}})", escape_json_string(var));
+    if (auto pub_chats_res = client_->send_request("searchPublicChats", pub_chats_req, 1.0)) {
+      for (const auto &id_val : pub_chats_res->get_array("chat_ids")) {
+        if (auto id = id_val.as_int64()) {
+          const std::string info_req = std::format(R"({{"chat_id": {}}})", *id);
+          if (auto info_res = client_->send_request("getChat", info_req, 0.3)) {
+            if (auto type_obj = info_res->get_object("type")) {
+              if (type_obj->get_string("@type").value_or("") == "chatTypePrivate") {
+                if (auto uid = type_obj->get_int("user_id")) {
+                  if (std::find(candidate_user_ids.begin(), candidate_user_ids.end(), *uid) == candidate_user_ids.end()) {
+                    candidate_user_ids.push_back(*uid);
+                  }
                 }
               }
             }
@@ -754,19 +758,35 @@ App::cmd_search_users(const std::vector<std::string> &args) {
     }
   }
 
-  // 6. Search members inside joined supergroups dynamically until target limit is reached
+  // 6. Global Message Sender Discovery: Extract user IDs from senders of messages matching query
   if (static_cast<int>(candidate_user_ids.size()) < target_needed) {
-    if (auto res_chats = client_->send_request("getChats", R"({"limit": 50})", 0.5)) {
-      int checked_chats = 0;
+    const std::string msg_req = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, std::max(target_needed * 2, 50));
+    if (auto res_msg = client_->send_request("searchMessages", msg_req, 2.0)) {
+      for (const auto &m : res_msg->get_array("messages")) {
+        if (auto sender_obj = m.get_object("sender_id")) {
+          if (sender_obj->get_string("@type").value_or("") == "messageSenderUser") {
+            if (auto uid = sender_obj->get_int("user_id")) {
+              if (std::find(candidate_user_ids.begin(), candidate_user_ids.end(), *uid) == candidate_user_ids.end()) {
+                candidate_user_ids.push_back(*uid);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 7. Search members inside joined supergroups dynamically until target limit is reached
+  if (static_cast<int>(candidate_user_ids.size()) < target_needed) {
+    if (auto res_chats = client_->send_request("getChats", R"({"limit": 100})", 0.5)) {
       for (const auto &id_val : res_chats->get_array("chat_ids")) {
-        if (static_cast<int>(candidate_user_ids.size()) >= target_needed || checked_chats >= 8) break;
+        if (static_cast<int>(candidate_user_ids.size()) >= target_needed * 2) break;
         if (auto cid = id_val.as_int64()) {
           const std::string info_req = std::format(R"({{"chat_id": {}}})", *cid);
           if (auto info_res = client_->send_request("getChat", info_req, 0.1)) {
             if (auto type_obj = info_res->get_object("type")) {
               if (type_obj->get_string("@type").value_or("") == "chatTypeSupergroup") {
                 if (!type_obj->get_bool("is_channel").value_or(false)) {
-                  checked_chats++;
                   const std::string mem_req = std::format(
                       R"({{"chat_id": {}, "query": "{}", "limit": {}}})",
                       *cid, escaped_query, target_needed);
@@ -791,6 +811,7 @@ App::cmd_search_users(const std::vector<std::string> &args) {
       }
     }
   }
+
 
 
   std::vector<fmt::UserItem> users;
