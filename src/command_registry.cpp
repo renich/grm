@@ -341,7 +341,7 @@ _grm_completions() {
   _init_completion || return
 
   local global_opts="-h --help --help=all -V --version -v --verbose -d --debug -q --quiet -c --config -T --test-dc -F --format --color --no-color"
-  local commands="login chat msg topic file completion"
+  local commands="login chat folder search msg topic file completion"
 
   if [[ ${cword} -eq 1 ]]; then
     if [[ "${cur}" == -* ]]; then
@@ -366,7 +366,7 @@ _grm_completions() {
           COMPREPLY=($(compgen -W "ls create info set-title set-desc pin unpin delete" -- "${cur}"))
         fi
       elif [[ "${words[2]}" == "ls" ]]; then
-        COMPREPLY=($(compgen -W "-n --limit -S --since -f --filter -h --help" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-n --limit -S --since -f --filter --folder -h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "create" ]]; then
         if [[ ${cword} -eq 3 ]]; then
           COMPREPLY=($(compgen -W "group channel" -- "${cur}"))
@@ -375,6 +375,30 @@ _grm_completions() {
         fi
       elif [[ "${words[2]}" == "info" || "${words[2]}" == "delete" || "${words[2]}" == "pin" || "${words[2]}" == "unpin" || "${words[2]}" == "set-title" || "${words[2]}" == "set-desc" ]]; then
         COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
+      fi
+      ;;
+    folder)
+      if [[ ${cword} -eq 2 ]]; then
+        if [[ "${cur}" == -* ]]; then
+          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
+        else
+          COMPREPLY=($(compgen -W "ls create edit delete" -- "${cur}"))
+        fi
+      elif [[ "${words[2]}" == "ls" || "${words[2]}" == "create" || "${words[2]}" == "edit" || "${words[2]}" == "delete" ]]; then
+        COMPREPLY=($(compgen -W "-n --limit -h --help" -- "${cur}"))
+      fi
+      ;;
+    search)
+      if [[ ${cword} -eq 2 ]]; then
+        if [[ "${cur}" == -* ]]; then
+          COMPREPLY=($(compgen -W "-n --limit -v --verbose -h --help" -- "${cur}"))
+        else
+          COMPREPLY=($(compgen -W "chats supergroups msgs users files" -- "${cur}"))
+        fi
+      elif [[ "${words[2]}" == "chats" || "${words[2]}" == "supergroups" || "${words[2]}" == "users" || "${words[2]}" == "files" ]]; then
+        COMPREPLY=($(compgen -W "-n --limit -v --verbose -h --help" -- "${cur}"))
+      elif [[ "${words[2]}" == "msgs" ]]; then
+        COMPREPLY=($(compgen -W "-c --chat -n --limit -v --verbose -h --help" -- "${cur}"))
       fi
       ;;
     msg)
@@ -472,6 +496,8 @@ _grm() {
   commands=(
     'login:Authenticate Telegram account'
     'chat:Manage Telegram chats, groups, and channels'
+    'folder:Manage chat folders and custom filters'
+    'search:Universal cross-domain search across chats, supergroups, users, messages, and files'
     'msg:Inspect, send, edit, search, pin, and export messages'
     'topic:Manage supergroup forum topics'
     'file:Download media and file attachments'
@@ -498,6 +524,12 @@ _grm() {
       ;;
     args)
       case $words[1] in
+        folder)
+          _arguments '1:subcommand:(ls create edit delete)'
+          ;;
+        search)
+          _arguments '1:subcommand:(chats supergroups msgs users files)'
+          ;;
         file)
           _arguments '1:subcommand:(get)'
           ;;
@@ -519,15 +551,15 @@ _grm "$@"
     ss << R"(# Fish completion script for grm
 complete -c grm -f -n '__fish_use_subcommand' -a 'login' -d 'Authenticate Telegram account'
 complete -c grm -f -n '__fish_use_subcommand' -a 'chat' -d 'Manage Telegram chats'
-complete -c grm -f -n '__fish_use_subcommand' -a 'msg' -d 'Manage messages'
-complete -c grm -f -n '__fish_use_subcommand' -a 'topic' -d 'Manage forum topics'
-complete -c grm -f -n '__fish_use_subcommand' -a 'file' -d 'Download attachments'
+complete -c grm -f -n '__fish_use_subcommand' -a 'folder' -d 'Manage chat folders'
 complete -c grm -f -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell autocompletion script'
 )";
     return ss.str();
   }
 
+
   return "";
 }
 
 } // namespace grm
+
