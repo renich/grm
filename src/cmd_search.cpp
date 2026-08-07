@@ -384,8 +384,9 @@ static ResolvedChatItems resolve_chat_candidates(
   // 3. Query searchPublicChats with query variants for global public chats/channels/supergroups
   std::vector<std::string> search_variants = expand_search_query_variants(query, limit);
   for (const auto &var : search_variants) {
+    if (static_cast<int>(candidate_ids.size()) >= limit * 3) break;
     const std::string req_pub = std::format(R"({{"query": "{}"}})", escape_json_string(var));
-    if (auto res_pub = client->send_request("searchPublicChats", req_pub, 1.0)) {
+    if (auto res_pub = client->send_request("searchPublicChats", req_pub, 0.15)) {
       for (const auto &id_val : res_pub->get_array("chat_ids")) {
         if (auto id = id_val.as_int64()) {
           if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
@@ -396,8 +397,6 @@ static ResolvedChatItems resolve_chat_candidates(
     }
   }
 
-
-
   // 4. Query searchPublicChat if single word or handle provided
   std::string handle = query;
   if (handle.starts_with('@')) {
@@ -405,7 +404,7 @@ static ResolvedChatItems resolve_chat_candidates(
   }
   if (!handle.empty() && handle.find(' ') == std::string::npos) {
     const std::string pub_chat_req = std::format(R"({{"username": "{}"}})", escape_json_string(handle));
-    if (auto chat_res = client->send_request("searchPublicChat", pub_chat_req, 2.0)) {
+    if (auto chat_res = client->send_request("searchPublicChat", pub_chat_req, 1.0)) {
       if (auto id = chat_res->get_int("id")) {
         if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
           candidate_ids.push_back(*id);
@@ -414,48 +413,36 @@ static ResolvedChatItems resolve_chat_candidates(
     }
   }
 
-  // 5. Query getChats and filter joined chat titles locally across up to 500 chats
-  const int get_chats_limit = std::max(limit * 5, 500);
-  const std::string get_chats_req = std::format(R"({{"limit": {}}})", get_chats_limit);
-  if (auto res_get = client->send_request("getChats", get_chats_req, 2.0)) {
-    std::string lower_query = query;
-    std::transform(lower_query.begin(), lower_query.end(), lower_query.begin(), ::tolower);
-    for (const auto &id_val : res_get->get_array("chat_ids")) {
-      if (auto id = id_val.as_int64()) {
-        if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
-          const std::string info_req = std::format(R"({{"chat_id": {}}})", *id);
-          if (auto info_res = client->send_request("getChat", info_req, 0.3)) {
-            std::string title = info_res->get_string("title").value_or("");
-            std::string lower_title = title;
-            std::transform(lower_title.begin(), lower_title.end(), lower_title.begin(), ::tolower);
-            if (lower_title.find(lower_query) != std::string::npos) {
-              candidate_ids.push_back(*id);
-            }
-          }
-        }
-      }
-    }
-  }
+  // 5. Global Message Discovery: Paginate searchMessages to discover active chats & channels discussing query
+  int64_t from_msg_id = 0;
+  int64_t from_c_id = 0;
+  for (int p = 0; p < 3; ++p) {
+    if (static_cast<int>(candidate_ids.size()) >= limit * 3) break;
+    const std::string msg_req = std::format(
+        R"({{"query": "{}", "offset_chat_id": {}, "offset_message_id": {}, "limit": 100}})",
+        escaped_query, from_c_id, from_msg_id);
+    auto res_msg = client->send_request("searchMessages", msg_req, 1.5);
+    if (!res_msg) break;
 
-  // 6. Global Message Discovery: Search messages to discover active chats/channels discussing query
-  const std::string msg_req = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, std::max(limit * 3, 50));
-  if (auto res_msg = client->send_request("searchMessages", msg_req, 3.0)) {
-    for (const auto &m : res_msg->get_array("messages")) {
+    auto msgs_arr = res_msg->get_array("messages");
+    if (msgs_arr.empty()) break;
+
+    for (const auto &m : msgs_arr) {
       if (auto cid = m.get_int("chat_id")) {
         if (std::find(candidate_ids.begin(), candidate_ids.end(), *cid) == candidate_ids.end()) {
           candidate_ids.push_back(*cid);
         }
       }
+      from_msg_id = m.get_int("id").value_or(0);
+      from_c_id = m.get_int("chat_id").value_or(0);
     }
   }
-
-
 
   ResolvedChatItems result;
   for (int64_t id : candidate_ids) {
     ensure_chat_loaded_fn(id);
     const std::string info_req = std::format(R"({{"chat_id": {}}})", id);
-    if (auto info_res = client->send_request("getChat", info_req, 2.0)) {
+    if (auto info_res = client->send_request("getChat", info_req, 0.5)) {
       fmt::ChatItem item;
       item.id = id;
       item.title = info_res->get_string("title").value_or("Chat " + std::to_string(id));
@@ -484,23 +471,18 @@ static ResolvedChatItems resolve_chat_candidates(
       item.unread_count = static_cast<int32_t>(info_res->get_int("unread_count").value_or(0));
 
       if (is_supergroup) {
-        if (static_cast<int>(result.supergroups.size()) < limit) {
-          result.supergroups.push_back(item);
-        }
+        result.supergroups.push_back(item);
       } else if (is_channel) {
-        if (static_cast<int>(result.channels.size()) < limit) {
-          result.channels.push_back(item);
-        }
+        result.channels.push_back(item);
       } else {
-        if (static_cast<int>(result.chats.size()) < limit) {
-          result.chats.push_back(item);
-        }
+        result.chats.push_back(item);
       }
     }
   }
 
   return result;
 }
+
 
 std::expected<int, std::string>
 App::cmd_search_chats(const std::vector<std::string> &args) {
