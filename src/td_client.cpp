@@ -46,13 +46,11 @@ void TdClient::stop() {
     return;
   }
 
+  is_running_ = false;
+
   if (client_id_ >= 0) {
     send_async("close", "{}");
   }
-
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-  is_running_ = false;
 
   if (receiver_thread_.joinable()) {
     receiver_thread_.join();
@@ -73,7 +71,7 @@ void TdClient::send_async(const std::string &type,
 
   json_object *raw_obj = json_tokener_parse(std::string(payload_json).c_str());
   if (!raw_obj || !json_object_is_type(raw_obj, json_type_object)) {
-    if (raw_obj) json_object_put(raw_obj);
+    if (raw_obj) json_c_put(raw_obj);
     raw_obj = json_object_new_object();
   }
 
@@ -83,7 +81,7 @@ void TdClient::send_async(const std::string &type,
   const char *str =
       json_object_to_json_string_ext(raw_obj, JSON_C_TO_STRING_PLAIN);
   td_send(client_id_, str);
-  json_object_put(raw_obj);
+  json_c_put(raw_obj);
 }
 
 std::expected<JsonValue, std::string>
@@ -112,7 +110,7 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
     json_object_object_foreach(parsed->raw(), key, val) {
       if (std::string_view(key) != "@type" &&
           std::string_view(key) != "@extra") {
-        json_object_object_add(raw_obj, key, json_object_get(val));
+        json_object_object_add(raw_obj, key, json_c_get(val));
       }
     }
   }
@@ -122,7 +120,7 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
   grm::log::debug("TD_SEND: " + std::string(str));
   td_send(client_id_, str);
 
-  json_object_put(raw_obj);
+  json_c_put(raw_obj);
 
   const auto status =
       fut.wait_for(std::chrono::duration<double>(timeout_seconds));

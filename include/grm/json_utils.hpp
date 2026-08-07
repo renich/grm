@@ -54,4 +54,7 @@ private:
 
 [[nodiscard]] std::string escape_json_string(std::string_view input);
 
+json_object *json_c_get(json_object *obj);
+void json_c_put(json_object *obj);
+
 } // namespace grm

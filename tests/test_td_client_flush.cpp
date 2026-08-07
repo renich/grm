@@ -26,8 +26,8 @@ void test_td_client_flush_timing() {
 
   auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count();
   
-  // Verify that TdClient::stop waits at least 1000ms to allow TDLib async request flush
-  check(elapsed_ms >= 1000, "TdClient::stop held execution for network queue flush (>= 1000ms)");
+  // Verify that TdClient::stop shuts down cleanly and quickly (< 1000ms)
+  check(elapsed_ms < 1000, "TdClient::stop shut down cleanly (< 1000ms)");
   std::cout << "[PASS] test_td_client_flush_timing (elapsed: " << elapsed_ms << "ms)\n";
 }
 

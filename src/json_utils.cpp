@@ -2,27 +2,47 @@
 #include <format>
 #include <json-c/json.h>
 
+#include <mutex>
+
 namespace grm {
+
+namespace {
+std::mutex g_json_c_mutex;
+} // namespace
+
+json_object *json_c_get(json_object *obj) {
+  if (!obj)
+    return nullptr;
+  std::lock_guard<std::mutex> lock(g_json_c_mutex);
+  return json_object_get(obj);
+}
+
+void json_c_put(json_object *obj) {
+  if (!obj)
+    return;
+  std::lock_guard<std::mutex> lock(g_json_c_mutex);
+  json_object_put(obj);
+}
 
 JsonValue::JsonValue() = default;
 
 JsonValue::JsonValue(json_object *raw_obj, bool take_ownership)
     : obj_(raw_obj) {
   if (obj_ && !take_ownership) {
-    json_object_get(obj_);
+    json_c_get(obj_);
   }
 }
 
 JsonValue::~JsonValue() {
   if (obj_) {
-    json_object_put(obj_);
+    json_c_put(obj_);
     obj_ = nullptr;
   }
 }
 
 JsonValue::JsonValue(const JsonValue &other) {
   if (other.obj_) {
-    obj_ = json_object_get(other.obj_);
+    obj_ = json_c_get(other.obj_);
   } else {
     obj_ = nullptr;
   }
@@ -31,10 +51,10 @@ JsonValue::JsonValue(const JsonValue &other) {
 JsonValue &JsonValue::operator=(const JsonValue &other) {
   if (this != &other) {
     if (obj_) {
-      json_object_put(obj_);
+      json_c_put(obj_);
     }
     if (other.obj_) {
-      obj_ = json_object_get(other.obj_);
+      obj_ = json_c_get(other.obj_);
     } else {
       obj_ = nullptr;
     }
@@ -49,7 +69,7 @@ JsonValue::JsonValue(JsonValue &&other) noexcept : obj_(other.obj_) {
 JsonValue &JsonValue::operator=(JsonValue &&other) noexcept {
   if (this != &other) {
     if (obj_) {
-      json_object_put(obj_);
+      json_c_put(obj_);
     }
     obj_ = other.obj_;
     other.obj_ = nullptr;
@@ -72,7 +92,7 @@ JsonValue::parse(std::string_view json_str) {
 
   if (err != json_tokener_success || !parsed) {
     if (parsed) {
-      json_object_put(parsed);
+      json_c_put(parsed);
     }
     return std::unexpected("JSON parse error: " +
                            std::string(json_tokener_error_desc(err)));
