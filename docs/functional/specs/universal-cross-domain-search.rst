@@ -29,5 +29,15 @@ Requirements
 -------------------
 
 * `-n, --limit <count>`: Maximum number of search results to return per domain (default: 20).
+* `-o, --offset <count>`: Offset starting result index (default: 0).
 * `-c, --chat <chat_id>`: Restricts message search to a specific chat.
 * `-v, --verbose`: Includes extended metadata (e.g., chat IDs, message IDs, user handles).
+
+Specification Status: In Progress / Unresolved
+=============================================
+
+.. note::
+
+   **Status: In Progress / Unresolved**
+
+   This specification remains active and unclosed. While initial candidate gathering, multi-domain search, and offset pagination have been implemented, performance optimization (Asynchronous Parallel RPC Gathering) and output streaming (Progressive Output Streaming) remain active open items. The spec MUST NOT be marked fully complete until sub-second time-to-first-result and explosive result volume (100+ public chats) are achieved.

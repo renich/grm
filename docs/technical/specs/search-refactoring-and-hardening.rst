@@ -104,3 +104,22 @@ Branch Strategy
 7. Run ``make doc-check`` (verify zero rstcheck errors).
 8. Execute live account verification against Telegram account.
 9. Commit using Conventional Commits trailers and push to remotes.
+
+Unresolved Architectural Items & Future Optimization Roadmap
+============================================================
+
+.. note::
+
+   **Status: In Progress / Unresolved**
+
+   While initial multi-domain search and offset pagination have been integrated, the search subsystem contains active architectural limitations currently undergoing design review:
+
+1. **Sequential Network Latency (6s-10s Time-To-First-Result)**:
+   Candidate gathering currently executes TDLib RPC calls in serial `for` loops on a single thread. Future refactoring MUST transition to **Asynchronous Parallel RPC Gathering** using thread worker pools to collapse network latency to under 1.0s.
+
+2. **Progressive Output Streaming**:
+   CLI table output currently waits for the full batch (e.g. `-n 100`) to resolve in memory before printing. Future versions MUST stream matching result rows to `stdout` progressively as responses arrive, achieving time-to-first-result under 200ms.
+
+3. **Global Public Directory Supergroup Indexing**:
+   Telegram's backend caps public directory queries (`searchPublicChats`) per keyword. Expanded handle extraction and linked discussion group resolution must be further extended to reach 100+ public discussion supergroups per query.
+
