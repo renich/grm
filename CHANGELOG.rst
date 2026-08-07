@@ -9,6 +9,28 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 [Unreleased]
 ============
 
+.. rubric:: Added
+
+* Universal Cross-Domain Search CLI suite (``grm search``, ``grm search chats``, ``supergroups``, ``channels``, ``users``, ``msgs``, ``files``) supporting keyword search, query stemming, offset pagination (``-o`` / ``--offset``), limit controls (``-n`` / ``--limit``), and chat-scoped filtering (``--chat <id>``).
+* Public Handle Extraction in candidate chat resolution: automatically parses ``@username`` and ``t.me/`` links from global message text to populate directory results for generic terms like ``movie``, ``crypto``, and ``linux``.
+* Deep Alphabet Suffix Probing for public channel and user discovery.
+* Thread-safe ``json_c_get`` and ``json_c_put`` helpers in ``include/grm/json_utils.hpp`` wrapping json-c reference counting in a global mutex to guarantee thread-safe execution across background threads.
+* Terminal Echo Protection via RAII ``TermiosGuard`` struct in ``src/cmd_auth.cpp``, ensuring terminal ECHO flags are guaranteed to be restored on early returns or exceptions.
+
+.. rubric:: Changed
+
+* Updated ``main.cpp`` flag forwarding logic to preserve short option flags (such as ``-p``) for subcommands without swallowing.
+* Improved ``TdClient::stop()`` shutdown sequence to prevent ``td_receive`` calls on closed client instances.
+* Replaced direct throwing ``std::stoll`` in ``parse_search_args`` with non-throwing ``parse_int64`` (``std::from_chars``) to prevent crash hazards on invalid CLI arguments.
+* Reduced fallback chat folder probe loop timeout in ``cmd_folder_ls`` from 1.5s to 0.1s over top 10 folder IDs to eliminate blocking delays.
+
+.. rubric:: Fixed
+
+* Resolved ``free(): double free detected in tcache 2`` runtime crash on exit by thread-guarding json-c reference counts and ordering thread cleanup before client teardown.
+* Fixed missing ``deleteMessages`` API request dispatch in ``App::cmd_msg_delete``, ensuring message deletions are sent to Telegram servers before logging success.
+* Added inline flag parsing support for ``--folder=<id>`` and ``-F=<id>`` in ``cmd_chat_ls``.
+* Fixed RFC 8259 compliance in ``escape_json_string`` by formatting ASCII control characters (``< 0x20``) as ``\u00XX`` hex unicode escape sequences.
+
 [0.6.0] — 2026-08-06
 ====================
 

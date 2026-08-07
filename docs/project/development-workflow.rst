@@ -40,9 +40,10 @@ When introducing a new CLI subcommand, flag, or core subsystem to **grm**, follo
   * Programmatic JSON help (`grm -F json --help` and `grm -F json <cmd> --help`).
   * Introspective shell completions (`grm completion bash|zsh|fish`).
 
-4. Documentation Synchronization
---------------------------------
+4. Documentation & Changelog Synchronization
+-------------------------------------------
 
+* Update **Changelog**: Document all user-facing additions, changes, and fixes under the `[Unreleased]` section of `CHANGELOG.rst` following Keep a Changelog 1.1.0 guidelines.
 * Update **Man Page**: Document all new flags, subcommands, and usage examples in `docs/man/grm.1.rst`.
 * Update **User Guide**: Add detailed subcommand tutorials in `docs/user/grm.rst`.
 * Update **README**: Add a succinct, high-level entry in `README.rst` keeping descriptions generalized.
@@ -131,18 +132,21 @@ Bug repairs must be practical, root-cause focused, and rapid while maintaining q
 
      make check
 
-5. Documentation Alignment
---------------------------
+5. Documentation & Changelog Synchronization
+-------------------------------------------
 
+* Document the bug resolution under `.. rubric:: Fixed` in `CHANGELOG.rst`.
 * If the bugfix altered option flags, defaults, or behavior, update `CommandRegistry`, `docs/man/grm.1.rst`, and `docs/user/grm.rst`.
+* Verify documentation syntax with `make doc-check`.
 
 6. Local User Installation & Live Verification
 ----------------------------------------------
 
-* Run `make install-user` and verify the fix against live account scenarios.
+* Install updated binary to user home (`make install-user`).
+* Execute live verification tests against real environment to confirm resolution.
 
-7. Linting & Conventional Commit
---------------------------------
+7. Commit & Merge Procedure
+---------------------------
 
-* Run `make lint` and `make doc-check`.
-* Commit using `fix(<scope>): description`, push branch, and merge.
+* Commit using **Conventional Commits**: `fix(<scope>): description`.
+* Rebase locally against `master` and fast-forward merge into `master`.
