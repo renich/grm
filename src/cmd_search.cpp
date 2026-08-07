@@ -451,11 +451,14 @@ App::cmd_search_users(const std::vector<std::string> &args) {
   int limit = sargs.limit;
   bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
 
-  std::vector<int64_t> candidate_user_ids;
+  // 1. Warm TDLib chat cache
+  (void)client_->send_request("loadChats", R"({"limit": 100})", 3.0);
 
-  // 1. Search local contacts
+  std::vector<int64_t> candidate_user_ids;
   const std::string escaped_query = escape_json_string(query);
-  const std::string req = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit);
+
+  // 2. Search local contacts
+  const std::string req = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
   if (auto res_contacts = client_->send_request("searchContacts", req, 5.0)) {
     for (const auto &user_val : res_contacts->get_array("users")) {
       if (auto id = user_val.as_int64()) {
@@ -464,7 +467,28 @@ App::cmd_search_users(const std::vector<std::string> &args) {
     }
   }
 
-  // 2. Query searchPublicChat if handle provided or single word
+  // 3. Query searchChatsOnServer for private user chats
+  const std::string req_server = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
+  if (auto res_server = client_->send_request("searchChatsOnServer", req_server, 5.0)) {
+    for (const auto &id_val : res_server->get_array("chat_ids")) {
+      if (auto cid = id_val.as_int64()) {
+        const std::string info_req = std::format(R"({{"chat_id": {}}})", *cid);
+        if (auto info_res = client_->send_request("getChat", info_req, 3.0)) {
+          if (auto type_obj = info_res->get_object("type")) {
+            if (type_obj->get_string("@type").value_or("") == "chatTypePrivate") {
+              if (auto uid = type_obj->get_int("user_id")) {
+                if (std::find(candidate_user_ids.begin(), candidate_user_ids.end(), *uid) == candidate_user_ids.end()) {
+                  candidate_user_ids.push_back(*uid);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 4. Query searchPublicChat if handle provided or single word
   std::string handle = query;
   if (handle.starts_with('@')) {
     handle = handle.substr(1);
@@ -484,7 +508,7 @@ App::cmd_search_users(const std::vector<std::string> &args) {
     }
   }
 
-  // 3. Query searchPublicChats for user profiles
+  // 5. Query searchPublicChats for public user profiles
   const std::string pub_chats_req = std::format(R"({{"query": "{}"}})", escaped_query);
   if (auto pub_chats_res = client_->send_request("searchPublicChats", pub_chats_req, 3.0)) {
     for (const auto &id_val : pub_chats_res->get_array("chat_ids")) {
@@ -505,8 +529,8 @@ App::cmd_search_users(const std::vector<std::string> &args) {
     }
   }
 
-  // 4. Search members inside joined supergroups (searchChatMembers)
-  if (auto res_chats = client_->send_request("searchChats", R"({"limit": 50})", 3.0)) {
+  // 6. Search members inside joined supergroups (searchChatMembers)
+  if (auto res_chats = client_->send_request("getChats", R"({"limit": 100})", 3.0)) {
     for (const auto &id_val : res_chats->get_array("chat_ids")) {
       if (auto cid = id_val.as_int64()) {
         const std::string mem_req = std::format(
@@ -548,6 +572,7 @@ App::cmd_search_users(const std::vector<std::string> &args) {
       if (static_cast<int>(users.size()) >= limit) break;
     }
   }
+
 
   fmt::Formatter::print_users(users, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
