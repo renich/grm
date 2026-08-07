@@ -275,6 +275,101 @@ App::cmd_search(const std::vector<std::string> &args) {
 
 }
 
+struct ResolvedChatItems {
+  std::vector<fmt::ChatItem> chats;
+  std::vector<fmt::ChatItem> supergroups;
+};
+
+static ResolvedChatItems resolve_chat_candidates(
+    TdClient *client,
+    const std::string &query,
+    int limit,
+    std::function<void(int64_t)> ensure_chat_loaded_fn) {
+
+  (void)client->send_request("loadChats", R"({"limit": 100})", 0.5);
+
+  const std::string escaped_query = escape_json_string(query);
+  std::vector<int64_t> candidate_ids;
+
+  // 1. Query searchChats (local database)
+  const std::string req_local = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
+  if (auto res_local = client->send_request("searchChats", req_local, 2.0)) {
+    for (const auto &id_val : res_local->get_array("chat_ids")) {
+      if (auto id = id_val.as_int64()) {
+        candidate_ids.push_back(*id);
+      }
+    }
+  }
+
+  // 2. Query searchChatsOnServer (server-side joined chat search)
+  const std::string req_server = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
+  if (auto res_server = client->send_request("searchChatsOnServer", req_server, 2.0)) {
+    for (const auto &id_val : res_server->get_array("chat_ids")) {
+      if (auto id = id_val.as_int64()) {
+        if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
+          candidate_ids.push_back(*id);
+        }
+      }
+    }
+  }
+
+  // 3. Query searchPublicChats (global public chats/channels/supergroups)
+  const std::string req_pub = std::format(R"({{"query": "{}"}})", escaped_query);
+  if (auto res_pub = client->send_request("searchPublicChats", req_pub, 2.0)) {
+    for (const auto &id_val : res_pub->get_array("chat_ids")) {
+      if (auto id = id_val.as_int64()) {
+        if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
+          candidate_ids.push_back(*id);
+        }
+      }
+    }
+  }
+
+  ResolvedChatItems result;
+  for (int64_t id : candidate_ids) {
+    ensure_chat_loaded_fn(id);
+    const std::string info_req = std::format(R"({{"chat_id": {}}})", id);
+    if (auto info_res = client->send_request("getChat", info_req, 2.0)) {
+      fmt::ChatItem item;
+      item.id = id;
+      item.title = info_res->get_string("title").value_or("Chat " + std::to_string(id));
+      bool is_supergroup = false;
+
+      if (auto type_obj = info_res->get_object("type")) {
+        std::string t = type_obj->get_string("@type").value_or("chat");
+        if (t == "chatTypeSupergroup") {
+          bool is_channel = type_obj->get_bool("is_channel").value_or(false);
+          if (!is_channel) {
+            is_supergroup = true;
+            item.type = type_obj->get_bool("is_forum").value_or(false) ? "Forum Supergroup" : "Supergroup";
+          } else {
+            item.type = "Channel";
+          }
+        } else if (t == "chatTypeBasicGroup") {
+          item.type = "Basic Group";
+        } else if (t == "chatTypePrivate") {
+          item.type = "Private Chat";
+        } else {
+          item.type = t;
+        }
+      }
+      item.unread_count = static_cast<int32_t>(info_res->get_int("unread_count").value_or(0));
+
+      if (is_supergroup) {
+        if (static_cast<int>(result.supergroups.size()) < limit) {
+          result.supergroups.push_back(item);
+        }
+      } else {
+        if (static_cast<int>(result.chats.size()) < limit) {
+          result.chats.push_back(item);
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
 std::expected<int, std::string>
 App::cmd_search_chats(const std::vector<std::string> &args) {
   if (args.empty() || is_help_requested(args)) {
@@ -292,80 +387,42 @@ App::cmd_search_chats(const std::vector<std::string> &args) {
     return 0;
   }
 
-  const std::string &query = sargs.query;
-  int limit = sargs.limit;
   bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
+  ResolvedChatItems res_items = resolve_chat_candidates(client_.get(), sargs.query, sargs.limit, [this](int64_t id) { ensure_chat_loaded(id); });
 
-  // 1. Warm TDLib memory cache
-  (void)client_->send_request("loadChats", R"({"limit": 100})", 3.0);
-
-  const std::string escaped_query = escape_json_string(query);
-  std::vector<int64_t> candidate_ids;
-
-  // 2. Query searchChats (local database)
-  const std::string req_local = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
-  if (auto res_local = client_->send_request("searchChats", req_local, 5.0)) {
-    for (const auto &id_val : res_local->get_array("chat_ids")) {
-      if (auto id = id_val.as_int64()) {
-        candidate_ids.push_back(*id);
-      }
-    }
+  std::vector<fmt::ChatItem> combined = res_items.chats;
+  combined.insert(combined.end(), res_items.supergroups.begin(), res_items.supergroups.end());
+  if (static_cast<int>(combined.size()) > sargs.limit) {
+    combined.resize(sargs.limit);
   }
 
-  // 3. Query searchChatsOnServer (server-side joined chat search)
-  const std::string req_server = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
-  if (auto res_server = client_->send_request("searchChatsOnServer", req_server, 5.0)) {
-    for (const auto &id_val : res_server->get_array("chat_ids")) {
-      if (auto id = id_val.as_int64()) {
-        if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
-          candidate_ids.push_back(*id);
-        }
-      }
-    }
-  }
-
-  // 4. Query searchPublicChats (global public chats/channels/supergroups)
-  const std::string req_pub = std::format(R"({{"query": "{}"}})", escaped_query);
-  if (auto res_pub = client_->send_request("searchPublicChats", req_pub, 5.0)) {
-    for (const auto &id_val : res_pub->get_array("chat_ids")) {
-      if (auto id = id_val.as_int64()) {
-        if (std::find(candidate_ids.begin(), candidate_ids.end(), *id) == candidate_ids.end()) {
-          candidate_ids.push_back(*id);
-        }
-      }
-    }
-  }
-
-  std::vector<fmt::ChatItem> chats;
-  for (int64_t id : candidate_ids) {
-    ensure_chat_loaded(id);
-    const std::string info_req = std::format(R"({{"chat_id": {}}})", id);
-    if (auto info_res = client_->send_request("getChat", info_req, 3.0)) {
-      fmt::ChatItem item;
-      item.id = id;
-      item.title = info_res->get_string("title").value_or("Chat " + std::to_string(id));
-      if (auto type_obj = info_res->get_object("type")) {
-        std::string t = type_obj->get_string("@type").value_or("chat");
-        if (t == "chatTypeSupergroup") {
-          item.type = type_obj->get_bool("is_channel").value_or(false) ? "Channel" : "Supergroup";
-        } else if (t == "chatTypeBasicGroup") {
-          item.type = "Basic Group";
-        } else if (t == "chatTypePrivate") {
-          item.type = "Private Chat";
-        } else {
-          item.type = t;
-        }
-      }
-      item.unread_count = static_cast<int32_t>(info_res->get_int("unread_count").value_or(0));
-      chats.push_back(item);
-      if (static_cast<int>(chats.size()) >= limit) break;
-    }
-  }
-
-  fmt::Formatter::print_chats(chats, options_.format, options_.color_mode, std::cout, verbose);
+  fmt::Formatter::print_chats(combined, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
 
+std::expected<int, std::string>
+App::cmd_search_supergroups(const std::vector<std::string> &args) {
+  if (args.empty() || is_help_requested(args)) {
+    print_search_help(options_.format);
+    return 0;
+  }
+
+  if (auto res = ensure_authenticated(); !res) {
+    return std::unexpected(res.error());
+  }
+
+  SearchArgs sargs = parse_search_args(args, 20);
+  if (sargs.query.empty()) {
+    print_search_help(options_.format);
+    return 0;
+  }
+
+  bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
+  ResolvedChatItems res_items = resolve_chat_candidates(client_.get(), sargs.query, sargs.limit, [this](int64_t id) { ensure_chat_loaded(id); });
+
+  fmt::Formatter::print_chats(res_items.supergroups, options_.format, options_.color_mode, std::cout, verbose);
+  return 0;
+}
 
 std::expected<int, std::string>
 App::cmd_search_msgs(const std::vector<std::string> &args) {
@@ -470,7 +527,6 @@ App::cmd_search_users(const std::vector<std::string> &args) {
   // 3. Query searchChatsOnServer for private user chats
   const std::string req_server = std::format(R"({{"query": "{}", "limit": {}}})", escaped_query, limit * 2);
   if (auto res_server = client_->send_request("searchChatsOnServer", req_server, 1.5)) {
-
     for (const auto &id_val : res_server->get_array("chat_ids")) {
       if (auto cid = id_val.as_int64()) {
         const std::string info_req = std::format(R"({{"chat_id": {}}})", *cid);
@@ -564,8 +620,6 @@ App::cmd_search_users(const std::vector<std::string> &args) {
     }
   }
 
-
-
   std::vector<fmt::UserItem> users;
   for (int64_t id : candidate_user_ids) {
     const std::string info_req = std::format(R"({{"user_id": {}}})", id);
@@ -586,83 +640,11 @@ App::cmd_search_users(const std::vector<std::string> &args) {
     }
   }
 
-
   fmt::Formatter::print_users(users, options_.format, options_.color_mode, std::cout, verbose);
   return 0;
 }
 
-std::expected<int, std::string>
-App::cmd_search_supergroups(const std::vector<std::string> &args) {
-  if (args.empty() || is_help_requested(args)) {
-    print_search_help(options_.format);
-    return 0;
-  }
 
-  if (auto res = ensure_authenticated(); !res) {
-    return std::unexpected(res.error());
-  }
-
-  SearchArgs sargs = parse_search_args(args, 20);
-  if (sargs.query.empty()) {
-    print_search_help(options_.format);
-    return 0;
-  }
-
-  const std::string &query = sargs.query;
-  int limit = sargs.limit;
-  bool verbose = sargs.verbose || (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
-
-
-  std::vector<int64_t> candidate_chat_ids;
-
-  // Search local/joined chats
-  const std::string local_req = std::format(R"({{"query": "{}", "limit": {}}})", query, limit * 2);
-  if (auto res = client_->send_request("searchChats", local_req, 5.0)) {
-    for (const auto &id_val : res->get_array("chat_ids")) {
-      if (auto id = id_val.as_int64()) {
-        candidate_chat_ids.push_back(*id);
-      }
-    }
-  }
-
-  // Search public global chats
-  const std::string pub_req = std::format(R"({{"query": "{}"}})", query);
-  if (auto res = client_->send_request("searchPublicChats", pub_req, 5.0)) {
-    for (const auto &id_val : res->get_array("chat_ids")) {
-      if (auto id = id_val.as_int64()) {
-        if (std::find(candidate_chat_ids.begin(), candidate_chat_ids.end(), *id) == candidate_chat_ids.end()) {
-          candidate_chat_ids.push_back(*id);
-        }
-      }
-    }
-  }
-
-  std::vector<fmt::ChatItem> supergroups;
-  for (int64_t id : candidate_chat_ids) {
-    ensure_chat_loaded(id);
-    const std::string info_req = std::format(R"({{"chat_id": {}}})", id);
-    if (auto info_res = client_->send_request("getChat", info_req, 3.0)) {
-      if (auto type_obj = info_res->get_object("type")) {
-        std::string type_name = type_obj->get_string("@type").value_or("");
-        if (type_name == "chatTypeSupergroup") {
-          bool is_channel = type_obj->get_bool("is_channel").value_or(false);
-          if (!is_channel) {
-            fmt::ChatItem item;
-            item.id = id;
-            item.title = info_res->get_string("title").value_or("Supergroup " + std::to_string(id));
-            item.type = type_obj->get_bool("is_forum").value_or(false) ? "Forum Supergroup" : "Supergroup";
-            item.unread_count = static_cast<int32_t>(info_res->get_int("unread_count").value_or(0));
-            supergroups.push_back(item);
-            if (static_cast<int>(supergroups.size()) >= limit) break;
-          }
-        }
-      }
-    }
-  }
-
-  fmt::Formatter::print_chats(supergroups, options_.format, options_.color_mode, std::cout, verbose);
-  return 0;
-}
 
 } // namespace grm
 
