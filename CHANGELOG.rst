@@ -9,6 +9,9 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 [Unreleased]
 ============
 
+[0.7.0] — 2026-08-07
+====================
+
 .. rubric:: Added
 
 * Added ``-r`` / ``--reply-to <message_id>`` flag to ``grm msg send`` to support direct inline message replies in supergroups, channels, and forum topic threads (GitLab Issue #2).

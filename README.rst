@@ -21,10 +21,12 @@ Why grm?
 
 * **Dual Human/AI UX Engine**: Optimized both for interactive terminal use (ANSI TTY tables, color schemes) and automated AI agent workflows (JSON envelope, NDJSON streams).
 * **Native TDLib Engine**: Direct C++ bindings to ``libtdjson`` for zero-hallucination, full MTProto protocol fidelity.
+* **Universal Cross-Domain Search Suite**: Fast multi-entity discovery across chats, supergroups, channels, users, messages, and files (``grm search``).
+* **Chat Folder Management**: Organize and filter chats by custom categories and Telegram chat list folders (``grm folder``).
 * **Supergroup & Forum Topic First**: Complete lifecycle management for Telegram Supergroups, Forum Topics, custom emoji icons, and thread messages.
 * **File Upload & Download Engine**: Streamlined document, photo, video, and media extractions with MIME detection and progress tracking.
 * **Shell Tab Auto-Completion**: Context-aware Bash tab completion covering commands, subcommands, flags, and options.
-* **Telegram Rich Text & Emoji Customization**: Telegram Markdown V2 entity formatting and custom Supergroup topic emoji icons.
+* **Telegram Rich Text & Emoji Customization**: Telegram Markdown V2 entity formatting, inline message replies (``--reply-to``), and custom Supergroup topic emoji icons.
 * **FreeDesktop & XDG Compliant**: Strictly honors FreeDesktop standards for user binaries, man pages, shell completions, and session state.
 
 FreeDesktop & XDG Configuration Standards
@@ -180,8 +182,17 @@ Usage Highlights
    # Authenticate Telegram account
    grm login
 
-   # List active chats
-   grm chat ls
+   # List active chats filtered by custom folder
+   grm chat ls --folder 1
+
+   # Search supergroups and channels globally across Telegram
+   grm search supergroups "devops"
+
+   # Search message history with sender and regex filters
+   grm msg search -q "error" --sender "@admin" -1003750297693
+
+   # Send inline message reply to a specific message ID
+   grm msg send -r 42 -t 2 -1003750297693 "Acknowledged and resolved."
 
    # Create a supergroup forum topic with a custom emoji icon
    grm topic create -e 5368560552786271734 -1003750297693 "DevOps Operations"
