@@ -11,6 +11,7 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 
 .. rubric:: Added
 
+* Added ``-r`` / ``--reply-to <message_id>`` flag to ``grm msg send`` to support direct inline message replies in supergroups, channels, and forum topic threads (GitLab Issue #2).
 * Universal Cross-Domain Search CLI suite (``grm search``, ``grm search chats``, ``supergroups``, ``channels``, ``users``, ``msgs``, ``files``) supporting keyword search, query stemming, offset pagination (``-o`` / ``--offset``), limit controls (``-n`` / ``--limit``), and chat-scoped filtering (``--chat <id>``).
 * Public Handle Extraction in candidate chat resolution: automatically parses ``@username`` and ``t.me/`` links from global message text to populate directory results for generic terms like ``movie``, ``crypto``, and ``linux``.
 * Deep Alphabet Suffix Probing for public channel and user discovery.
@@ -26,6 +27,8 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 
 .. rubric:: Fixed
 
+* Resolved premature client session teardown in ``grm msg send`` (GitLab Issue #1) by implementing ``App::send_message_and_wait`` to wait for TDLib ``updateMessageSendSucceeded`` / ``updateMessageSendFailed`` before exiting.
+* Resolved supergroup/channel resolution error (``TDLib Error [400]: Chat not found``) in ``grm msg edit`` (GitLab Issue #3) by enhancing ``ensure_chat_loaded`` to construct supergroup/channel entities and fixing CLI option flag parsing across message subcommands.
 * Resolved ``free(): double free detected in tcache 2`` runtime crash on exit by thread-guarding json-c reference counts and ordering thread cleanup before client teardown.
 * Fixed missing ``deleteMessages`` API request dispatch in ``App::cmd_msg_delete``, ensuring message deletions are sent to Telegram servers before logging success.
 * Added inline flag parsing support for ``--folder=<id>`` and ``-F=<id>`` in ``cmd_chat_ls``.

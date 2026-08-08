@@ -157,6 +157,8 @@ private:
   [[nodiscard]] std::expected<void, std::string> init_tdlib();
   void send_tdlib_parameters();
   void ensure_chat_loaded(int64_t chat_id);
+  [[nodiscard]] std::expected<int64_t, std::string>
+  send_message_and_wait(const std::string &payload, double timeout_seconds = 15.0);
   [[nodiscard]] std::expected<JsonValue, std::string>
   parse_formatted_text(const std::string &text,
                        const std::string &mode = "markdown");

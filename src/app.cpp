@@ -206,21 +206,157 @@ void App::ensure_chat_loaded(int64_t chat_id) {
   const std::string chat_req = std::format(R"({{"chat_id": {}}})", chat_id);
   auto chat_res = client_->send_request("getChat", chat_req, 3.0);
   if (!chat_res) {
-    auto load_res =
-        client_->send_request("loadChats", R"({"limit": 100})", 5.0);
-    if (!load_res) {
-      grm::log::debug("loadChats: " + load_res.error());
+    if (chat_id < -1000000000000LL) {
+      int64_t supergroup_id = -chat_id - 1000000000000LL;
+      const std::string sg_req = std::format(
+          R"({{"supergroup_id": {}, "force": false}})", supergroup_id);
+      chat_res = client_->send_request("createSupergroupChat", sg_req, 3.0);
+    } else if (chat_id < 0) {
+      int64_t group_id = -chat_id;
+      const std::string bg_req = std::format(
+          R"({{"basic_group_id": {}, "force": false}})", group_id);
+      chat_res = client_->send_request("createBasicGroupChat", bg_req, 3.0);
+    } else if (chat_id > 0) {
+      const std::string pvt_req = std::format(
+          R"({{"user_id": {}, "force": false}})", chat_id);
+      chat_res = client_->send_request("createPrivateChat", pvt_req, 3.0);
     }
-    for (int i = 0; i < 10; ++i) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      if (client_->send_request("getChat", chat_req, 2.0)) {
-        break;
+
+    if (!chat_res) {
+      auto load_res =
+          client_->send_request("loadChats", R"({"limit": 100})", 5.0);
+      if (!load_res) {
+        grm::log::debug("loadChats: " + load_res.error());
+      }
+      for (int i = 0; i < 10; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        if (client_->send_request("getChat", chat_req, 2.0)) {
+          break;
+        }
       }
     }
   }
   if (auto open_res = client_->send_request("openChat", chat_req, 2.0); !open_res) {
     grm::log::debug("openChat failed for chat " + std::to_string(chat_id) + ": " + open_res.error());
   }
+}
+
+std::expected<int64_t, std::string>
+App::send_message_and_wait(const std::string &payload, double timeout_seconds) {
+  if (!client_) {
+    return std::unexpected("TDLib client is not initialized");
+  }
+
+  struct SendResult {
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool finished = false;
+    bool success = false;
+    int64_t final_id = 0;
+    std::string error;
+    std::unordered_map<int64_t, int64_t> succeeded_ids;
+    std::unordered_map<int64_t, std::string> failed_ids;
+  };
+
+  auto state = std::make_shared<SendResult>();
+  int64_t pending_id = 0;
+
+  client_->on_update([state, &pending_id](const JsonValue &val) {
+    auto type = val.get_type().value_or("");
+    if (type == "updateMessageSendSucceeded") {
+      int64_t old_id = val.get_int("old_message_id").value_or(0);
+      int64_t new_id = 0;
+      if (auto msg_obj = val.get_object("message")) {
+        new_id = msg_obj->get_int("id").value_or(0);
+      }
+      std::lock_guard<std::mutex> lock(state->mutex);
+      if (old_id != 0) {
+        state->succeeded_ids[old_id] = (new_id != 0) ? new_id : old_id;
+      }
+      if (new_id != 0) {
+        state->succeeded_ids[new_id] = new_id;
+      }
+      if (pending_id != 0 && (old_id == pending_id || new_id == pending_id)) {
+        state->finished = true;
+        state->success = true;
+        state->final_id = (new_id != 0) ? new_id : old_id;
+        state->cv.notify_one();
+      }
+    } else if (type == "updateMessageSendFailed") {
+      int64_t old_id = val.get_int("old_message_id").value_or(0);
+      int64_t new_id = 0;
+      std::string err_msg = val.get_string("error_message").value_or("Send failed");
+      int64_t code = val.get_int("error_code").value_or(0);
+      if (auto msg_obj = val.get_object("message")) {
+        new_id = msg_obj->get_int("id").value_or(0);
+      }
+      std::string err_formatted = std::format("TDLib Error [{}]: {}", code, err_msg);
+      std::lock_guard<std::mutex> lock(state->mutex);
+      if (old_id != 0) {
+        state->failed_ids[old_id] = err_formatted;
+      }
+      if (new_id != 0) {
+        state->failed_ids[new_id] = err_formatted;
+      }
+      if (pending_id != 0 && (old_id == pending_id || new_id == pending_id)) {
+        state->finished = true;
+        state->success = false;
+        state->error = err_formatted;
+        state->cv.notify_one();
+      }
+    }
+  });
+
+  auto res = client_->send_request("sendMessage", payload, timeout_seconds);
+  if (!res) {
+    return std::unexpected(res.error());
+  }
+
+  int64_t returned_id = res->get_int("id").value_or(0);
+  auto sending_state = res->get_object("sending_state");
+
+  if (!sending_state || returned_id == 0) {
+    return returned_id;
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(state->mutex);
+    pending_id = returned_id;
+    if (auto it = state->succeeded_ids.find(returned_id);
+        it != state->succeeded_ids.end()) {
+      state->finished = true;
+      state->success = true;
+      state->final_id = it->second;
+    } else if (auto fail_it = state->failed_ids.find(returned_id);
+               fail_it != state->failed_ids.end()) {
+      state->finished = true;
+      state->success = false;
+      state->error = fail_it->second;
+    }
+    if (state->finished) {
+      if (state->success) {
+        return state->final_id;
+      }
+      return std::unexpected(state->error);
+    }
+  }
+
+  std::unique_lock<std::mutex> lock(state->mutex);
+  bool signaled = state->cv.wait_for(
+      lock, std::chrono::duration<double>(timeout_seconds),
+      [&] { return state->finished; });
+
+  if (!signaled) {
+    grm::log::warn("Timeout waiting for updateMessageSendSucceeded, proceeding with local ID: " +
+                   std::to_string(returned_id));
+    return returned_id;
+  }
+
+  if (!state->success) {
+    return std::unexpected(state->error);
+  }
+
+  return state->final_id;
 }
 
 std::expected<int, std::string> App::run(const std::vector<std::string> &args) {

@@ -46,6 +46,28 @@ static std::string build_delete_messages_payload(int64_t chat_id,
       chat_id, message_id, revoke ? "true" : "false");
 }
 
+static std::string build_send_message_reply_payload(int64_t chat_id,
+                                                    int64_t reply_to_id,
+                                                    const std::string &text) {
+  return std::format(
+      R"({{
+        "@type": "sendMessage",
+        "chat_id": {},
+        "reply_to": {{
+          "@type": "inputMessageReplyToMessage",
+          "message_id": {}
+        }},
+        "input_message_content": {{
+          "@type": "inputMessageText",
+          "text": {{
+            "@type": "formattedText",
+            "text": "{}"
+          }}
+        }}
+      }})",
+      chat_id, reply_to_id, grm::escape_json_string(text));
+}
+
 } // namespace grm::test
 
 void test_edit_message_payload() {
@@ -67,10 +89,22 @@ void test_delete_messages_payload() {
   std::cout << "[PASS] test_delete_messages_payload\n";
 }
 
+void test_send_reply_to_payload() {
+  std::string payload = grm::test::build_send_message_reply_payload(
+      -1001789902965, 42, "Replying to message");
+  check(payload.find("sendMessage") != std::string::npos, "Type match");
+  check(payload.find("inputMessageReplyToMessage") != std::string::npos,
+        "Reply-to type match");
+  check(payload.find("\"message_id\": 42") != std::string::npos,
+        "Reply-to msg_id match");
+  std::cout << "[PASS] test_send_reply_to_payload\n";
+}
+
 int main() {
   std::cout << "Running Message CRUD unit tests...\n";
   test_edit_message_payload();
   test_delete_messages_payload();
+  test_send_reply_to_payload();
   std::cout << "All Message CRUD unit tests passed successfully.\n";
   return 0;
 }

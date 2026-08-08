@@ -30,11 +30,12 @@ CommandSpec get_msg_spec() {
               OptionSpec{"-r", "--reverse", "", "Display messages in reverse chronological order", {}},
               OptionSpec{"-h", "--help", "", "Show message list help message", {}}
           }},
-          SubcommandSpec{"send", "[-a|--attach <file>] [-m|--media] [-C|--caption \"<text>\"] [-t|--topic <id>] <chat_id> [\"<message>\"]", "Send text message or file attachment(s)", {
+          SubcommandSpec{"send", "[-a|--attach <file>] [-m|--media] [-C|--caption \"<text>\"] [-t|--topic <id>] [-r|--reply-to <id>] <chat_id> [\"<message>\"]", "Send text message or file attachment(s)", {
               OptionSpec{"-a", "--attach", "<file>", "Attach file or document path to message", {}},
               OptionSpec{"-m", "--media", "", "Send attachment as inline visual media", {}},
               OptionSpec{"-C", "--caption", "<text>", "Set caption for file attachment", {}},
               OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
+              OptionSpec{"-r", "--reply-to", "<id>", "Reply to specific message ID in chat", {}},
               OptionSpec{"-h", "--help", "", "Show send help message", {}}
           }},
           SubcommandSpec{"info", "<chat_id> <message_id>", "View message details and metadata", {
@@ -914,6 +915,7 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
   std::vector<std::filesystem::path> attachments;
   [[maybe_unused]] bool is_media = false;
   int64_t message_thread_id = 0;
+  int64_t reply_to_message_id = 0;
 
   for (size_t i = 0; i < args.size(); ++i) {
     std::string_view arg(args[i]);
@@ -939,6 +941,14 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
       if (auto tid = parse_int64(arg.substr(8))) {
         message_thread_id = *tid;
       }
+    } else if ((arg == "-r" || arg == "--reply-to") && i + 1 < args.size()) {
+      if (auto rid = parse_int64(args[++i])) {
+        reply_to_message_id = *rid;
+      }
+    } else if (arg.starts_with("--reply-to=")) {
+      if (auto rid = parse_int64(arg.substr(11))) {
+        reply_to_message_id = *rid;
+      }
     } else if (!chat_id_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_id_set = true;
@@ -950,7 +960,7 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
   if (!chat_id_set) {
     return std::unexpected(
         "Usage: grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "
-        "\"<text>\"] [-t|--topic <id>] <chat_id> [\"<message>\"]");
+        "\"<text>\"] [-t|--topic <id>] [-r|--reply-to <id>] <chat_id> [\"<message>\"]");
   }
 
   if (caption.empty() && !message_text.empty()) {
@@ -963,6 +973,18 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
 
   ensure_chat_loaded(chat_id);
 
+  std::string thread_part =
+      (message_thread_id > 0)
+          ? std::format(R"("message_thread_id": {},)", message_thread_id)
+          : "";
+
+  std::string reply_part =
+      (reply_to_message_id > 0)
+          ? std::format(
+                R"("reply_to": {{"@type": "inputMessageReplyToMessage", "message_id": {}}},)",
+                reply_to_message_id)
+          : "";
+
   if (attachments.empty()) {
     if (message_text.empty()) {
       return std::unexpected(
@@ -973,27 +995,23 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
         text_obj ? text_obj->to_string()
                  : std::format(R"({{"@type":"formattedText","text":"{}"}})",
                                escape_json_string(message_text));
-    std::string thread_part =
-        (message_thread_id > 0)
-            ? std::format(R"("message_thread_id": {},)", message_thread_id)
-            : "";
     const std::string payload = std::format(
         R"({{
           "chat_id": {},
+          {}
           {}
           "input_message_content": {{
             "@type": "inputMessageText",
             "text": {}
           }}
         }})",
-        chat_id, thread_part, text_json);
+        chat_id, thread_part, reply_part, text_json);
 
-    auto res = client_->send_request("sendMessage", payload, 10.0);
+    auto res = send_message_and_wait(payload, 15.0);
     if (!res) {
       return std::unexpected("Failed to send message: " + res.error());
     }
-    int64_t sent_id = res->get_int("id").value_or(0);
-    grm::log::info(std::format("Message sent successfully (ID: {}).", sent_id));
+    grm::log::info(std::format("Message sent successfully (ID: {}).", *res));
     return 0;
   }
 
@@ -1025,17 +1043,24 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
       caption_part = std::format(R"(, "caption": {})", caption_json);
     }
 
-    std::string thread_part;
+    std::string thread_part_attachment;
     if (message_thread_id > 0) {
-      thread_part =
+      thread_part_attachment =
           std::format(R"(, "message_thread_id": {})", message_thread_id);
+    }
+
+    std::string reply_part_attachment;
+    if (reply_to_message_id > 0) {
+      reply_part_attachment = std::format(
+          R"(, "reply_to": {{"@type": "inputMessageReplyToMessage", "message_id": {}}})",
+          reply_to_message_id);
     }
 
     std::string msg_payload;
     if (is_media) {
       msg_payload = std::format(
           R"({{
-            "chat_id": {}{},
+            "chat_id": {}{}{},
             "input_message_content": {{
               "@type": "inputMessagePhoto",
               "photo": {{
@@ -1047,11 +1072,12 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
               }}{}
             }}
           }})",
-          chat_id, thread_part, escape_json_string(abs_path), caption_part);
+          chat_id, thread_part_attachment, reply_part_attachment,
+          escape_json_string(abs_path), caption_part);
     } else {
       msg_payload = std::format(
           R"({{
-            "chat_id": {}{},
+            "chat_id": {}{}{},
             "input_message_content": {{
               "@type": "inputMessageDocument",
               "document": {{
@@ -1063,10 +1089,11 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
               }}{}
             }}
           }})",
-          chat_id, thread_part, escape_json_string(abs_path), caption_part);
+          chat_id, thread_part_attachment, reply_part_attachment,
+          escape_json_string(abs_path), caption_part);
     }
 
-    auto res = client_->send_request("sendMessage", msg_payload, 30.0);
+    auto res = send_message_and_wait(msg_payload, 30.0);
     if (!res) {
       return std::unexpected("Failed to send file " + file_path.string() +
                              ": " + res.error());
@@ -1079,25 +1106,46 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_info(const std::vector<std::string> &args) {
-  if (args.size() < 2) {
-    return std::unexpected("Usage: grm msg info <chat_id> <message_id>");
+  int64_t chat_id = 0;
+  int64_t message_id = 0;
+  [[maybe_unused]] int64_t message_thread_id = 0;
+  bool chat_set = false;
+  bool msg_set = false;
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
+    if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
+      if (auto tid = parse_int64(args[++i])) {
+        message_thread_id = *tid;
+      }
+    } else if (arg.starts_with("--topic=")) {
+      if (auto tid = parse_int64(arg.substr(8))) {
+        message_thread_id = *tid;
+      }
+    } else if (!chat_set && parse_int64(arg).has_value()) {
+      chat_id = *parse_int64(arg);
+      chat_set = true;
+    } else if (chat_set && !msg_set && parse_int64(arg).has_value()) {
+      message_id = *parse_int64(arg);
+      msg_set = true;
+    }
   }
 
-  auto cid_res = parse_int64(args[0]);
-  auto mid_res = parse_int64(args[1]);
-  if (!cid_res || !mid_res)
-    return std::unexpected("Invalid chat_id or message_id");
+  if (!chat_set || !msg_set) {
+    return std::unexpected(
+        "Usage: grm msg info [-t|--topic <id>] <chat_id> <message_id>");
+  }
 
   if (auto res = ensure_authenticated(); !res)
     return std::unexpected(res.error());
-  ensure_chat_loaded(*cid_res);
+  ensure_chat_loaded(chat_id);
 
   const std::string payload = std::format(
       R"({{
         "chat_id": {},
         "message_id": {}
       }})",
-      *cid_res, *mid_res);
+      chat_id, message_id);
 
   auto res = client_->send_request("getMessage", payload, 5.0);
   if (!res) {
@@ -1110,20 +1158,24 @@ App::cmd_msg_info(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_edit(const std::vector<std::string> &args) {
-  if (args.size() < 3) {
-    return std::unexpected("Usage: grm msg edit [-t|--topic <id>] <chat_id> "
-                           "<message_id> \"<new_text>\"");
-  }
-
   int64_t chat_id = 0;
   int64_t message_id = 0;
+  [[maybe_unused]] int64_t message_thread_id = 0;
   std::string new_text;
   bool chat_set = false;
   bool msg_set = false;
 
-  for (const auto &raw_arg : args) {
-    std::string_view arg(raw_arg);
-    if (!chat_set && parse_int64(arg).has_value()) {
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
+    if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
+      if (auto tid = parse_int64(args[++i])) {
+        message_thread_id = *tid;
+      }
+    } else if (arg.starts_with("--topic=")) {
+      if (auto tid = parse_int64(arg.substr(8))) {
+        message_thread_id = *tid;
+      }
+    } else if (!chat_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_set = true;
     } else if (chat_set && !msg_set && parse_int64(arg).has_value()) {
@@ -1137,11 +1189,19 @@ App::cmd_msg_edit(const std::vector<std::string> &args) {
 
   if (!chat_set || !msg_set || new_text.empty()) {
     return std::unexpected(
-        "Usage: grm msg edit <chat_id> <message_id> \"<new_text>\"");
+        "Usage: grm msg edit [-t|--topic <id>] <chat_id> <message_id> \"<new_text>\"");
   }
 
   if (auto res = ensure_authenticated(); !res)
     return std::unexpected(res.error());
+
+  ensure_chat_loaded(chat_id);
+
+  auto text_obj = parse_formatted_text(new_text, "markdown");
+  std::string text_json =
+      text_obj ? text_obj->to_string()
+               : std::format(R"({{"@type":"formattedText","text":"{}"}})",
+                             escape_json_string(new_text));
 
   const std::string payload = std::format(
       R"({{
@@ -1149,13 +1209,10 @@ App::cmd_msg_edit(const std::vector<std::string> &args) {
         "message_id": {},
         "input_message_content": {{
           "@type": "inputMessageText",
-          "text": {{
-            "@type": "formattedText",
-            "text": "{}"
-          }}
+          "text": {}
         }}
       }})",
-      chat_id, message_id, escape_json_string(new_text));
+      chat_id, message_id, text_json);
 
   auto res = client_->send_request("editMessageText", payload, 10.0);
   if (!res) {
@@ -1176,12 +1233,21 @@ App::cmd_msg_delete(const std::vector<std::string> &args) {
   bool revoke = false;
   int64_t chat_id = 0;
   bool chat_set = false;
+  [[maybe_unused]] int64_t message_thread_id = 0;
   std::vector<int64_t> message_ids;
 
-  for (const auto &raw_arg : args) {
-    std::string_view arg(raw_arg);
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
     if (arg == "--for-everyone" || arg == "-e") {
       revoke = true;
+    } else if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
+      if (auto tid = parse_int64(args[++i])) {
+        message_thread_id = *tid;
+      }
+    } else if (arg.starts_with("--topic=")) {
+      if (auto tid = parse_int64(arg.substr(8))) {
+        message_thread_id = *tid;
+      }
     } else if (!chat_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_set = true;
@@ -1197,6 +1263,8 @@ App::cmd_msg_delete(const std::vector<std::string> &args) {
 
   if (auto res = ensure_authenticated(); !res)
     return std::unexpected(res.error());
+
+  ensure_chat_loaded(chat_id);
 
   std::string ids_json = "[";
   for (size_t idx = 0; idx < message_ids.size(); ++idx) {
@@ -1225,20 +1293,40 @@ App::cmd_msg_delete(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_pin(const std::vector<std::string> &args) {
-  if (args.size() < 2) {
-    return std::unexpected("Usage: grm msg pin <chat_id> <message_id>");
+  int64_t chat_id = 0;
+  int64_t message_id = 0;
+  [[maybe_unused]] int64_t message_thread_id = 0;
+  bool chat_set = false;
+  bool msg_set = false;
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
+    if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
+      if (auto tid = parse_int64(args[++i])) {
+        message_thread_id = *tid;
+      }
+    } else if (arg.starts_with("--topic=")) {
+      if (auto tid = parse_int64(arg.substr(8))) {
+        message_thread_id = *tid;
+      }
+    } else if (!chat_set && parse_int64(arg).has_value()) {
+      chat_id = *parse_int64(arg);
+      chat_set = true;
+    } else if (chat_set && !msg_set && parse_int64(arg).has_value()) {
+      message_id = *parse_int64(arg);
+      msg_set = true;
+    }
   }
 
-  auto cid_res = parse_int64(args[0]);
-  if (!cid_res)
-    return std::unexpected(cid_res.error());
-
-  auto mid_res = parse_int64(args[1]);
-  if (!mid_res)
-    return std::unexpected(mid_res.error());
+  if (!chat_set || !msg_set) {
+    return std::unexpected(
+        "Usage: grm msg pin [-t|--topic <id>] <chat_id> <message_id>");
+  }
 
   if (auto res = ensure_authenticated(); !res)
     return std::unexpected(res.error());
+
+  ensure_chat_loaded(chat_id);
 
   const std::string payload = std::format(
       R"({{
@@ -1247,15 +1335,15 @@ App::cmd_msg_pin(const std::vector<std::string> &args) {
         "disable_notification": false,
         "only_for_self": false
       }})",
-      *cid_res, *mid_res);
+      chat_id, message_id);
 
   auto res = client_->send_request("pinChatMessage", payload, 5.0);
   if (!res) {
     return std::unexpected("Failed to pin message: " + res.error());
   }
 
-  grm::log::info("Message " + std::to_string(*mid_res) + " in chat " +
-                 std::to_string(*cid_res) + " pinned successfully.");
+  grm::log::info("Message " + std::to_string(message_id) + " in chat " +
+                 std::to_string(chat_id) + " pinned successfully.");
   return 0;
 }
 
@@ -1263,7 +1351,7 @@ std::expected<int, std::string>
 App::cmd_msg_unpin(const std::vector<std::string> &args) {
   if (args.empty()) {
     return std::unexpected(
-        "Usage: grm msg unpin [-a|--all] <chat_id> [<message_id>]");
+        "Usage: grm msg unpin [-a|--all] [-t|--topic <id>] <chat_id> [<message_id>]");
   }
 
   bool unpin_all = false;
@@ -1271,11 +1359,20 @@ App::cmd_msg_unpin(const std::vector<std::string> &args) {
   bool chat_set = false;
   int64_t message_id = 0;
   bool msg_set = false;
+  [[maybe_unused]] int64_t message_thread_id = 0;
 
-  for (const auto &raw_arg : args) {
-    std::string_view arg(raw_arg);
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::string_view arg(args[i]);
     if (arg == "-a" || arg == "--all") {
       unpin_all = true;
+    } else if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
+      if (auto tid = parse_int64(args[++i])) {
+        message_thread_id = *tid;
+      }
+    } else if (arg.starts_with("--topic=")) {
+      if (auto tid = parse_int64(arg.substr(8))) {
+        message_thread_id = *tid;
+      }
     } else if (!chat_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_set = true;
@@ -1287,11 +1384,13 @@ App::cmd_msg_unpin(const std::vector<std::string> &args) {
 
   if (!chat_set) {
     return std::unexpected(
-        "Usage: grm msg unpin [-a|--all] <chat_id> [<message_id>]");
+        "Usage: grm msg unpin [-a|--all] [-t|--topic <id>] <chat_id> [<message_id>]");
   }
 
   if (auto res = ensure_authenticated(); !res)
     return std::unexpected(res.error());
+
+  ensure_chat_loaded(chat_id);
 
   if (unpin_all || !msg_set) {
     const std::string payload = std::format(
