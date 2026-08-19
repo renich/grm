@@ -96,7 +96,7 @@ grm login [-p|--phone <num>] [-k|--code <code>] [-q|--qr]
       SMS or Telegram login code.
 
    -q, --qr
-      Authenticate via QR code by generating ``/tmp/grm-login-qr.html`` and opening it via ``xdg-open``.
+      Authenticate via QR code by generating ``/tmp/grm-login-qr.svg`` and opening it via ``xdg-open``.
 
 grm logout
    Log out from Telegram, terminate the active TDLib session, and clear local session state.
