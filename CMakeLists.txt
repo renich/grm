@@ -14,6 +14,22 @@ set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-Wl,--gc-sections -s")
 # Debug unoptimized development build with full debug symbols
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g3 -DDEBUG")
 
+# Sanitizer build options (ASan + UBSan / TSan)
+option(ENABLE_ASAN "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+
+if(ENABLE_ASAN)
+    message(STATUS "AddressSanitizer and UndefinedBehaviorSanitizer enabled")
+    add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address,undefined)
+endif()
+
+if(ENABLE_TSAN)
+    message(STATUS "ThreadSanitizer enabled")
+    add_compile_options(-fsanitize=thread -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=thread)
+endif()
+
 
 
 
@@ -298,6 +314,19 @@ add_executable(test_td_client_flush
 )
 target_link_libraries(test_td_client_flush PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
 add_test(NAME test_td_client_flush COMMAND test_td_client_flush)
+
+add_executable(test_cli_options
+    tests/test_cli_options.cpp
+)
+add_test(NAME test_cli_options COMMAND test_cli_options)
+
+add_executable(test_config
+    tests/test_config.cpp
+    src/config.cpp
+    src/json_utils.cpp
+)
+target_link_libraries(test_config PRIVATE ${JSONC_LIBRARIES})
+add_test(NAME test_config COMMAND test_config)
 
 endif()
 

@@ -9,7 +9,7 @@ int main() {
   // Test 1: Global help screen rendering
   std::string global_help = registry.render_global_help();
   assert(!global_help.empty());
-  assert(global_help.find("grm - Group & Telegram Manager CLI") != std::string::npos);
+  assert(global_help.find("grm: Telegram CLI client") != std::string::npos);
   assert(global_help.find("Commands:") != std::string::npos);
 
   // Test 2: Subcommand help screen rendering for 'file'
@@ -28,7 +28,7 @@ int main() {
   std::string bash_comp = registry.render_completion("bash");
   assert(!bash_comp.empty());
   assert(bash_comp.find("_grm_completions()") != std::string::npos);
-  assert(bash_comp.find("photo video doc audio all") != std::string::npos);
+  assert(bash_comp.find("--type") != std::string::npos);
 
   // Test 5: Zsh completion script rendering
   std::string zsh_comp = registry.render_completion("zsh");

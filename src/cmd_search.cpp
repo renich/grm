@@ -615,7 +615,7 @@ App::cmd_search_chats(const std::vector<std::string> &args) {
   if (static_cast<int>(combined.size()) > sargs.offset) {
     sliced = std::vector<fmt::ChatItem>(combined.begin() + sargs.offset, combined.end());
     if (static_cast<int>(sliced.size()) > sargs.limit) {
-      sliced.resize(sargs.limit);
+      sliced.resize(static_cast<size_t>(sargs.limit));
     }
   }
 
@@ -651,7 +651,7 @@ App::cmd_search_supergroups(const std::vector<std::string> &args) {
   if (static_cast<int>(supergroup_list.size()) > sargs.offset) {
     sliced = std::vector<fmt::ChatItem>(supergroup_list.begin() + sargs.offset, supergroup_list.end());
     if (static_cast<int>(sliced.size()) > sargs.limit) {
-      sliced.resize(sargs.limit);
+      sliced.resize(static_cast<size_t>(sargs.limit));
     }
   }
 
@@ -735,7 +735,7 @@ App::cmd_search_msgs(const std::vector<std::string> &args) {
         all_messages.begin() + sargs.offset,
         all_messages.end());
     if (static_cast<int>(result_messages.size()) > sargs.limit) {
-      result_messages.resize(sargs.limit);
+      result_messages.resize(static_cast<size_t>(sargs.limit));
     }
   }
 
@@ -908,7 +908,7 @@ App::cmd_search_users(const std::vector<std::string> &args) {
         candidate_user_ids.begin() + sargs.offset,
         candidate_user_ids.end());
     if (static_cast<int>(sliced_ids.size()) > sargs.limit) {
-      sliced_ids.resize(sargs.limit);
+      sliced_ids.resize(static_cast<size_t>(sargs.limit));
     }
     for (int64_t id : sliced_ids) {
       const std::string info_req = std::format(R"({{"user_id": {}}})", id);
@@ -958,7 +958,7 @@ App::cmd_search_channels(const std::vector<std::string> &args) {
   if (static_cast<int>(res_items.channels.size()) > sargs.offset) {
     sliced = std::vector<fmt::ChatItem>(res_items.channels.begin() + sargs.offset, res_items.channels.end());
     if (static_cast<int>(sliced.size()) > sargs.limit) {
-      sliced.resize(sargs.limit);
+      sliced.resize(static_cast<size_t>(sargs.limit));
     }
   }
 
@@ -1050,7 +1050,7 @@ App::cmd_search_files(const std::vector<std::string> &args) {
         all_files.begin() + sargs.offset,
         all_files.end());
     if (static_cast<int>(result_files.size()) > sargs.limit) {
-      result_files.resize(sargs.limit);
+      result_files.resize(static_cast<size_t>(sargs.limit));
     }
   }
 

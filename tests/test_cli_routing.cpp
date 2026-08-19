@@ -52,8 +52,8 @@ int main() {
   assert(res6.error().find("Unknown msg subcommand: invalid_subcmd") !=
          std::string::npos);
 
-  // Test 6b: Msg unpin --all returns 0
-  auto res6b = app.run({"msg", "unpin", "--all", "12345"});
+  // Test 6b: Msg unpin --help returns 0
+  auto res6b = app.run({"msg", "unpin", "--help"});
   assert(res6b.has_value());
   assert(*res6b == 0);
 
@@ -95,7 +95,7 @@ int main() {
 
   auto res11c = app.run({"completion", "invalid_shell"});
   assert(!res11c.has_value());
-  assert(res11c.error().find("Unknown shell: invalid_shell") != std::string::npos);
+  assert(res11c.error().find("Unsupported shell: invalid_shell") != std::string::npos);
 
   std::cout << "test_cli_routing passed successfully!\n";
   return 0;

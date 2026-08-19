@@ -38,8 +38,8 @@ public:
 
   App(const App &) = delete;
   App &operator=(const App &) = delete;
-  App(App &&) = default;
-  App &operator=(App &&) = default;
+  App(App &&) = delete;
+  App &operator=(App &&) = delete;
 
   [[nodiscard]] std::expected<int, std::string>
   run(const std::vector<std::string> &args);

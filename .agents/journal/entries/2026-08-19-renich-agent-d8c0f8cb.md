@@ -1,0 +1,4 @@
+# Journal: 2026-08-19 (agent-d8c0f8cb)
+==============================
+
+* [2026-08-19 02:36:03] [agent-d8c0f8cb] [AUDIT,SANITIZERS,ASAN,UBSAN,REMEDIATION,SUCCESS] [prev:f0e9d8c7b6a5432109876543210fedcba9876543210fedcba9876543210fedcb] [hash:3e458aa05e803d046d8015ea93c00275c4815cda33d542957cb1784f16988679] AUDIT & REMEDIATION COMPLETE (grm v0.7.0): Added AddressSanitizer and UndefinedBehaviorSanitizer build targets (make asan, make tsan, make sanitize), expanded CTest registration to 18/18 test suites in CMakeLists.txt, fixed App class move operations for std::mutex safety, enabled empty-key primitive array extraction in JsonValue, resolved CLI routing flag handling (-V, --version, -H), synchronized .agents/journal/state.json to v0.7.0, and verified 100% pass across all 18 test suites under ASan/UBSan.

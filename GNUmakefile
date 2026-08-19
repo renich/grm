@@ -17,7 +17,7 @@ CLANG_FORMAT ?= clang-format
 CLANG_TIDY ?= clang-tidy
 SCAN_BUILD ?= scan-build
 
-.PHONY: all build release clean distclean format lint analyze check man doc-check install install-user install-man install-completions install-hooks hooks uninstall uninstall-user help
+.PHONY: all build release clean distclean format lint analyze check asan tsan sanitize man doc-check install install-user install-man install-completions install-hooks hooks uninstall uninstall-user help
 
 all: build
 
@@ -31,6 +31,9 @@ help:
 	@echo ""
 	@echo "Quality & Testing Targets:"
 	@echo "  check                Run full CTest automated test suite"
+	@echo "  asan                 Build with AddressSanitizer & UBSan and run CTest suite"
+	@echo "  tsan                 Build with ThreadSanitizer and run CTest suite"
+	@echo "  sanitize             Alias for asan"
 	@echo "  format               Apply clang-format code formatting to src/ and include/"
 	@echo "  lint                 Run clang-tidy static analysis on C++ source files"
 	@echo "  analyze              Run Clang scan-build static analyzer"
@@ -47,11 +50,11 @@ help:
 	@echo "  distclean            Alias for clean"
 
 build:
-	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 	$(CMAKE) --build $(BUILD_DIR)
 
 release:
-	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 	$(CMAKE) --build $(BUILD_DIR)
 	$(STRIP) --strip-unneeded $(BUILD_DIR)/grm
 
@@ -70,8 +73,22 @@ lint: release doc-check
 analyze:
 	$(SCAN_BUILD) --status-bugs $(CMAKE) --build $(BUILD_DIR) --clean-first
 
-check: release
+check:
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DENABLE_ASAN=OFF -DENABLE_TSAN=OFF
+	$(CMAKE) --build $(BUILD_DIR)
 	$(CTEST) --test-dir $(BUILD_DIR) --output-on-failure
+
+asan:
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DENABLE_ASAN=ON -DENABLE_TSAN=OFF
+	$(CMAKE) --build $(BUILD_DIR)
+	$(CTEST) --test-dir $(BUILD_DIR) --output-on-failure
+
+tsan:
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DENABLE_TSAN=ON -DENABLE_ASAN=OFF
+	$(CMAKE) --build $(BUILD_DIR)
+	$(CTEST) --test-dir $(BUILD_DIR) --output-on-failure
+
+sanitize: asan
 
 man:
 	$(MAKE) -C docs man BUILD_DIR="$(abspath $(BUILD_DIR))"

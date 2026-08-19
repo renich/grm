@@ -371,7 +371,7 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
   }
 
   if (std::ranges::any_of(args, [](const std::string &arg) {
-        return arg == "--help=all";
+        return arg == "--help=all" || arg == "-H";
       }) ||
       (args.size() >= 2 && (args[0] == "--help" || args[0] == "help") && args[1] == "all")) {
     if (options_.format == fmt::OutputFormat::Json || options_.format == fmt::OutputFormat::JsonL) {
@@ -386,6 +386,11 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
 
   if (cmd == "-h" || cmd == "--help" || cmd == "help") {
     print_usage(options_.format);
+    return 0;
+  }
+
+  if (cmd == "-V" || cmd == "--version" || cmd == "version") {
+    print_version();
     return 0;
   }
 
