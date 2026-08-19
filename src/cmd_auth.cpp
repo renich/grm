@@ -367,12 +367,13 @@ std::expected<int, std::string> App::cmd_logout() {
     return std::unexpected(res.error());
   }
 
-  // Wait up to 10 seconds for TDLib parameters to be negotiated and initial auth state determined
+  // Wait up to 10 seconds for TDLib parameters and database encryption key to settle
   {
     std::unique_lock<std::mutex> lock(auth_mutex_);
     auth_cv_.wait_for(lock, std::chrono::seconds(10), [this] {
       return !auth_state_.empty() &&
-             auth_state_ != "authorizationStateWaitTdlibParameters";
+             auth_state_ != "authorizationStateWaitTdlibParameters" &&
+             auth_state_ != "authorizationStateWaitEncryptionKey";
     });
   }
 
