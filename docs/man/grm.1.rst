@@ -76,7 +76,7 @@ grm login [-p *PHONE*] [-k *CODE*] [-q]
       Pre-fill authentication code for non-interactive logins.
 
    -q, --qr
-      Authenticate via QR code by generating ``/tmp/grm-login-qr.svg`` and opening it via ``xdg-open``.
+      Authenticate via QR code by generating ``/tmp/grm-login-qr.html`` and opening it via ``xdg-open``.
 
 logout
 ------

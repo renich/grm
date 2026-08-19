@@ -1,7 +1,6 @@
 #include "grm/app.hpp"
 #include "grm/json_utils.hpp"
 #include "grm/logger.hpp"
-#include "grm/qrcodegen.hpp"
 #include <chrono>
 #include <filesystem>
 #include <format>
@@ -21,7 +20,7 @@ CommandSpec get_login_spec() {
           SubcommandSpec{"login", "[-p|--phone <number>] [-k|--code <code>] [-q|--qr]", "Authenticate Telegram session via terminal phone code or browser QR code", {
               OptionSpec{"-p", "--phone", "<number>", "International phone number (e.g. +523330000000)", {}},
               OptionSpec{"-k", "--code", "<code>", "Authentication code received via Telegram or SMS", {}},
-              OptionSpec{"-q", "--qr", "", "Authenticate via QR code (opens /tmp/grm-login-qr.svg via xdg-open)", {}},
+              OptionSpec{"-q", "--qr", "", "Authenticate via QR code (opens /tmp/grm-login-qr.html via xdg-open)", {}},
               OptionSpec{"-h", "--help", "", "Show login help message", {}}
           }}
       },
@@ -43,25 +42,6 @@ CommandSpec get_logout_spec() {
 }
 
 namespace {
-
-bool generate_standard_qr_svg(std::string_view link, const std::string &output_path) {
-  try {
-    const auto segs = qrcodegen::QrSegment::makeSegments(std::string(link).c_str());
-    const auto qr = qrcodegen::QrCode::encodeSegments(
-        segs, qrcodegen::QrCode::Ecc::MEDIUM, 1, 40, -1, false);
-
-    std::ofstream out(output_path);
-    if (!out.is_open()) {
-      return false;
-    }
-
-    out << qr.toSvgString(4);
-    out.close();
-    return true;
-  } catch (...) {
-    return false;
-  }
-}
 
 struct TermiosGuard {
   termios oldt;
@@ -234,30 +214,114 @@ std::expected<int, std::string> App::cmd_login() {
         if (!link.empty() && link != last_qr_link) {
           last_qr_link = link;
 
-          // Generate standalone ISO standard vector SVG QR Code
-          const std::string svg_path = "/tmp/grm-login-qr.svg";
-          generate_standard_qr_svg(link, svg_path);
+          // Generate HTML page using official Telegram Web qr-code-styling engine
+          try {
+            std::ofstream html_out("/tmp/grm-login-qr.html");
+            if (html_out) {
+              html_out << R"(<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="28">
+<title>grm Telegram Login</title>
+<script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #0f141c;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #ffffff;
+}
+.card {
+  background-color: #17212b;
+  padding: 36px 48px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  max-width: 440px;
+}
+#qr-container {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 16px;
+  display: inline-block;
+  margin: 20px 0;
+}
+h2 { margin: 0 0 8px; font-size: 22px; font-weight: 600; color: #ffffff; }
+p { margin: 4px 0; color: #7f91a4; font-size: 14px; }
+.steps { text-align: left; margin-top: 18px; font-size: 14px; line-height: 1.6; color: #c4c9cc; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Log in to Telegram by QR Code</h2>
+  <p>grm CLI Client</p>
+  <div id="qr-container"></div>
+  <div class="steps">
+    1. Open <b>Telegram</b> on your phone<br>
+    2. Go to <b>Settings &gt; Devices &gt; Link Desktop Device</b><br>
+    3. Point your camera at this QR code
+  </div>
+</div>
+<script>
+if (typeof QRCodeStyling !== 'undefined') {
+  const qrCode = new QRCodeStyling({
+    width: 280,
+    height: 280,
+    type: "svg",
+    data: ")" << link << R"(",
+    margin: 0,
+    qrOptions: {
+      typeNumber: 0,
+      mode: "Byte",
+      errorCorrectionLevel: "M"
+    },
+    dotsOptions: {
+      color: "#000000",
+      type: "rounded"
+    },
+    cornersSquareOptions: {
+      color: "#000000",
+      type: "extra-rounded"
+    },
+    cornersDotOptions: {
+      color: "#000000",
+      type: "dot"
+    }
+  });
+  qrCode.append(document.getElementById("qr-container"));
+}
+</script>
+</body>
+</html>)";
+              html_out.close();
+            }
+          } catch (...) {}
 
           std::cout << "\n"
                     << "============================================================\n"
                     << " [AUTH] QR CODE AUTHENTICATION (Scan within 30s)\n"
                     << "============================================================\n"
-                    << " [AUTH] Vector QR Code generated: " << svg_path << "\n";
+                    << " [AUTH] HTML QR code page generated: /tmp/grm-login-qr.html\n";
 
           if (std::getenv("DISPLAY") || std::getenv("WAYLAND_DISPLAY")) {
-            std::cout << " [AUTH] Opening " << svg_path << " via xdg-open...\n\n"
+            std::cout << " [AUTH] Opening /tmp/grm-login-qr.html via xdg-open...\n\n"
                       << " 1. Open Telegram on your mobile phone:\n"
                       << "    Settings -> Devices -> Link Desktop Device\n"
-                      << " 2. Point your camera at the QR code image.\n";
-            std::string cmd = "xdg-open " + svg_path + " >/dev/null 2>&1 &";
-            int _ = std::system(cmd.c_str());
+                      << " 2. Point your camera at the QR code in your browser window.\n";
+            int _ = std::system("xdg-open /tmp/grm-login-qr.html >/dev/null 2>&1 &");
             (void)_;
           } else {
             std::cout << " [AUTH] Headless session detected (no graphical desktop environment).\n\n"
-                      << " 1. Download or open " << svg_path << " in an image viewer or browser.\n"
+                      << " 1. Download or open /tmp/grm-login-qr.html in a web browser.\n"
                       << " 2. Open Telegram on your mobile phone:\n"
                       << "    Settings -> Devices -> Link Desktop Device\n"
-                      << " 3. Point your camera at the QR code image.\n";
+                      << " 3. Point your camera at the QR code displayed in your browser.\n";
           }
 
           std::cout << "============================================================\n"
