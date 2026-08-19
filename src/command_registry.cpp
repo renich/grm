@@ -60,6 +60,30 @@ std::string CommandRegistry::render_command_help(const std::string &cmd_name) co
   }
 
   std::stringstream ss;
+  if (it->subcommands.size() == 1 && it->subcommands[0].name == it->name) {
+    const auto &sub = it->subcommands[0];
+    if (!sub.synopsis.empty()) {
+      ss << std::format("Usage: grm {} {}\n\n{}\n\nOptions:\n", it->name, sub.synopsis, it->description);
+    } else {
+      ss << std::format("Usage: grm {} [options]\n\n{}\n\nOptions:\n", it->name, it->description);
+    }
+    for (const auto &opt : sub.options) {
+      std::string flags;
+      if (!opt.short_flag.empty() && !opt.long_flag.empty()) {
+        flags = std::format("{}, {}", opt.short_flag, opt.long_flag);
+      } else if (!opt.short_flag.empty()) {
+        flags = opt.short_flag;
+      } else {
+        flags = opt.long_flag;
+      }
+      if (!opt.value_hint.empty()) {
+        flags += " " + opt.value_hint;
+      }
+      ss << std::format("  {:<31} {}\n", flags, opt.description);
+    }
+    return ss.str();
+  }
+
   ss << std::format("Usage: grm {} <subcommand> [options] [args]\n\n{}\n\nSubcommands:\n", it->name, it->description);
 
   for (const auto &sub : it->subcommands) {
@@ -370,34 +394,53 @@ std::string CommandRegistry::render_completion(const std::string &shell) const {
     for (const auto &cmd : commands_) {
       ss << "    " << cmd.name << ")\n";
       if (!cmd.subcommands.empty()) {
-        std::string sub_names;
-        for (size_t j = 0; j < cmd.subcommands.size(); ++j) {
-          if (j > 0) {
-            sub_names += " ";
-          }
-          sub_names += cmd.subcommands[j].name;
-        }
-        ss << "      if [[ ${cword} -eq 2 ]]; then\n";
-        ss << "        if [[ \"${cur}\" == -* ]]; then\n";
-        ss << "          COMPREPLY=($(compgen -W \"-h --help\" -- \"${cur}\"))\n";
-        ss << "        else\n";
-        ss << "          COMPREPLY=($(compgen -W \"" << sub_names << "\" -- \"${cur}\"))\n";
-        ss << "        fi\n";
-
-        for (const auto &sub : cmd.subcommands) {
+        if (cmd.subcommands.size() == 1 && cmd.subcommands[0].name == cmd.name) {
           std::string flags = "-h --help";
-          for (const auto &opt : sub.options) {
-            if (!opt.short_flag.empty()) {
-              flags += " " + opt.short_flag;
-            }
-            if (!opt.long_flag.empty()) {
-              flags += " " + opt.long_flag;
+          for (const auto &opt : cmd.subcommands[0].options) {
+            if (opt.short_flag != "-h" && opt.long_flag != "--help") {
+              if (!opt.short_flag.empty()) {
+                flags += " " + opt.short_flag;
+              }
+              if (!opt.long_flag.empty()) {
+                flags += " " + opt.long_flag;
+              }
             }
           }
-          ss << "      elif [[ \"${words[2]}\" == \"" << sub.name << "\" ]]; then\n";
+          ss << "      if [[ ${cword} -ge 2 ]]; then\n";
           ss << "        COMPREPLY=($(compgen -W \"" << flags << "\" -- \"${cur}\"))\n";
+          ss << "      fi\n";
+        } else {
+          std::string sub_names;
+          for (size_t j = 0; j < cmd.subcommands.size(); ++j) {
+            if (j > 0) {
+              sub_names += " ";
+            }
+            sub_names += cmd.subcommands[j].name;
+          }
+          ss << "      if [[ ${cword} -eq 2 ]]; then\n";
+          ss << "        if [[ \"${cur}\" == -* ]]; then\n";
+          ss << "          COMPREPLY=($(compgen -W \"-h --help\" -- \"${cur}\"))\n";
+          ss << "        else\n";
+          ss << "          COMPREPLY=($(compgen -W \"" << sub_names << "\" -- \"${cur}\"))\n";
+          ss << "        fi\n";
+
+          for (const auto &sub : cmd.subcommands) {
+            std::string flags = "-h --help";
+            for (const auto &opt : sub.options) {
+              if (opt.short_flag != "-h" && opt.long_flag != "--help") {
+                if (!opt.short_flag.empty()) {
+                  flags += " " + opt.short_flag;
+                }
+                if (!opt.long_flag.empty()) {
+                  flags += " " + opt.long_flag;
+                }
+              }
+            }
+            ss << "      elif [[ \"${words[2]}\" == \"" << sub.name << "\" ]]; then\n";
+            ss << "        COMPREPLY=($(compgen -W \"" << flags << "\" -- \"${cur}\"))\n";
+          }
+          ss << "      fi\n";
         }
-        ss << "      fi\n";
       } else {
         ss << "      COMPREPLY=($(compgen -W \"-h --help\" -- \"${cur}\"))\n";
       }

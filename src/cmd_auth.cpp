@@ -45,16 +45,40 @@ namespace {
 
 struct TermiosGuard {
   termios oldt;
+  bool is_tty = false;
   TermiosGuard() {
-    tcgetattr(STDIN_FILENO, &oldt);
-    termios newt = oldt;
-    newt.c_lflag &= static_cast<tcflag_t>(~ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    if (isatty(STDIN_FILENO)) {
+      if (tcgetattr(STDIN_FILENO, &oldt) == 0) {
+        is_tty = true;
+        termios newt = oldt;
+        newt.c_lflag &= static_cast<tcflag_t>(~ECHO);
+        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+      }
+    }
   }
   ~TermiosGuard() {
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    if (is_tty) {
+      tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    }
   }
 };
+
+std::string get_secure_qr_path(const Config &config) {
+  const char *xdg_runtime = std::getenv("XDG_RUNTIME_DIR");
+  if (xdg_runtime && *xdg_runtime) {
+    std::filesystem::path runtime_dir(xdg_runtime);
+    std::filesystem::path grm_dir = runtime_dir / "grm";
+    std::error_code ec;
+    std::filesystem::create_directories(grm_dir, ec);
+    std::filesystem::permissions(
+        grm_dir,
+        std::filesystem::perms::owner_read | std::filesystem::perms::owner_write |
+            std::filesystem::perms::owner_exec,
+        std::filesystem::perm_options::replace, ec);
+    return (grm_dir / "login-qr.html").string();
+  }
+  return (config.config_dir / "login-qr.html").string();
+}
 
 std::string read_secure_password(std::string_view prompt) {
   std::cout << prompt;
@@ -63,7 +87,10 @@ std::string read_secure_password(std::string_view prompt) {
   std::string password;
   {
     TermiosGuard guard;
-    std::getline(std::cin, password);
+    if (!std::getline(std::cin, password)) {
+      std::cout << '\n';
+      return "";
+    }
     if (!password.empty() && password.back() == '\r') {
       password.pop_back();
     }
@@ -102,9 +129,15 @@ std::expected<int, std::string> App::cmd_login() {
 
     if (state == "authorizationStateClosed") {
       grm::log::info("Resetting closed session database...");
-      client_->stop();
+      if (client_) {
+        client_->stop();
+        client_.reset();
+      }
       std::error_code ec;
-      std::filesystem::remove_all(config_.db_dir, ec);
+      const auto target_db = options_.use_test_dc
+                                 ? config_.config_dir / "tdlib_test_db"
+                                 : config_.db_dir;
+      std::filesystem::remove_all(target_db, ec);
       is_closed_ = false;
       {
         std::unique_lock<std::mutex> lock(auth_mutex_);
@@ -138,7 +171,9 @@ std::expected<int, std::string> App::cmd_login() {
         if (phone.empty()) {
           std::cout << "\n[AUTH] Enter your Telegram phone number (e.g. +521234567890) or type 'qr' for QR Code login:\n> "
                     << std::flush;
-          std::cin >> phone;
+          if (!(std::cin >> phone)) {
+            return std::unexpected("Authentication aborted (end-of-file on input).");
+          }
         } else {
           grm::log::auth("Using pre-filled phone number: " + phone);
         }
@@ -215,9 +250,15 @@ std::expected<int, std::string> App::cmd_login() {
           last_qr_link = link;
 
           // Generate HTML page using official Telegram Web qr-code-styling engine
+          const std::string qr_path = get_secure_qr_path(config_);
           try {
-            std::ofstream html_out("/tmp/grm-login-qr.html");
+            std::ofstream html_out(qr_path);
             if (html_out) {
+              std::error_code ec;
+              std::filesystem::permissions(
+                  qr_path,
+                  std::filesystem::perms::owner_read | std::filesystem::perms::owner_write,
+                  std::filesystem::perm_options::replace, ec);
               html_out << R"(<!DOCTYPE html>
 <html>
 <head>
@@ -274,7 +315,7 @@ if (typeof QRCodeStyling !== 'undefined') {
     width: 280,
     height: 280,
     type: "svg",
-    data: ")" << link << R"(",
+    data: ")" << escape_json_string(link) << R"(",
     margin: 0,
     qrOptions: {
       typeNumber: 0,
@@ -307,18 +348,19 @@ if (typeof QRCodeStyling !== 'undefined') {
                     << "============================================================\n"
                     << " [AUTH] QR CODE AUTHENTICATION (Scan within 30s)\n"
                     << "============================================================\n"
-                    << " [AUTH] HTML QR code page generated: /tmp/grm-login-qr.html\n";
+                    << " [AUTH] HTML QR code page generated: " << qr_path << "\n";
 
           if (std::getenv("DISPLAY") || std::getenv("WAYLAND_DISPLAY")) {
-            std::cout << " [AUTH] Opening /tmp/grm-login-qr.html via xdg-open...\n\n"
+            std::cout << " [AUTH] Opening " << qr_path << " via xdg-open...\n\n"
                       << " 1. Open Telegram on your mobile phone:\n"
                       << "    Settings -> Devices -> Link Desktop Device\n"
                       << " 2. Point your camera at the QR code in your browser window.\n";
-            int _ = std::system("xdg-open /tmp/grm-login-qr.html >/dev/null 2>&1 &");
+            std::string cmd = "xdg-open " + qr_path + " >/dev/null 2>&1 &";
+            int _ = std::system(cmd.c_str());
             (void)_;
           } else {
             std::cout << " [AUTH] Headless session detected (no graphical desktop environment).\n\n"
-                      << " 1. Download or open /tmp/grm-login-qr.html in a web browser.\n"
+                      << " 1. Download or open " << qr_path << " in a web browser.\n"
                       << " 2. Open Telegram on your mobile phone:\n"
                       << "    Settings -> Devices -> Link Desktop Device\n"
                       << " 3. Point your camera at the QR code displayed in your browser.\n";
@@ -336,7 +378,9 @@ if (typeof QRCodeStyling !== 'undefined') {
         if (code.empty()) {
           std::cout << "\n[AUTH] Enter authentication code (or type 'resend' for SMS):\n> "
                     << std::flush;
-          std::cin >> code;
+          if (!(std::cin >> code)) {
+            return std::unexpected("Authentication aborted (end-of-file on input).");
+          }
         } else {
           grm::log::auth("Using pre-filled code.");
         }
@@ -394,6 +438,10 @@ std::expected<int, std::string> App::cmd_logout() {
     return std::unexpected(res.error());
   }
 
+  const auto target_db = options_.use_test_dc
+                             ? config_.config_dir / "tdlib_test_db"
+                             : config_.db_dir;
+
   // Wait up to 10 seconds for TDLib parameters and database encryption key to settle
   {
     std::unique_lock<std::mutex> lock(auth_mutex_);
@@ -426,9 +474,12 @@ std::expected<int, std::string> App::cmd_logout() {
       grm::log::auth("Session is already unauthorized on Telegram server. Purging local session data...");
       auto destroy_res = client_->send_request("destroy", "{}", 5.0);
       (void)destroy_res;
-      client_->stop();
+      if (client_) {
+        client_->stop();
+        client_.reset();
+      }
       std::error_code ec;
-      std::filesystem::remove_all(config_.db_dir, ec);
+      std::filesystem::remove_all(target_db, ec);
       grm::log::auth("Logged out successfully. Local session cleared.");
       return 0;
     }
@@ -436,17 +487,19 @@ std::expected<int, std::string> App::cmd_logout() {
   }
 
   // Wait up to 5 seconds for TDLib to close session
-  auto start = std::chrono::steady_clock::now();
-  while (std::chrono::steady_clock::now() - start < std::chrono::seconds(5)) {
-    if (get_auth_state() == "authorizationStateClosed") {
-      break;
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  {
+    std::unique_lock<std::mutex> lock(auth_mutex_);
+    auth_cv_.wait_for(lock, std::chrono::seconds(5), [this] {
+      return auth_state_ == "authorizationStateClosed" || is_closed_;
+    });
   }
 
-  client_->stop();
+  if (client_) {
+    client_->stop();
+    client_.reset();
+  }
   std::error_code ec;
-  std::filesystem::remove_all(config_.db_dir, ec);
+  std::filesystem::remove_all(target_db, ec);
 
   grm::log::auth("Logged out successfully. Session closed.");
   return 0;

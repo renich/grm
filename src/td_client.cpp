@@ -56,6 +56,17 @@ void TdClient::stop() {
     receiver_thread_.join();
   }
 
+  // Reject any in-flight promises so callers do not hang
+  {
+    std::lock_guard<std::mutex> lock(promises_mutex_);
+    for (auto &[extra, promise] : pending_promises_) {
+      try {
+        promise.set_exception(std::make_exception_ptr(std::runtime_error("TDLib client stopped")));
+      } catch (...) {}
+    }
+    pending_promises_.clear();
+  }
+
   client_id_ = -1;
 }
 
@@ -78,8 +89,9 @@ void TdClient::send_async(const std::string &type,
   json_object_object_add(raw_obj, "@type",
                          json_object_new_string(type.c_str()));
 
-  const char *str =
-      json_object_to_json_string_ext(raw_obj, JSON_C_TO_STRING_PLAIN);
+  const char *str = json_object_to_json_string_ext(
+      raw_obj, JSON_C_TO_STRING_PLAIN | JSON_C_TO_STRING_NOSLASHESCAPE);
+  grm::log::debug("TD_ASYNC_SEND: " + std::string(str));
   td_send(client_id_, str);
   json_c_put(raw_obj);
 }
@@ -87,7 +99,7 @@ void TdClient::send_async(const std::string &type,
 std::expected<JsonValue, std::string>
 TdClient::send_request(const std::string &type, std::string_view payload_json,
                        double timeout_seconds) {
-  if (!is_running_ || client_id_ < 0) {
+  if (client_id_ < 0) {
     return std::unexpected("TDLib client is not running");
   }
 
@@ -99,21 +111,16 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
     fut = pending_promises_[extra_id].get_future();
   }
 
-  json_object *raw_obj = json_object_new_object();
+  json_object *raw_obj = json_tokener_parse(std::string(payload_json).c_str());
+  if (!raw_obj || !json_object_is_type(raw_obj, json_type_object)) {
+    if (raw_obj) json_c_put(raw_obj);
+    raw_obj = json_object_new_object();
+  }
+
   json_object_object_add(raw_obj, "@type",
                          json_object_new_string(type.c_str()));
   json_object_object_add(raw_obj, "@extra",
                          json_object_new_string(extra_id.c_str()));
-
-  auto parsed = JsonValue::parse(payload_json);
-  if (parsed && parsed->is_object()) {
-    json_object_object_foreach(parsed->raw(), key, val) {
-      if (std::string_view(key) != "@type" &&
-          std::string_view(key) != "@extra") {
-        json_object_object_add(raw_obj, key, json_c_get(val));
-      }
-    }
-  }
 
   const char *str = json_object_to_json_string_ext(
       raw_obj, JSON_C_TO_STRING_PLAIN | JSON_C_TO_STRING_NOSLASHESCAPE);
@@ -131,15 +138,18 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
     return std::unexpected("Request timed out (" + type + ")");
   }
 
-  auto val = fut.get();
-  if (auto t = val.get_type(); t && *t == "error") {
-    const std::string msg =
-        val.get_string("message").value_or("Unknown TDLib error");
-    const int64_t code = val.get_int("code").value_or(0);
-    return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
+  try {
+    auto val = fut.get();
+    if (auto t = val.get_type(); t && *t == "error") {
+      const std::string msg =
+          val.get_string("message").value_or("Unknown TDLib error");
+      const int64_t code = val.get_int("code").value_or(0);
+      return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
+    }
+    return val;
+  } catch (const std::exception &e) {
+    return std::unexpected(e.what());
   }
-
-  return val;
 }
 
 void TdClient::on_update(UpdateCallback callback) {

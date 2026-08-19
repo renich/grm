@@ -40,7 +40,7 @@ GLOBAL OPTIONS
    Suppress non-error messages.
 
 -c, --config *FILE*
-   Specify custom path to configuration file (default: ``~/.config/grm/grm.conf``).
+   Specify custom path to configuration file (default: ``~/.config/grm/config.json``).
 
 -T, --test-dc
    Connect to Telegram Test Data Center (DC) environment.
@@ -76,7 +76,7 @@ grm login [-p *PHONE*] [-k *CODE*] [-q]
       Pre-fill authentication code for non-interactive logins.
 
    -q, --qr
-      Authenticate via QR code by generating ``/tmp/grm-login-qr.html`` and opening it via ``xdg-open``.
+      Authenticate via QR code by generating an interactive HTML QR code page and opening it via ``xdg-open``.
 
 logout
 ------
@@ -355,11 +355,11 @@ NO_COLOR
 FILES
 =====
 
-~/.config/grm/grm.conf
-   Configuration file.
+~/.config/grm/config.json
+   Configuration file containing Telegram API credentials and application defaults.
 
-~/.local/share/grm/tdlib/
-   TDLib database directory.
+~/.local/lib/grm/tdlib_db/
+   TDLib database directory storing local encryption keys and caches.
 
 REPORTING BUGS
 ==============

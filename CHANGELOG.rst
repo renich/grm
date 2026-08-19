@@ -17,7 +17,7 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 * Added ``grm logout`` command to cleanly terminate the active TDLib session, purge local credentials, and exit with an immediate non-blocking status check if already logged out.
 * Added ``-q`` / ``--qr`` flag to ``grm login`` for desktop QR code authentication via the official ``qr-code-styling`` engine opened using FreeDesktop ``xdg-open``.
 * Added automatic desktop fallback from phone-number login to QR code authentication when Telegram returns ``406 UPDATE_APP_TO_LOGIN``, opening the stylized QR page via ``xdg-open`` without terminal ASCII clutter on graphical desktop sessions.
-* Streamlined headless environment handling by generating ``/tmp/grm-login-qr.html`` with clear, concise instructions to download or open the file in a browser.
+* Streamlined headless environment handling by generating a secure HTML QR code page with clear, concise instructions to download or open the file in a browser.
 * Added LeakSanitizer suppressions file (``sanitizers/lsan.supp``) for third-party ``libtdjson`` library memory allocations during AddressSanitizer test runs.
 * Added Bash autocompletion, global and JSON help screens, and comprehensive manual page documentation for ``grm logout`` and ``grm login --qr``.
 

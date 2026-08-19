@@ -196,8 +196,11 @@ void App::send_tdlib_parameters() {
           "ignore_file_names": false
         }}
       }})",
-      options_.use_test_dc ? "true" : "false", db_path.string(),
-      db_path.string(), config_.api_id, config_.api_hash);
+      options_.use_test_dc ? "true" : "false",
+      escape_json_string(db_path.string()),
+      escape_json_string(db_path.string()),
+      config_.api_id,
+      escape_json_string(config_.api_hash));
 
   client_->send_async("setTdlibParameters", params);
 }
@@ -207,14 +210,18 @@ std::expected<void, std::string> App::ensure_authenticated() {
     return std::unexpected(res.error());
   }
 
-  // Block and wait up to 10 seconds for TDLib session database to load and reach authorizationStateReady
+  // Block and wait up to 10 seconds for TDLib session database to load and reach a settled state
   {
     std::unique_lock<std::mutex> lock(auth_mutex_);
     auth_cv_.wait_for(lock, std::chrono::seconds(10), [this] {
-      return auth_state_ == "authorizationStateReady" || is_closed_;
+      return auth_state_ == "authorizationStateReady" ||
+             auth_state_ == "authorizationStateWaitPhoneNumber" ||
+             auth_state_ == "authorizationStateWaitOtherDeviceConfirmation" ||
+             auth_state_ == "authorizationStateWaitCode" ||
+             auth_state_ == "authorizationStateWaitPassword" ||
+             is_closed_;
     });
   }
-
 
   const std::string current_state = get_auth_state();
 
@@ -280,15 +287,15 @@ App::send_message_and_wait(const std::string &payload, double timeout_seconds) {
     bool finished = false;
     bool success = false;
     int64_t final_id = 0;
+    int64_t pending_id = 0;
     std::string error;
     std::unordered_map<int64_t, int64_t> succeeded_ids;
     std::unordered_map<int64_t, std::string> failed_ids;
   };
 
   auto state = std::make_shared<SendResult>();
-  int64_t pending_id = 0;
 
-  client_->on_update([state, &pending_id](const JsonValue &val) {
+  client_->on_update([state](const JsonValue &val) {
     auto type = val.get_type().value_or("");
     if (type == "updateMessageSendSucceeded") {
       int64_t old_id = val.get_int("old_message_id").value_or(0);
@@ -303,7 +310,7 @@ App::send_message_and_wait(const std::string &payload, double timeout_seconds) {
       if (new_id != 0) {
         state->succeeded_ids[new_id] = new_id;
       }
-      if (pending_id != 0 && (old_id == pending_id || new_id == pending_id)) {
+      if (state->pending_id != 0 && (old_id == state->pending_id || new_id == state->pending_id)) {
         state->finished = true;
         state->success = true;
         state->final_id = (new_id != 0) ? new_id : old_id;
@@ -325,7 +332,7 @@ App::send_message_and_wait(const std::string &payload, double timeout_seconds) {
       if (new_id != 0) {
         state->failed_ids[new_id] = err_formatted;
       }
-      if (pending_id != 0 && (old_id == pending_id || new_id == pending_id)) {
+      if (state->pending_id != 0 && (old_id == state->pending_id || new_id == state->pending_id)) {
         state->finished = true;
         state->success = false;
         state->error = err_formatted;
@@ -348,7 +355,7 @@ App::send_message_and_wait(const std::string &payload, double timeout_seconds) {
 
   {
     std::lock_guard<std::mutex> lock(state->mutex);
-    pending_id = returned_id;
+    state->pending_id = returned_id;
     if (auto it = state->succeeded_ids.find(returned_id);
         it != state->succeeded_ids.end()) {
       state->finished = true;
