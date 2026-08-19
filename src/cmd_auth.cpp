@@ -367,10 +367,10 @@ std::expected<int, std::string> App::cmd_logout() {
     return std::unexpected(res.error());
   }
 
-  // Wait briefly for TDLib parameters to be negotiated and initial auth state determined
+  // Wait up to 10 seconds for TDLib parameters to be negotiated and initial auth state determined
   {
     std::unique_lock<std::mutex> lock(auth_mutex_);
-    auth_cv_.wait_for(lock, std::chrono::seconds(3), [this] {
+    auth_cv_.wait_for(lock, std::chrono::seconds(10), [this] {
       return !auth_state_.empty() &&
              auth_state_ != "authorizationStateWaitTdlibParameters";
     });
@@ -378,9 +378,16 @@ std::expected<int, std::string> App::cmd_logout() {
 
   const std::string state = get_auth_state();
 
-  if (state != "authorizationStateReady") {
+  if (state == "authorizationStateWaitPhoneNumber" ||
+      state == "authorizationStateWaitOtherDeviceConfirmation" ||
+      state == "authorizationStateClosed") {
     grm::log::auth("Already logged out (no active session).");
     return 0;
+  }
+
+  if (state != "authorizationStateReady") {
+    return std::unexpected("Unable to determine authorization state from TDLib (current: " +
+                           (state.empty() ? "uninitialized" : state) + ").");
   }
 
   grm::log::auth("Logging out from Telegram...");
