@@ -3,6 +3,7 @@
 #include "grm/logger.hpp"
 #include "grm/qrcodegen.hpp"
 #include <chrono>
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <iostream>
@@ -171,7 +172,20 @@ std::expected<int, std::string> App::cmd_login() {
     }
 
     if (state == "authorizationStateClosed") {
-      return std::unexpected("TDLib session closed");
+      grm::log::info("Resetting closed session database...");
+      client_->stop();
+      std::error_code ec;
+      std::filesystem::remove_all(config_.db_dir, ec);
+      is_closed_ = false;
+      {
+        std::unique_lock<std::mutex> lock(auth_mutex_);
+        auth_state_.clear();
+      }
+      if (auto r = init_tdlib(); !r) {
+        return std::unexpected(r.error());
+      }
+      last_state.clear();
+      continue;
     }
 
     if (!state.empty() && state != last_state) {
@@ -394,6 +408,17 @@ std::expected<int, std::string> App::cmd_logout() {
   grm::log::auth("Logging out from Telegram...");
   auto res = client_->send_request("logOut", "{}", 15.0);
   if (!res) {
+    if (res.error().find("401") != std::string::npos ||
+        res.error().find("Unauthorized") != std::string::npos) {
+      grm::log::auth("Session is already unauthorized on Telegram server. Purging local session data...");
+      auto destroy_res = client_->send_request("destroy", "{}", 5.0);
+      (void)destroy_res;
+      client_->stop();
+      std::error_code ec;
+      std::filesystem::remove_all(config_.db_dir, ec);
+      grm::log::auth("Logged out successfully. Local session cleared.");
+      return 0;
+    }
     return std::unexpected("Failed to log out: " + res.error());
   }
 
@@ -405,6 +430,10 @@ std::expected<int, std::string> App::cmd_logout() {
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+
+  client_->stop();
+  std::error_code ec;
+  std::filesystem::remove_all(config_.db_dir, ec);
 
   grm::log::auth("Logged out successfully. Session closed.");
   return 0;
