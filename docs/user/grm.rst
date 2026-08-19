@@ -86,14 +86,20 @@ Commands & Subcommands
 Authentication
 --------------
 
-grm login [-p|--phone <num>] [-k|--code <code>]
-   Authenticate against Telegram servers using phone number, login code, and optional 2FA password.
+grm login [-p|--phone <num>] [-k|--code <code>] [-q|--qr]
+   Authenticate against Telegram servers using terminal phone code flow or browser QR code.
 
    -p, --phone <num>
       International phone number (e.g. ``+523330000000``).
 
    -k, --code <code>
       SMS or Telegram login code.
+
+   -q, --qr
+      Authenticate via QR code by generating ``/tmp/grm-login-qr.html`` and opening it in the default browser using ``xdg-open``.
+
+grm logout
+   Log out from Telegram, terminate the active TDLib session, and clear local session state.
 
 Chat & Group Management
 -----------------------

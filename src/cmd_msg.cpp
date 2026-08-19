@@ -441,17 +441,16 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
             chat_id, escape_json_string(search_query), from_msg_id, fetch_limit);
       }
     } else if (topic_id > 0) {
-      method_name = "getForumTopicHistory";
+      method_name = "getMessageThreadHistory";
       payload = std::format(
           R"({{
             "chat_id": {},
-            "forum_topic_id": {},
             "message_thread_id": {},
             "from_message_id": {},
             "offset": 0,
             "limit": {}
           }})",
-          chat_id, topic_id, topic_id, from_msg_id, fetch_limit);
+          chat_id, topic_id, from_msg_id, fetch_limit);
     } else {
       method_name = "getChatHistory";
       payload = std::format(
@@ -482,17 +481,16 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
     if (batch.empty() && method_name == "searchChatMessages") {
       // Fallback to getChatHistory if searchChatMessages returns empty
       if (topic_id > 0) {
-        method_name = "getForumTopicHistory";
+        method_name = "getMessageThreadHistory";
         payload = std::format(
             R"({{
               "chat_id": {},
-              "forum_topic_id": {},
               "message_thread_id": {},
               "from_message_id": {},
               "offset": 0,
               "limit": {}
             }})",
-            chat_id, topic_id, topic_id, from_msg_id, fetch_limit);
+            chat_id, topic_id, from_msg_id, fetch_limit);
       } else {
         method_name = "getChatHistory";
         payload = std::format(

@@ -97,6 +97,15 @@ int main() {
   assert(!res11c.has_value());
   assert(res11c.error().find("Unsupported shell: invalid_shell") != std::string::npos);
 
+  // Test 12: Logout command with --help returns 0
+  auto res12a = app.run({"logout", "--help"});
+  assert(res12a.has_value());
+  assert(*res12a == 0);
+
+  auto res12b = app.run({"logout", "-h"});
+  assert(res12b.has_value());
+  assert(*res12b == 0);
+
   std::cout << "test_cli_routing passed successfully!\n";
   return 0;
 }

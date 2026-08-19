@@ -1,8 +1,10 @@
 #include "grm/app.hpp"
 #include "grm/json_utils.hpp"
 #include "grm/logger.hpp"
+#include "grm/qrcodegen.hpp"
 #include <chrono>
 #include <format>
+#include <fstream>
 #include <iostream>
 #include <termios.h>
 #include <thread>
@@ -15,9 +17,10 @@ CommandSpec get_login_spec() {
       "login",
       "Authenticate Telegram account with TDLib",
       {
-          SubcommandSpec{"login", "[-p|--phone <number>] [-k|--code <code>]", "Authenticate Telegram session interactively or non-interactively", {
+          SubcommandSpec{"login", "[-p|--phone <number>] [-k|--code <code>] [-q|--qr]", "Authenticate Telegram session via terminal phone code or browser QR code", {
               OptionSpec{"-p", "--phone", "<number>", "International phone number (e.g. +523330000000)", {}},
               OptionSpec{"-k", "--code", "<code>", "Authentication code received via Telegram or SMS", {}},
+              OptionSpec{"-q", "--qr", "", "Authenticate via QR code (opens /tmp/grm-login-qr.html via xdg-open)", {}},
               OptionSpec{"-h", "--help", "", "Show login help message", {}}
           }}
       },
@@ -25,7 +28,87 @@ CommandSpec get_login_spec() {
   };
 }
 
+CommandSpec get_logout_spec() {
+  return CommandSpec{
+      "logout",
+      "Log out from Telegram and terminate TDLib session",
+      {
+          SubcommandSpec{"logout", "[-h|--help]", "Log out from Telegram and clear local session state", {
+              OptionSpec{"-h", "--help", "", "Show logout help message", {}}
+          }}
+      },
+      {}
+  };
+}
+
 namespace {
+
+void print_terminal_qr(std::string_view text) {
+  if (text.empty())
+    return;
+
+  try {
+    const auto segs =
+        qrcodegen::QrSegment::makeSegments(std::string(text).c_str());
+    const auto qr = qrcodegen::QrCode::encodeSegments(
+        segs, qrcodegen::QrCode::Ecc::MEDIUM, 1, 40, -1, false);
+
+    const int size = qr.getSize();
+    const int pad_x = 4;
+    const int pad_y = 2; // 2 lines = 4 vertical modules
+
+    std::cout << "\n";
+    // Top quiet zone (solid white card header)
+    for (int py = 0; py < pad_y; ++py) {
+      std::cout << "        \033[48;2;255;255;255m";
+      for (int x = -pad_x; x < size + pad_x; ++x) {
+        std::cout << " ";
+      }
+      std::cout << "\033[0m\n";
+    }
+
+    // QR Data rows
+    for (int y = 0; y < size; y += 2) {
+      std::cout << "        \033[48;2;255;255;255;38;2;0;0;0m";
+      // Left quiet zone
+      for (int px = 0; px < pad_x; ++px) {
+        std::cout << " ";
+      }
+      // QR Modules
+      for (int x = 0; x < size; ++x) {
+        const bool top = qr.getModule(x, y);
+        const bool bottom = (y + 1 < size) ? qr.getModule(x, y + 1) : false;
+
+        if (top && bottom) {
+          std::cout << "█";
+        } else if (!top && !bottom) {
+          std::cout << " ";
+        } else if (top && !bottom) {
+          std::cout << "▀";
+        } else {
+          std::cout << "▄";
+        }
+      }
+      // Right quiet zone
+      for (int px = 0; px < pad_x; ++px) {
+        std::cout << " ";
+      }
+      std::cout << "\033[0m\n";
+    }
+
+    // Bottom quiet zone (solid white card footer)
+    for (int py = 0; py < pad_y; ++py) {
+      std::cout << "        \033[48;2;255;255;255m";
+      for (int x = -pad_x; x < size + pad_x; ++x) {
+        std::cout << " ";
+      }
+      std::cout << "\033[0m\n";
+    }
+    std::cout << "\n";
+  } catch (const std::exception &e) {
+    grm::log::error("Failed to render QR Code: " + std::string(e.what()));
+  }
+}
 
 struct TermiosGuard {
   termios oldt;
@@ -74,6 +157,7 @@ std::expected<int, std::string> App::cmd_login() {
   grm::log::auth("Initializing authentication flow...");
 
   std::string last_state;
+  std::string last_qr_link;
 
   while (true) {
     const std::string state = get_auth_state();
@@ -94,13 +178,34 @@ std::expected<int, std::string> App::cmd_login() {
       if (state == "authorizationStateWaitTdlibParameters") {
         grm::log::info("Configuring TDLib engine parameters...");
       } else if (state == "authorizationStateWaitPhoneNumber") {
+        if (options_.qr) {
+          grm::log::auth("Requesting QR Code authentication from Telegram...");
+          auto res = client_->send_request("requestQrCodeAuthentication", "{}", 15.0);
+          if (!res) {
+            grm::log::error("Failed to request QR Code: " + res.error());
+            last_state.clear();
+          }
+          continue;
+        }
+
         std::string phone = options_.phone;
         if (phone.empty()) {
-          std::cout << "\n[AUTH] Enter your Telegram phone number (e.g. +521234567890):\n> "
+          std::cout << "\n[AUTH] Enter your Telegram phone number (e.g. +521234567890) or type 'qr' for QR Code login:\n> "
                     << std::flush;
           std::cin >> phone;
         } else {
           grm::log::auth("Using pre-filled phone number: " + phone);
+        }
+
+        if (phone == "qr" || phone == "QR") {
+          options_.qr = true;
+          grm::log::auth("Requesting QR Code authentication from Telegram...");
+          auto res = client_->send_request("requestQrCodeAuthentication", "{}", 15.0);
+          if (!res) {
+            grm::log::error("Failed to request QR Code: " + res.error());
+            last_state.clear();
+          }
+          continue;
         }
 
         const std::string payload = std::format(
@@ -126,9 +231,14 @@ std::expected<int, std::string> App::cmd_login() {
             grm::log::error(
                 "Telegram API security restriction [406 UPDATE_APP_TO_LOGIN].");
             grm::log::info(
-                "Telegram does not allow SMS auth for custom API_IDs.");
-            grm::log::info(
-                "Please make sure your phone number is logged into an official Telegram client (phone/desktop), then retry.");
+                "Telegram rejected phone-based authentication for this account. Switching to QR Code login...");
+            options_.qr = true;
+            auto qr_res = client_->send_request("requestQrCodeAuthentication", "{}", 15.0);
+            if (!qr_res) {
+              grm::log::error("Failed to request QR Code: " + qr_res.error());
+            }
+            last_state.clear();
+            continue;
           } else {
             grm::log::error("Failed to set phone number: " + res.error());
           }
@@ -138,6 +248,139 @@ std::expected<int, std::string> App::cmd_login() {
           grm::log::auth(
               "Phone number submitted. Waiting for authentication code...");
         }
+
+      } else if (state == "authorizationStateWaitOtherDeviceConfirmation") {
+        std::string link = get_qr_link();
+        if (link.empty()) {
+          if (auto res = client_->send_request("getAuthorizationState", "{}", 2.0)) {
+            if (auto direct_link = res->get_string("link")) {
+              link = *direct_link;
+              set_qr_link(link);
+            } else if (auto st = res->get_object("authorization_state")) {
+              if (auto nested_link = st->get_string("link")) {
+                link = *nested_link;
+                set_qr_link(link);
+              }
+            }
+          }
+        }
+
+        if (!link.empty() && link != last_qr_link) {
+          last_qr_link = link;
+
+          // Generate HTML page using official Telegram Web qr-code-styling engine
+          try {
+            std::ofstream html_out("/tmp/grm-login-qr.html");
+            if (html_out) {
+              html_out << R"(<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="28">
+<title>grm Telegram Login</title>
+<script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #0f141c;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #ffffff;
+}
+.card {
+  background-color: #17212b;
+  padding: 36px 48px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  max-width: 440px;
+}
+#qr-container {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 16px;
+  display: inline-block;
+  margin: 20px 0;
+}
+h2 { margin: 0 0 8px; font-size: 22px; font-weight: 600; color: #ffffff; }
+p { margin: 4px 0; color: #7f91a4; font-size: 14px; }
+.steps { text-align: left; margin-top: 18px; font-size: 14px; line-height: 1.6; color: #c4c9cc; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Log in to Telegram by QR Code</h2>
+  <p>grm CLI Client</p>
+  <div id="qr-container"></div>
+  <div class="steps">
+    1. Open <b>Telegram</b> on your phone<br>
+    2. Go to <b>Settings &gt; Devices &gt; Link Desktop Device</b><br>
+    3. Point your camera at this QR code
+  </div>
+</div>
+<script>
+if (typeof QRCodeStyling !== 'undefined') {
+  const qrCode = new QRCodeStyling({
+    width: 280,
+    height: 280,
+    type: "svg",
+    data: ")" << link << R"(",
+    margin: 0,
+    qrOptions: {
+      typeNumber: 0,
+      mode: "Byte",
+      errorCorrectionLevel: "M"
+    },
+    dotsOptions: {
+      color: "#000000",
+      type: "rounded"
+    },
+    cornersSquareOptions: {
+      color: "#000000",
+      type: "extra-rounded"
+    },
+    cornersDotOptions: {
+      color: "#000000",
+      type: "dot"
+    }
+  });
+  qrCode.append(document.getElementById("qr-container"));
+}
+</script>
+</body>
+</html>)";
+              html_out.close();
+            }
+          } catch (...) {}
+
+          std::cout << "\n"
+                    << "============================================================\n"
+                    << " [AUTH] QR CODE AUTHENTICATION (Scan within 30s)\n"
+                    << "============================================================\n"
+                    << " 1. Open Telegram on your mobile phone\n"
+                    << " 2. Go to: Settings -> Devices -> Link Desktop Device\n"
+                    << " 3. Point your camera at the QR code in the browser window\n"
+                    << " [AUTH] HTML QR code page generated: /tmp/grm-login-qr.html\n";
+
+          if (std::getenv("DISPLAY") || std::getenv("WAYLAND_DISPLAY")) {
+            std::cout << " [AUTH] Opening /tmp/grm-login-qr.html via xdg-open...\n";
+            int _ = std::system("xdg-open /tmp/grm-login-qr.html >/dev/null 2>&1 &");
+            (void)_;
+          } else {
+            std::cout << " [AUTH] Headless session detected (no graphical desktop environment).\n";
+            print_terminal_qr(link);
+          }
+
+          std::cout << "============================================================\n"
+                    << " Waiting for confirmation from your Telegram device...\n"
+                    << std::flush;
+        }
+
+        last_state.clear(); // Re-check on every tick so new tokens are rendered immediately
 
       } else if (state == "authorizationStateWaitCode") {
         std::string code = options_.code;
@@ -189,6 +432,52 @@ std::expected<int, std::string> App::cmd_login() {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
+}
+
+std::expected<int, std::string> App::cmd_logout() {
+  if (config_.api_id == 0 || config_.api_hash.empty()) {
+    return std::unexpected(
+        "Missing Telegram API credentials. Please set 'api_id' and 'api_hash' in "
+        "~/.config/grm/config.json (or pass via -c/--config).");
+  }
+
+  if (auto res = init_tdlib(); !res) {
+    return std::unexpected(res.error());
+  }
+
+  // Wait briefly for TDLib parameters to be negotiated and initial auth state determined
+  {
+    std::unique_lock<std::mutex> lock(auth_mutex_);
+    auth_cv_.wait_for(lock, std::chrono::seconds(3), [this] {
+      return !auth_state_.empty() &&
+             auth_state_ != "authorizationStateWaitTdlibParameters";
+    });
+  }
+
+  const std::string state = get_auth_state();
+
+  if (state != "authorizationStateReady") {
+    grm::log::auth("Already logged out (no active session).");
+    return 0;
+  }
+
+  grm::log::auth("Logging out from Telegram...");
+  auto res = client_->send_request("logOut", "{}", 15.0);
+  if (!res) {
+    return std::unexpected("Failed to log out: " + res.error());
+  }
+
+  // Wait up to 5 seconds for TDLib to close session
+  auto start = std::chrono::steady_clock::now();
+  while (std::chrono::steady_clock::now() - start < std::chrono::seconds(5)) {
+    if (get_auth_state() == "authorizationStateClosed") {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  grm::log::auth("Logged out successfully. Session closed.");
+  return 0;
 }
 
 } // namespace grm

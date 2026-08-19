@@ -9,6 +9,26 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 [Unreleased]
 ============
 
+[0.7.1] — 2026-08-19
+====================
+
+.. rubric:: Added
+
+* Added ``grm logout`` command to cleanly terminate the active TDLib session, purge local credentials, and exit with an immediate non-blocking status check if already logged out.
+* Added ``-q`` / ``--qr`` flag to ``grm login`` for desktop QR code authentication via the official ``qr-code-styling`` engine opened using FreeDesktop ``xdg-open``.
+* Added automatic desktop fallback from phone-number login to QR code authentication when Telegram returns ``406 UPDATE_APP_TO_LOGIN``, opening the stylized QR page via ``xdg-open`` without terminal ASCII clutter on graphical desktop sessions.
+* Retained terminal Unicode block QR rendering exclusively for headless environments lacking ``DISPLAY`` or ``WAYLAND_DISPLAY``.
+* Added LeakSanitizer suppressions file (``sanitizers/lsan.supp``) for third-party ``libtdjson`` library memory allocations during AddressSanitizer test runs.
+* Added Bash autocompletion, global and JSON help screens, and comprehensive manual page documentation for ``grm logout`` and ``grm login --qr``.
+
+.. rubric:: Fixed
+
+* Resolved Telegram in-app mobile QR code camera scanner rejection by rendering high-resolution vector geometry with curved corner markers and rounded dot modules via ``qr-code-styling``.
+* Resolved TDLib session race condition (``TDLib Error [400]: Initialization parameters are needed``) on ``grm logout`` by ensuring ``ensure_authenticated()`` initializes TDLib parameters before dispatching ``logOut``.
+* Replaced obsolete ``getForumTopicHistory`` TDLib request with ``getMessageThreadHistory`` in message history retrieval and file attachment downloaders.
+* Fixed ``TdClient::stop()`` shutdown sequence to dispatch ``close`` before joining receiver threads, preventing unhandled teardown crashes.
+* Resolved Makefile build configuration leak by explicitly enforcing ``-DENABLE_ASAN=OFF`` and ``-DENABLE_TSAN=OFF`` on user release builds.
+
 [0.7.0] — 2026-08-07
 ====================
 

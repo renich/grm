@@ -11,7 +11,7 @@ namespace grm {
 App::App(Config config, CliOptions options)
     : config_(std::move(config)), options_(std::move(options)) {}
 
-void App::print_version() { std::cout << "grm 0.7.0\n"; }
+void App::print_version() { std::cout << "grm 0.7.1\n"; }
 
 void App::print_usage(fmt::OutputFormat format) {
   if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
@@ -32,6 +32,14 @@ void App::print_login_help(fmt::OutputFormat format) {
     std::cout << CommandRegistry::get_instance().render_command_help_json("login");
   } else {
     std::cout << CommandRegistry::get_instance().render_command_help("login");
+  }
+}
+
+void App::print_logout_help(fmt::OutputFormat format) {
+  if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
+    std::cout << CommandRegistry::get_instance().render_command_help_json("logout");
+  } else {
+    std::cout << CommandRegistry::get_instance().render_command_help("logout");
   }
 }
 
@@ -83,6 +91,16 @@ void App::update_auth_state(std::string state, bool closed) {
   auth_cv_.notify_all();
 }
 
+std::string App::get_qr_link() const {
+  std::scoped_lock lock(auth_mutex_);
+  return qr_link_;
+}
+
+void App::set_qr_link(std::string link) {
+  std::scoped_lock lock(auth_mutex_);
+  qr_link_ = std::move(link);
+}
+
 std::expected<void, std::string> App::init_tdlib() {
   if (client_) {
     return {};
@@ -114,6 +132,10 @@ std::expected<void, std::string> App::init_tdlib() {
                     }
                   }
                 }
+              }
+            } else if (*sttype == "authorizationStateWaitOtherDeviceConfirmation") {
+              if (auto link = state->get_string("link")) {
+                set_qr_link(*link);
               }
             }
             update_auth_state(*sttype, *sttype == "authorizationStateClosed");
@@ -154,20 +176,25 @@ void App::send_tdlib_parameters() {
   const std::string params = std::format(
       R"({{
         "@type": "setTdlibParameters",
-        "use_test_dc": {},
-        "database_directory": "{}",
-        "files_directory": "{}/files",
-        "database_encryption_key": "",
-        "use_file_database": true,
-        "use_chat_info_database": true,
-        "use_message_database": true,
-        "use_secret_chats": true,
-        "api_id": {},
-        "api_hash": "{}",
-        "system_language_code": "en",
-        "device_model": "grm",
-        "system_version": "Linux x86_64",
-        "application_version": "0.7.0"
+        "parameters": {{
+          "@type": "tdlibParameters",
+          "use_test_dc": {},
+          "database_directory": "{}",
+          "files_directory": "{}/files",
+          "database_encryption_key": "",
+          "use_file_database": true,
+          "use_chat_info_database": true,
+          "use_message_database": true,
+          "use_secret_chats": true,
+          "api_id": {},
+          "api_hash": "{}",
+          "system_language_code": "en",
+          "device_model": "grm",
+          "system_version": "Linux x86_64",
+          "application_version": "0.7.1",
+          "enable_storage_optimizer": true,
+          "ignore_file_names": false
+        }}
       }})",
       options_.use_test_dc ? "true" : "false", db_path.string(),
       db_path.string(), config_.api_id, config_.api_hash);
@@ -408,9 +435,19 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
       } else if ((sub_args[i] == "-k" || sub_args[i] == "--code") &&
                  i + 1 < sub_args.size()) {
         options_.code = sub_args[++i];
+      } else if (sub_args[i] == "-q" || sub_args[i] == "--qr") {
+        options_.qr = true;
       }
     }
     return cmd_login();
+  }
+
+  if (cmd == "logout") {
+    if (is_help_requested(sub_args)) {
+      print_logout_help(options_.format);
+      return 0;
+    }
+    return cmd_logout();
   }
 
   if (cmd == "chat") {

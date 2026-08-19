@@ -101,19 +101,18 @@ App::cmd_file_get(const std::vector<std::string> &args) {
                     chat_id, topic_id));
 
     std::string method =
-        (topic_id > 0) ? "getForumTopicHistory" : "getChatHistory";
+        (topic_id > 0) ? "getMessageThreadHistory" : "getChatHistory";
     std::string req_payload;
     if (topic_id > 0) {
       req_payload = std::format(
           R"({{
             "chat_id": {},
-            "forum_topic_id": {},
             "message_thread_id": {},
             "from_message_id": 0,
             "offset": 0,
             "limit": {}
           }})",
-          chat_id, topic_id, topic_id, std::min(100, limit));
+          chat_id, topic_id, std::min(100, limit));
     } else {
       req_payload = std::format(
           R"({{

@@ -50,11 +50,11 @@ help:
 	@echo "  distclean            Alias for clean"
 
 build:
-	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=OFF -DENABLE_TSAN=OFF -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 	$(CMAKE) --build $(BUILD_DIR)
 
 release:
-	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_ASAN=OFF -DENABLE_TSAN=OFF -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 	$(CMAKE) --build $(BUILD_DIR)
 	$(STRIP) --strip-unneeded $(BUILD_DIR)/grm
 
@@ -81,7 +81,7 @@ check:
 asan:
 	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DENABLE_ASAN=ON -DENABLE_TSAN=OFF
 	$(CMAKE) --build $(BUILD_DIR)
-	$(CTEST) --test-dir $(BUILD_DIR) --output-on-failure
+	LSAN_OPTIONS="suppressions=$(abspath sanitizers/lsan.supp)" $(CTEST) --test-dir $(BUILD_DIR) --output-on-failure
 
 tsan:
 	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DENABLE_TSAN=ON -DENABLE_ASAN=OFF

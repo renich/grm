@@ -46,11 +46,11 @@ void TdClient::stop() {
     return;
   }
 
-  is_running_ = false;
-
   if (client_id_ >= 0) {
     send_async("close", "{}");
   }
+
+  is_running_ = false;
 
   if (receiver_thread_.joinable()) {
     receiver_thread_.join();

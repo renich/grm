@@ -209,6 +209,9 @@ Usage Highlights
    # Bulk download all photos from a forum topic
    grm file download-all -o ~/Downloads -t 2 --type photo -1003750297693
 
+   # Log out from Telegram and clear session credentials
+   grm logout
+
 Documentation & Specs
 ---------------------
 

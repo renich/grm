@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(grm VERSION 0.7.0 LANGUAGES CXX)
+project(grm VERSION 0.7.1 LANGUAGES CXX)
 
 
 set(CMAKE_CXX_STANDARD 23)
@@ -92,7 +92,10 @@ add_executable(grm
     src/uploader.cpp
     src/downloader.cpp
     src/formatter.cpp
+    src/qrcodegen.cpp
 )
+
+set_source_files_properties(src/qrcodegen.cpp PROPERTIES COMPILE_OPTIONS "-Wno-conversion;-Wno-sign-conversion;-Wno-shadow;-Wno-old-style-cast")
 
 target_link_libraries(grm PRIVATE
     ${TDJSON_LDFLAGS}
@@ -130,6 +133,7 @@ add_executable(test_cli_routing
     src/config.cpp
     src/logger.cpp
     src/json_utils.cpp
+    src/qrcodegen.cpp
 )
 target_link_libraries(test_cli_routing PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
 add_test(NAME test_cli_routing COMMAND test_cli_routing)
@@ -155,6 +159,7 @@ add_executable(test_completion
     src/config.cpp
     src/logger.cpp
     src/json_utils.cpp
+    src/qrcodegen.cpp
 )
 target_link_libraries(test_completion PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
 add_test(NAME test_completion COMMAND test_completion)
@@ -180,6 +185,7 @@ add_executable(test_command_registry
     src/config.cpp
     src/logger.cpp
     src/json_utils.cpp
+    src/qrcodegen.cpp
 )
 target_link_libraries(test_command_registry PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
 add_test(NAME test_command_registry COMMAND test_command_registry)
@@ -206,6 +212,7 @@ add_executable(test_folder
     src/config.cpp
     src/logger.cpp
     src/json_utils.cpp
+    src/qrcodegen.cpp
 )
 target_link_libraries(test_folder PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
 add_test(NAME test_folder COMMAND test_folder)
@@ -231,6 +238,7 @@ add_executable(test_search
     src/config.cpp
     src/logger.cpp
     src/json_utils.cpp
+    src/qrcodegen.cpp
 )
 target_link_libraries(test_search PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
 add_test(NAME test_search COMMAND test_search)
@@ -314,6 +322,7 @@ add_executable(test_td_client_flush
 )
 target_link_libraries(test_td_client_flush PRIVATE ${TDJSON_LIBRARIES} ${JSONC_LIBRARIES})
 add_test(NAME test_td_client_flush COMMAND test_td_client_flush)
+set_tests_properties(test_td_client_flush PROPERTIES RUN_SERIAL TRUE)
 
 add_executable(test_cli_options
     tests/test_cli_options.cpp

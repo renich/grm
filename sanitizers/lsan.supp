@@ -1,0 +1,6 @@
+# LeakSanitizer suppressions for external TDLib shared libraries
+leak:libtdjson.so
+leak:libtdclient.so
+leak:libtdcore.so
+leak:libtdactor.so
+leak:libtdutils.so

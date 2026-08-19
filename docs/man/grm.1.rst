@@ -66,14 +66,23 @@ COMMANDS
 login
 -----
 
-grm login [-p *PHONE*] [-k *CODE*]
-   Authenticate Telegram session.
+grm login [-p *PHONE*] [-k *CODE*] [-q]
+   Authenticate Telegram session via interactive terminal phone verification or browser QR code.
 
    -p, --phone *PHONE*
       Pre-fill international phone number (e.g. ``+523330000000``).
 
    -k, --code *CODE*
       Pre-fill authentication code for non-interactive logins.
+
+   -q, --qr
+      Authenticate via QR code by generating ``/tmp/grm-login-qr.html`` and opening it in the default browser using ``xdg-open``.
+
+logout
+------
+
+grm logout
+   Log out from Telegram, terminate the active TDLib session, and clear local session state.
 
 chat
 ----

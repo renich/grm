@@ -17,6 +17,7 @@ namespace grm {
 
 // Feature module self-registration spec accessors
 CommandSpec get_login_spec();
+CommandSpec get_logout_spec();
 CommandSpec get_chat_spec();
 CommandSpec get_msg_spec();
 CommandSpec get_topic_spec();
@@ -47,6 +48,7 @@ public:
   static void print_usage(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void print_version();
   static void print_login_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void print_logout_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   [[nodiscard]] static CommandSpec get_search_spec();
   static void print_search_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void print_chat_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
@@ -60,6 +62,7 @@ public:
 
 private:
   [[nodiscard]] std::expected<int, std::string> cmd_login();
+  [[nodiscard]] std::expected<int, std::string> cmd_logout();
   [[nodiscard]] std::expected<int, std::string>
   cmd_completion(const std::vector<std::string> &args);
 
@@ -164,8 +167,10 @@ private:
                        const std::string &mode = "markdown");
 
   [[nodiscard]] std::string get_auth_state() const;
-
   void update_auth_state(std::string state, bool closed = false);
+
+  [[nodiscard]] std::string get_qr_link() const;
+  void set_qr_link(std::string link);
 
   [[nodiscard]] SenderInfo resolve_sender_info(const JsonValue &message_obj);
   [[nodiscard]] std::string resolve_sender_name(const JsonValue &message_obj);
@@ -176,6 +181,7 @@ private:
   mutable std::mutex auth_mutex_;
   std::condition_variable auth_cv_;
   std::string auth_state_;
+  std::string qr_link_;
   bool is_closed_{false};
   std::unordered_map<int64_t, SenderInfo> sender_cache_;
   mutable std::mutex sender_cache_mutex_;

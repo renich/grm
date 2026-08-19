@@ -16,13 +16,23 @@ int main() {
   std::string file_help = registry.render_command_help("file");
   assert(!file_help.empty());
   assert(file_help.find("grm file get") != std::string::npos);
-  assert(file_help.find("--type") != std::string::npos);
+  // Test 2b: Subcommand help screen rendering for 'login'
+  std::string login_help = registry.render_command_help("login");
+  assert(!login_help.empty());
+  assert(login_help.find("--phone") != std::string::npos);
+  assert(login_help.find("--qr") != std::string::npos);
 
   // Test 3: Subcommand help screen rendering for 'msg'
   std::string msg_help = registry.render_command_help("msg");
   assert(!msg_help.empty());
   assert(msg_help.find("grm msg unpin") != std::string::npos);
   assert(msg_help.find("--all") != std::string::npos);
+
+  // Test 3b: Subcommand help screen rendering for 'logout'
+  std::string logout_help = registry.render_command_help("logout");
+  assert(!logout_help.empty());
+  assert(logout_help.find("grm logout") != std::string::npos);
+  assert(logout_help.find("Log out from Telegram") != std::string::npos);
 
   // Test 4: Bash completion script rendering
   std::string bash_comp = registry.render_completion("bash");

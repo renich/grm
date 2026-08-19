@@ -7,7 +7,7 @@ _grm_completions() {
   _init_completion || return
 
   local global_opts="-h --help --help=all -V --version -v --verbose -d --debug -q --quiet -c --config -T --test-dc -F --format --color --no-color"
-  local commands="login chat msg topic file folder search completion"
+  local commands="login logout chat msg topic file folder search completion"
 
   if [[ ${cword} -eq 1 ]]; then
     if [[ "${cur}" == -* ]]; then
@@ -29,7 +29,18 @@ _grm_completions() {
           COMPREPLY=($(compgen -W "login" -- "${cur}"))
         fi
       elif [[ "${words[2]}" == "login" ]]; then
-        COMPREPLY=($(compgen -W "-h --help -p --phone -k --code -h --help" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-h --help -p --phone -k --code -q --qr -h --help" -- "${cur}"))
+      fi
+      ;;
+    logout)
+      if [[ ${cword} -eq 2 ]]; then
+        if [[ "${cur}" == -* ]]; then
+          COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
+        else
+          COMPREPLY=($(compgen -W "logout" -- "${cur}"))
+        fi
+      elif [[ "${words[2]}" == "logout" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -h --help" -- "${cur}"))
       fi
       ;;
     chat)
@@ -67,7 +78,7 @@ _grm_completions() {
       elif [[ "${words[2]}" == "ls" ]]; then
         COMPREPLY=($(compgen -W "-h --help -t --topic -n --limit -S --since -f --filter -r --reverse -h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "send" ]]; then
-        COMPREPLY=($(compgen -W "-h --help -a --attach -m --media -C --caption -t --topic -h --help" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-h --help -a --attach -m --media -C --caption -t --topic -r --reply-to -h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "info" ]]; then
         COMPREPLY=($(compgen -W "-h --help -t --topic -h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "edit" ]]; then

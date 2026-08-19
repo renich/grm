@@ -23,6 +23,7 @@ struct CliOptions {
   bool help_all{false};
   bool pretty{false};
   bool version{false};
+  bool qr{false};
 };
 
 struct Config {
