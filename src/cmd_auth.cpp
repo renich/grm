@@ -1,7 +1,6 @@
 #include "grm/app.hpp"
 #include "grm/json_utils.hpp"
 #include "grm/logger.hpp"
-#include "grm/qrcodegen.hpp"
 #include <chrono>
 #include <format>
 #include <fstream>
@@ -42,73 +41,6 @@ CommandSpec get_logout_spec() {
 }
 
 namespace {
-
-void print_terminal_qr(std::string_view text) {
-  if (text.empty())
-    return;
-
-  try {
-    const auto segs =
-        qrcodegen::QrSegment::makeSegments(std::string(text).c_str());
-    const auto qr = qrcodegen::QrCode::encodeSegments(
-        segs, qrcodegen::QrCode::Ecc::MEDIUM, 1, 40, -1, false);
-
-    const int size = qr.getSize();
-    const int pad_x = 4;
-    const int pad_y = 2; // 2 lines = 4 vertical modules
-
-    std::cout << "\n";
-    // Top quiet zone (solid white card header)
-    for (int py = 0; py < pad_y; ++py) {
-      std::cout << "        \033[48;2;255;255;255m";
-      for (int x = -pad_x; x < size + pad_x; ++x) {
-        std::cout << " ";
-      }
-      std::cout << "\033[0m\n";
-    }
-
-    // QR Data rows
-    for (int y = 0; y < size; y += 2) {
-      std::cout << "        \033[48;2;255;255;255;38;2;0;0;0m";
-      // Left quiet zone
-      for (int px = 0; px < pad_x; ++px) {
-        std::cout << " ";
-      }
-      // QR Modules
-      for (int x = 0; x < size; ++x) {
-        const bool top = qr.getModule(x, y);
-        const bool bottom = (y + 1 < size) ? qr.getModule(x, y + 1) : false;
-
-        if (top && bottom) {
-          std::cout << "█";
-        } else if (!top && !bottom) {
-          std::cout << " ";
-        } else if (top && !bottom) {
-          std::cout << "▀";
-        } else {
-          std::cout << "▄";
-        }
-      }
-      // Right quiet zone
-      for (int px = 0; px < pad_x; ++px) {
-        std::cout << " ";
-      }
-      std::cout << "\033[0m\n";
-    }
-
-    // Bottom quiet zone (solid white card footer)
-    for (int py = 0; py < pad_y; ++py) {
-      std::cout << "        \033[48;2;255;255;255m";
-      for (int x = -pad_x; x < size + pad_x; ++x) {
-        std::cout << " ";
-      }
-      std::cout << "\033[0m\n";
-    }
-    std::cout << "\n";
-  } catch (const std::exception &e) {
-    grm::log::error("Failed to render QR Code: " + std::string(e.what()));
-  }
-}
 
 struct TermiosGuard {
   termios oldt;
@@ -361,18 +293,21 @@ if (typeof QRCodeStyling !== 'undefined') {
                     << "============================================================\n"
                     << " [AUTH] QR CODE AUTHENTICATION (Scan within 30s)\n"
                     << "============================================================\n"
-                    << " 1. Open Telegram on your mobile phone\n"
-                    << " 2. Go to: Settings -> Devices -> Link Desktop Device\n"
-                    << " 3. Point your camera at the QR code in the browser window\n"
                     << " [AUTH] HTML QR code page generated: /tmp/grm-login-qr.html\n";
 
           if (std::getenv("DISPLAY") || std::getenv("WAYLAND_DISPLAY")) {
-            std::cout << " [AUTH] Opening /tmp/grm-login-qr.html via xdg-open...\n";
+            std::cout << " [AUTH] Opening /tmp/grm-login-qr.html via xdg-open...\n\n"
+                      << " 1. Open Telegram on your mobile phone:\n"
+                      << "    Settings -> Devices -> Link Desktop Device\n"
+                      << " 2. Point your camera at the QR code in your browser window.\n";
             int _ = std::system("xdg-open /tmp/grm-login-qr.html >/dev/null 2>&1 &");
             (void)_;
           } else {
-            std::cout << " [AUTH] Headless session detected (no graphical desktop environment).\n";
-            print_terminal_qr(link);
+            std::cout << " [AUTH] Headless session detected (no graphical desktop environment).\n\n"
+                      << " 1. Download or open /tmp/grm-login-qr.html in a web browser.\n"
+                      << " 2. Open Telegram on your mobile phone:\n"
+                      << "    Settings -> Devices -> Link Desktop Device\n"
+                      << " 3. Point your camera at the QR code displayed in your browser.\n";
           }
 
           std::cout << "============================================================\n"
