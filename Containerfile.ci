@@ -27,7 +27,7 @@ RUN dnf -y install \
 
 # Compile and install TDLib 1.8.66 into /usr/local
 WORKDIR /tmp/tdlib-build
-RUN git clone --depth 1 --branch v1.8.0 https://github.com/tdlib/td.git . \
+RUN git clone --depth 1 https://github.com/tdlib/td.git . \
     && mkdir build \
     && cd build \
     && cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX=/usr/local -DTD_ENABLE_JNI=OFF -DTD_ENABLE_DOTNET=OFF .. \
