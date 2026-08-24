@@ -217,8 +217,8 @@ Usage Highlights
    # Bulk download all photos from a forum topic
    grm file download-all -o ~/Downloads -t 2 --type photo -1003750297693
 
-   # Publish a Telegram Story with Markdown hyperlinks and pin to profile
-   grm story post --photo assets/logo.png --caption "[grm](https://gitlab.com/renich/grm) ya soporta historias 🚀" --pinned --period 24h
+   # Publish a Telegram Story with clickable URL and pin to profile
+   grm story post --photo assets/logo.png --caption "grm ya soporta historias 🚀 https://gitlab.com/renich/grm" --pinned --period 24h
 
    # Edit an existing story's caption or media
    grm story edit --story-id 32 --caption "Updated story caption with link: https://gitlab.com/renich/grm"

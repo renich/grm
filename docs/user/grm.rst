@@ -431,11 +431,11 @@ Examples
 
       grm file download-all -o ~/Downloads -t 2 --type photo -1003750297693
 
-5. Publish a Telegram Story with Markdown hyperlinks and pin to profile page:
+5. Publish a Telegram Story with clickable URL and pin to profile page:
 
    .. code-block:: bash
 
-      grm story post --photo assets/logo.png --caption "[grm](https://gitlab.com/renich/grm) ya soporta historias 🚀" --pinned --period 24h
+      grm story post --photo assets/logo.png --caption "grm ya soporta historias 🚀 https://gitlab.com/renich/grm" --pinned --period 24h
 
 6. Edit an existing story's caption and media:
 

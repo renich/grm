@@ -14,7 +14,7 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 
 .. rubric:: Added
 
-* Complete Telegram Stories CRUD suite (``grm story post``, ``grm story edit``, ``grm story ls``, ``grm story delete``) supporting photo and video publishing, caption Markdown hyperlinks and entity formatting, privacy scopes (``everyone``, ``contacts``, ``close_friends``), active durations (6h, 12h, 24h, 48h), profile "Posts" pinning, content forwarding protection, and multi-source story listing across active, pinned profile, and archived stories.
+* Complete Telegram Stories CRUD suite (``grm story post``, ``grm story edit``, ``grm story ls``, ``grm story delete``) supporting photo and video publishing, clickable URLs and caption formatting, privacy scopes (``everyone``, ``contacts``, ``close_friends``), active durations (6h, 12h, 24h, 48h), profile "Posts" pinning, content forwarding protection, and multi-source story listing across active, pinned profile, and archived stories.
 * Custom Telegram Emoji Status CLI suite (``grm status ls``, ``grm status set``, ``grm status clear``) supporting emoji discovery across default, recent, and custom sticker sets, query filtering, custom emoji IDs, human duration strings (``30m``, ``1h``, ``8h``, ``2d``), and channel/supergroup boosted status badges.
 * Dynamic Git-based build versioning in CMake (``include/grm/version.hpp.in``) reporting ``devel (<commit-hash>[-dirty])`` for unreleased/master builds and exact release tag for release builds.
 * Automated ``make tdlib-bootstrap`` target in GNUmakefile to compile and install upstream TDLib into ``~/.local``.

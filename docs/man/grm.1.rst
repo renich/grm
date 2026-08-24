@@ -328,7 +328,7 @@ grm story ls [-C *CHAT_ID*] [-n *LIMIT*] [-p] [-a] [-A]
       List active, pinned profile, and archived stories combined.
 
 grm story edit -s *STORY_ID* [-p *PHOTO*] [-v *VIDEO*] [-c *CAPTION*] [-C *CHAT_ID*]
-   Edit media content or caption of an existing story. Supports Markdown hyperlinks in captions.
+   Edit media content or caption of an existing story. Supports clickable URLs and formatting in captions.
 
    -s, --story-id *ID*
       Story identifier to edit.
