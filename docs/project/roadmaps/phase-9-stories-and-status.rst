@@ -5,7 +5,7 @@ Phase 9: Telegram Stories & Emoji Status CLI
 :Author: Rénich Bon Ćirić
 :Status: Completed
 :Type: Project Roadmap Specification
-:Date: 2026-08-23
+:Date: 2026-08-24
 
 Overview
 ========
@@ -21,14 +21,22 @@ Delivered Scope
    * Automated ``make tdlib-bootstrap`` target to build upstream TDLib into ``$HOME/.local``.
    * Zero-config automatic fallback to system package when Fedora updates ``tdlib-devel``.
 
-2. **Story Subcommand Suite** (``grm story``):
+2. **Rich Telegram Stories Subcommand Suite** (``grm story``):
 
-   * ``grm story post``: Photo/video story publishing with Markdown captions, privacy settings (``everyone``, ``contacts``, ``close_friends``), duration periods (6h, 12h, 24h, 48h), profile pinning, and content protection.
-   * ``grm story ls``: Active story listing with tabular summary and JSON envelope modes.
+   * ``grm story post``: Photo/video story publishing with Markdown/URL captions, interactive sticker overlays (clickable links via ``-l|--link`` and reaction buttons via ``-r|--reaction``), privacy settings (``everyone``, ``contacts``, ``close_friends``), duration periods (6h, 12h, 24h, 48h), profile pinning, and content protection.
+   * ``grm story edit``: Modifies media content, caption, clickable links, or reaction stickers of published stories.
+   * ``grm story info``: Detailed metadata inspection, interaction counters, capabilities, and sticker attachments.
+   * ``grm story viewers``: Interaction analytics, viewer histories, and reaction breakdowns.
+   * ``grm story pin`` / ``unpin``: Profile and chat page permanent "Posts" tab pinning management.
+   * ``grm story react``: Story emoji reaction management.
+   * ``grm story privacy``: Dynamic visibility updates for active stories.
+   * ``grm story stealth``: 25-minute Telegram Premium stealth mode.
+   * ``grm story ls``: Multi-source story listing across active, pinned profile posts, and archived stories.
    * ``grm story delete``: Targeted story removal.
 
 3. **Custom Emoji Status Subcommand Suite** (``grm status``):
 
+   * ``grm status ls``: Custom emoji status discovery and search across default, recent, and custom sticker packs.
    * ``grm status set``: Custom emoji badge assignment with human duration parsing (e.g. ``30m``, ``1h``, ``2d``).
    * ``grm status clear``: Badge removal.
    * Chat-scoped status support for boosted supergroups and channels (``--chat <id>``).

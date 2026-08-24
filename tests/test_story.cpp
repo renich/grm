@@ -265,11 +265,266 @@ void test_story_json_builders() {
   std::cout << "[PASS] test_story_json_builders\n";
 }
 
+void test_story_info_and_viewers_args() {
+  {
+    grm::StoryInfoOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--story-id", "101", "-C", "12345"};
+    bool ok = grm::parse_story_info_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 101);
+    TEST_ASSERT(opts.chat_id == 12345);
+  }
+
+  {
+    grm::StoryInfoOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"102"};
+    bool ok = grm::parse_story_info_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 102);
+  }
+
+  {
+    grm::StoryViewersOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--story-id", "101",   "--limit", "25",
+                                     "--query",    "alice", "-C",      "12345"};
+    bool ok = grm::parse_story_viewers_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 101);
+    TEST_ASSERT(opts.limit == 25);
+    TEST_ASSERT(opts.query == "alice");
+    TEST_ASSERT(opts.chat_id == 12345);
+  }
+
+  std::cout << "[PASS] test_story_info_and_viewers_args\n";
+}
+
+void test_story_pin_react_privacy_args() {
+  {
+    grm::StoryPinOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--story-id", "55", "-C", "777"};
+    bool ok = grm::parse_story_pin_args(args, opts, err, true);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 55);
+    TEST_ASSERT(opts.chat_id == 777);
+    TEST_ASSERT(opts.is_pinned);
+  }
+
+  {
+    grm::StoryPinOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"55"};
+    bool ok = grm::parse_story_pin_args(args, opts, err, false);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 55);
+    TEST_ASSERT(!opts.is_pinned);
+  }
+
+  {
+    grm::StoryReactOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--story-id", "55", "--emoji",
+                                     "🔥",         "-C", "777"};
+    bool ok = grm::parse_story_react_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 55);
+    TEST_ASSERT(opts.emoji == "🔥");
+    TEST_ASSERT(opts.chat_id == 777);
+  }
+
+  {
+    grm::StoryPrivacyOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--story-id", "55", "--privacy",
+                                     "close_friends"};
+    bool ok = grm::parse_story_privacy_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 55);
+    TEST_ASSERT(opts.privacy == "close_friends");
+  }
+
+  std::cout << "[PASS] test_story_pin_react_privacy_args\n";
+}
+
+void test_story_stickers_and_actions_json() {
+  // Test story areas in post
+  grm::StoryPostOptions opts;
+  opts.photo_path = "/tmp/img.png";
+  opts.link_url = "https://gitlab.com/renich/grm";
+  opts.reaction_emoji = "🚀";
+  std::string post_json = grm::build_post_story_json(opts, 999, "");
+  auto parsed_post = grm::JsonValue::parse(post_json);
+  TEST_ASSERT(parsed_post.has_value());
+  auto areas_obj = parsed_post->get_object("areas");
+  TEST_ASSERT(areas_obj.has_value());
+  auto areas_arr = areas_obj->get_array("areas");
+  TEST_ASSERT(areas_arr.size() == 2);
+
+  // Test toggle pin JSON
+  std::string pin_json =
+      grm::build_toggle_story_is_posted_to_chat_page_json(999, 42, true);
+  auto parsed_pin = grm::JsonValue::parse(pin_json);
+  TEST_ASSERT(parsed_pin.has_value());
+  TEST_ASSERT(parsed_pin->get_bool("is_posted_to_chat_page").value_or(false));
+
+  // Test set reaction JSON
+  std::string react_json = grm::build_set_story_reaction_json(999, 42, "🔥");
+  auto parsed_react = grm::JsonValue::parse(react_json);
+  TEST_ASSERT(parsed_react.has_value());
+  auto rx_obj = parsed_react->get_object("reaction_type");
+  TEST_ASSERT(rx_obj.has_value());
+  TEST_ASSERT(rx_obj->get_string("emoji").value_or("") == "🔥");
+
+  // Test video post JSON
+  grm::StoryPostOptions vid_opts;
+  vid_opts.video_path = "/tmp/clip.mp4";
+  vid_opts.privacy = "close_friends";
+  vid_opts.active_period = 43200;
+  std::string vid_json = grm::build_post_story_json(vid_opts, 123, "");
+  auto parsed_vid = grm::JsonValue::parse(vid_json);
+  TEST_ASSERT(parsed_vid.has_value());
+  auto vid_content = parsed_vid->get_object("content");
+  TEST_ASSERT(vid_content.has_value());
+  TEST_ASSERT(vid_content->get_string("@type").value_or("") ==
+              "inputStoryContentVideo");
+  auto vid_priv = parsed_vid->get_object("privacy_settings");
+  TEST_ASSERT(vid_priv.has_value());
+  TEST_ASSERT(vid_priv->get_string("@type").value_or("") ==
+              "storyPrivacySettingsCloseFriends");
+
+  // Test video edit JSON
+  grm::StoryEditOptions edit_vid_opts;
+  edit_vid_opts.video_path = "/tmp/clip2.mp4";
+  std::string edit_vid_json =
+      grm::build_edit_story_json(123, 77, edit_vid_opts, "");
+  auto parsed_edit_vid = grm::JsonValue::parse(edit_vid_json);
+  TEST_ASSERT(parsed_edit_vid.has_value());
+  auto edit_vid_content = parsed_edit_vid->get_object("content");
+  TEST_ASSERT(edit_vid_content.has_value());
+  TEST_ASSERT(edit_vid_content->get_string("@type").value_or("") ==
+              "inputStoryContentVideo");
+
+  // Test clear reaction JSON
+  std::string clear_rx_json = grm::build_set_story_reaction_json(999, 42, "");
+  auto parsed_clear_rx = grm::JsonValue::parse(clear_rx_json);
+  TEST_ASSERT(parsed_clear_rx.has_value());
+  TEST_ASSERT(parsed_clear_rx->get_object("reaction_type") == std::nullopt);
+
+  std::cout << "[PASS] test_story_stickers_and_actions_json\n";
+}
+
+void test_story_equals_flag_parsing() {
+  {
+    grm::StoryPostOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--photo=/tmp/pic.jpg",
+                                     "--caption=hello",
+                                     "--link=https://example.com",
+                                     "--reaction=🔥",
+                                     "--privacy=contacts",
+                                     "--period=2d",
+                                     "--chat=12345"};
+    bool ok = grm::parse_story_post_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.photo_path == "/tmp/pic.jpg");
+    TEST_ASSERT(opts.caption == "hello");
+    TEST_ASSERT(opts.link_url == "https://example.com");
+    TEST_ASSERT(opts.reaction_emoji == "🔥");
+    TEST_ASSERT(opts.privacy == "contacts");
+    TEST_ASSERT(opts.active_period == 172800);
+    TEST_ASSERT(opts.chat_id == 12345);
+  }
+
+  {
+    grm::StoryEditOptions opts;
+    std::string err;
+    std::vector<std::string> args = {
+        "--story-id=88",  "--video=/tmp/vid.mp4",
+        "--caption=edit", "--link=https://example.com",
+        "--reaction=🚀",  "--chat=99"};
+    bool ok = grm::parse_story_edit_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 88);
+    TEST_ASSERT(opts.video_path == "/tmp/vid.mp4");
+    TEST_ASSERT(opts.caption == "edit");
+    TEST_ASSERT(opts.has_caption);
+    TEST_ASSERT(opts.link_url == "https://example.com");
+    TEST_ASSERT(opts.reaction_emoji == "🚀");
+    TEST_ASSERT(opts.has_areas);
+    TEST_ASSERT(opts.chat_id == 99);
+  }
+
+  {
+    grm::StoryListOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--chat=777", "--limit=30"};
+    bool ok = grm::parse_story_ls_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.chat_id == 777);
+    TEST_ASSERT(opts.limit == 30);
+  }
+
+  {
+    grm::StoryViewersOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--story-id=10", "--query=bob",
+                                     "--limit=15", "--chat=55"};
+    bool ok = grm::parse_story_viewers_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 10);
+    TEST_ASSERT(opts.query == "bob");
+    TEST_ASSERT(opts.limit == 15);
+    TEST_ASSERT(opts.chat_id == 55);
+  }
+
+  {
+    grm::StoryPinOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--story-id=20", "--chat=33"};
+    bool ok = grm::parse_story_pin_args(args, opts, err, true);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 20);
+    TEST_ASSERT(opts.chat_id == 33);
+  }
+
+  {
+    grm::StoryReactOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--story-id=25", "--emoji=❤️", "--chat=44"};
+    bool ok = grm::parse_story_react_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 25);
+    TEST_ASSERT(opts.emoji == "❤️");
+    TEST_ASSERT(opts.chat_id == 44);
+  }
+
+  {
+    grm::StoryPrivacyOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--story-id=30", "--privacy=contacts",
+                                     "--chat=66"};
+    bool ok = grm::parse_story_privacy_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 30);
+    TEST_ASSERT(opts.privacy == "contacts");
+    TEST_ASSERT(opts.chat_id == 66);
+  }
+
+  std::cout << "[PASS] test_story_equals_flag_parsing\n";
+}
+
 int main() {
   test_period_parsing();
   test_story_post_arg_parsing();
   test_story_ls_and_delete_args();
   test_story_json_builders();
+  test_story_info_and_viewers_args();
+  test_story_pin_react_privacy_args();
+  test_story_stickers_and_actions_json();
+  test_story_equals_flag_parsing();
   std::cout << "All Story unit tests passed successfully!\n";
   return 0;
 }

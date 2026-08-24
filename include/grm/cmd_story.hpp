@@ -17,6 +17,8 @@ struct StoryPostOptions {
   int32_t active_period{86400};    // default 24 hours (86400)
   bool is_pinned{false};           // is_posted_to_chat_page
   bool protect_content{false};
+  std::string link_url;
+  std::string reaction_emoji;
   int64_t chat_id{0}; // 0 for personal account, or channel ID
 };
 
@@ -26,6 +28,9 @@ struct StoryEditOptions {
   std::string video_path;
   std::string caption;
   bool has_caption{false};
+  std::string link_url;
+  std::string reaction_emoji;
+  bool has_areas{false};
   int64_t chat_id{0};
 };
 
@@ -39,6 +44,36 @@ struct StoryListOptions {
 
 struct StoryDeleteOptions {
   int32_t story_id{0};
+  int64_t chat_id{0};
+};
+
+struct StoryInfoOptions {
+  int32_t story_id{0};
+  int64_t chat_id{0};
+};
+
+struct StoryViewersOptions {
+  int32_t story_id{0};
+  int64_t chat_id{0};
+  int32_t limit{50};
+  std::string query;
+};
+
+struct StoryPinOptions {
+  int32_t story_id{0};
+  int64_t chat_id{0};
+  bool is_pinned{true};
+};
+
+struct StoryReactOptions {
+  int32_t story_id{0};
+  std::string emoji;
+  int64_t chat_id{0};
+};
+
+struct StoryPrivacyOptions {
+  int32_t story_id{0};
+  std::string privacy{"everyone"};
   int64_t chat_id{0};
 };
 
@@ -63,6 +98,26 @@ parse_period_string(std::string_view str);
                                            StoryDeleteOptions &opts,
                                            std::string &err);
 
+[[nodiscard]] bool parse_story_info_args(const std::vector<std::string> &args,
+                                         StoryInfoOptions &opts,
+                                         std::string &err);
+
+[[nodiscard]] bool
+parse_story_viewers_args(const std::vector<std::string> &args,
+                         StoryViewersOptions &opts, std::string &err);
+
+[[nodiscard]] bool parse_story_pin_args(const std::vector<std::string> &args,
+                                        StoryPinOptions &opts, std::string &err,
+                                        bool default_pinned = true);
+
+[[nodiscard]] bool parse_story_react_args(const std::vector<std::string> &args,
+                                          StoryReactOptions &opts,
+                                          std::string &err);
+
+[[nodiscard]] bool
+parse_story_privacy_args(const std::vector<std::string> &args,
+                         StoryPrivacyOptions &opts, std::string &err);
+
 [[nodiscard]] std::string
 build_post_story_json(const StoryPostOptions &opts, int64_t resolved_chat_id,
                       const std::string &formatted_caption_json);
@@ -76,5 +131,16 @@ build_edit_story_json(int64_t chat_id, int32_t story_id,
 
 [[nodiscard]] std::string build_delete_story_json(int64_t chat_id,
                                                   int32_t story_id);
+
+[[nodiscard]] std::string build_toggle_story_is_posted_to_chat_page_json(
+    int64_t chat_id, int32_t story_id, bool is_posted_to_chat_page);
+
+[[nodiscard]] std::string
+build_set_story_reaction_json(int64_t chat_id, int32_t story_id,
+                              const std::string &emoji);
+
+[[nodiscard]] std::string
+build_set_story_privacy_settings_json(int32_t story_id,
+                                      const std::string &privacy);
 
 } // namespace grm

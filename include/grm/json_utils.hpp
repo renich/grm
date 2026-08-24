@@ -34,9 +34,11 @@ public:
   [[nodiscard]] std::optional<std::string>
   get_string(const std::string &key) const;
   [[nodiscard]] std::optional<int64_t> get_int(const std::string &key) const;
+  [[nodiscard]] std::optional<double> get_double(const std::string &key) const;
   [[nodiscard]] std::optional<bool> get_bool(const std::string &key) const;
 
   [[nodiscard]] std::optional<int64_t> as_int64() const;
+  [[nodiscard]] std::optional<double> as_double() const;
   [[nodiscard]] std::optional<std::string> as_string() const;
 
   [[nodiscard]] std::optional<JsonValue>

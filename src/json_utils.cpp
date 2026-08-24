@@ -161,6 +161,37 @@ std::optional<int64_t> JsonValue::get_int(const std::string &key) const {
   return std::nullopt;
 }
 
+std::optional<double> JsonValue::as_double() const {
+  if (obj_) {
+    if (json_object_is_type(obj_, json_type_double)) {
+      return json_object_get_double(obj_);
+    }
+    if (json_object_is_type(obj_, json_type_int)) {
+      return static_cast<double>(json_object_get_int64(obj_));
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<double> JsonValue::get_double(const std::string &key) const {
+  if (key.empty()) {
+    return as_double();
+  }
+  if (!is_object())
+    return std::nullopt;
+
+  json_object *val = nullptr;
+  if (json_object_object_get_ex(obj_, key.c_str(), &val) && val) {
+    if (json_object_is_type(val, json_type_double)) {
+      return json_object_get_double(val);
+    }
+    if (json_object_is_type(val, json_type_int)) {
+      return static_cast<double>(json_object_get_int64(val));
+    }
+  }
+  return std::nullopt;
+}
+
 std::optional<bool> JsonValue::get_bool(const std::string &key) const {
   if (key.empty()) {
     if (obj_ && json_object_is_type(obj_, json_type_boolean)) {

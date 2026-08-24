@@ -9,6 +9,27 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 [Unreleased]
 ============
 
+[0.8.1] — 2026-08-24
+====================
+
+.. rubric:: Added
+
+* Extended Telegram Stories options with interactive sticker overlays: clickable link overlays (``-l`` / ``--link``) and suggested reaction buttons (``-r`` / ``--reaction``) for ``grm story post`` and ``grm story edit``.
+* Added ``grm story info`` command to inspect full story metadata, interaction counters (views, forwards, reactions), capabilities, and interactive sticker attachments.
+* Added ``grm story viewers`` (alias ``interactions``) command to list viewer history, reaction emojis, and interaction timestamps with query search and pagination limits.
+* Added ``grm story pin`` and ``grm story unpin`` commands to dynamically manage profile and chat page permanent "Posts" tab pinning.
+* Added ``grm story react`` command to set or remove emoji reactions on stories.
+* Added ``grm story privacy`` command to dynamically modify visibility settings (``everyone``, ``contacts``, ``close_friends``) on published stories.
+* Added ``grm story stealth`` command to activate Telegram Premium 25-minute stealth mode.
+* Added ``JsonValue::get_double`` and ``JsonValue::as_double`` getters to JSON utility engine.
+* Added comprehensive unit test coverage and CLI routing tests in ``tests/test_story.cpp`` and ``tests/test_cli_routing.cpp``.
+* Updated manual page, user guide, and Bash autocompletions for all newly added story commands and flags.
+
+.. rubric:: Fixed
+
+* Added automatic story metadata prefetching in ``grm story pin``, ``grm story unpin``, ``grm story react``, and ``grm story privacy`` to ensure TDLib local caches are populated before dispatching mutations.
+* Clarified URL auto-linkification in story viewer captions.
+
 [0.8.0] — 2026-08-24
 ====================
 

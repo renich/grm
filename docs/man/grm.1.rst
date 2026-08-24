@@ -306,6 +306,12 @@ grm story post [--photo *PATH* | --video *PATH*] [-c *CAPTION*] [--privacy every
    --protect
       Prevent story forwarding and saving.
 
+   -l, --link *URL*
+      Clickable link sticker overlay URL.
+
+   -r, --reaction *EMOJI*
+      Interactive suggested reaction sticker button.
+
    -C, --chat *CHAT_ID*
       Target chat or channel ID (default: personal account).
 
@@ -327,8 +333,8 @@ grm story ls [-C *CHAT_ID*] [-n *LIMIT*] [-p] [-a] [-A]
    -A, --all
       List active, pinned profile, and archived stories combined.
 
-grm story edit -s *STORY_ID* [-p *PHOTO*] [-v *VIDEO*] [-c *CAPTION*] [-C *CHAT_ID*]
-   Edit media content or caption of an existing story. Supports clickable URLs and formatting in captions.
+grm story edit -s *STORY_ID* [-p *PHOTO*] [-v *VIDEO*] [-c *CAPTION*] [-l *URL*] [-r *EMOJI*] [-C *CHAT_ID*]
+   Edit media content, caption, or interactive stickers of an existing story.
 
    -s, --story-id *ID*
       Story identifier to edit.
@@ -340,10 +346,82 @@ grm story edit -s *STORY_ID* [-p *PHOTO*] [-v *VIDEO*] [-c *CAPTION*] [-C *CHAT_
       New video file.
 
    -c, --caption *TEXT*
-      New story caption (supports Markdown hyperlinks and formatting).
+      New story caption.
+
+   -l, --link *URL*
+      Clickable link sticker overlay URL.
+
+   -r, --reaction *EMOJI*
+      Interactive suggested reaction sticker button.
 
    -C, --chat *CHAT_ID*
       Target chat or channel ID.
+
+grm story info -s *STORY_ID* [-C *CHAT_ID*]
+   Show detailed story metadata, capabilities, views count, forwards, and interactive stickers.
+
+   -s, --story-id *ID*
+      Story identifier to inspect.
+
+   -C, --chat *CHAT_ID*
+      Target chat or channel ID.
+
+grm story viewers -s *STORY_ID* [-n *LIMIT*] [-q *QUERY*] [-C *CHAT_ID*]
+   List viewers and reactions for a published story.
+
+   -s, --story-id *ID*
+      Story identifier.
+
+   -n, --limit *LIMIT*
+      Maximum viewers to return (default: 50).
+
+   -q, --query *TEXT*
+      Filter viewers by name or username.
+
+   -C, --chat *CHAT_ID*
+      Target chat or channel ID.
+
+grm story pin -s *STORY_ID* [-C *CHAT_ID*]
+   Pin story to chat page / profile under permanent Posts.
+
+   -s, --story-id *ID*
+      Story identifier to pin.
+
+   -C, --chat *CHAT_ID*
+      Target chat or channel ID.
+
+grm story unpin -s *STORY_ID* [-C *CHAT_ID*]
+   Unpin story from chat page / profile.
+
+   -s, --story-id *ID*
+      Story identifier to unpin.
+
+   -C, --chat *CHAT_ID*
+      Target chat or channel ID.
+
+grm story react -s *STORY_ID* -e *EMOJI* [-C *CHAT_ID*]
+   Set or remove reaction on a story.
+
+   -s, --story-id *ID*
+      Story identifier to react to.
+
+   -e, --emoji *EMOJI*
+      Reaction emoji to set (empty string to remove reaction).
+
+   -C, --chat *CHAT_ID*
+      Target chat or channel ID.
+
+grm story privacy -s *STORY_ID* --privacy *SETTING*
+   Update privacy visibility settings of a published story.
+
+   -s, --story-id *ID*
+      Story identifier to modify.
+
+   --privacy *SETTING*
+      Privacy scope (``everyone``, ``contacts``, ``close_friends``).
+
+grm story stealth
+   Activate story stealth mode for 25 minutes (Telegram Premium).
 
 grm story delete -s *STORY_ID* [-C *CHAT_ID*]
    Delete a published story.

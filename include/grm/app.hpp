@@ -176,6 +176,20 @@ private:
   [[nodiscard]] std::expected<int, std::string>
   cmd_story_edit(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
+  cmd_story_info(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_story_viewers(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_story_pin(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_story_unpin(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_story_react(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_story_privacy(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_story_stealth(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
   cmd_story_ls(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
   cmd_story_delete(const std::vector<std::string> &args);

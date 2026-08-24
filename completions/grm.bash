@@ -164,14 +164,28 @@ _grm_completions() {
         if [[ "${cur}" == -* ]]; then
           COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
         else
-          COMPREPLY=($(compgen -W "post ls edit delete" -- "${cur}"))
+          COMPREPLY=($(compgen -W "post edit info viewers pin unpin react privacy stealth ls delete" -- "${cur}"))
         fi
       elif [[ "${words[2]}" == "post" ]]; then
-        COMPREPLY=($(compgen -W "-h --help -p --photo -v --video -c --caption --privacy --period --pinned --protect -C --chat" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-h --help -p --photo -v --video -c --caption --privacy --period --pinned --protect -l --link -r --reaction -C --chat" -- "${cur}"))
+      elif [[ "${words[2]}" == "edit" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -s --story-id -p --photo -v --video -c --caption -l --link -r --reaction -C --chat" -- "${cur}"))
+      elif [[ "${words[2]}" == "info" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -s --story-id -C --chat" -- "${cur}"))
+      elif [[ "${words[2]}" == "viewers" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -s --story-id -n --limit -q --query -C --chat" -- "${cur}"))
+      elif [[ "${words[2]}" == "pin" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -s --story-id -C --chat" -- "${cur}"))
+      elif [[ "${words[2]}" == "unpin" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -s --story-id -C --chat" -- "${cur}"))
+      elif [[ "${words[2]}" == "react" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -s --story-id -e --emoji -C --chat" -- "${cur}"))
+      elif [[ "${words[2]}" == "privacy" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -s --story-id --privacy" -- "${cur}"))
+      elif [[ "${words[2]}" == "stealth" ]]; then
+        COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
       elif [[ "${words[2]}" == "ls" ]]; then
         COMPREPLY=($(compgen -W "-h --help -C --chat -n --limit -p --pinned -a --archived -A --all" -- "${cur}"))
-      elif [[ "${words[2]}" == "edit" ]]; then
-        COMPREPLY=($(compgen -W "-h --help -s --story-id -p --photo -v --video -c --caption -C --chat" -- "${cur}"))
       elif [[ "${words[2]}" == "delete" ]]; then
         COMPREPLY=($(compgen -W "-h --help -s --story-id -C --chat" -- "${cur}"))
       fi

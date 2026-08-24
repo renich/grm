@@ -20,8 +20,9 @@ CommandSpec get_story_spec() {
            "post",
            "[--photo <path>|--video <path>] [--caption <caption>] [--privacy "
            "everyone|contacts|close_friends] [--period <time>] [--pinned] "
-           "[--protect] [--chat <id>]",
-           "Publish a new photo or video story",
+           "[--protect] [--link <url>] [--reaction <emoji>] [--chat <id>]",
+           "Publish a new photo or video story with optional link/reaction "
+           "stickers",
            {OptionSpec{"-p",
                        "--photo",
                        "<path>",
@@ -35,7 +36,7 @@ CommandSpec get_story_spec() {
             OptionSpec{"-c",
                        "--caption",
                        "<caption>",
-                       "Story caption (supports Markdown formatting)",
+                       "Story caption (supports URLs and Markdown formatting)",
                        {}},
             OptionSpec{"",
                        "--privacy",
@@ -59,6 +60,16 @@ CommandSpec get_story_spec() {
                        "",
                        "Protect story content from saving and forwarding",
                        {}},
+            OptionSpec{"-l",
+                       "--link",
+                       "<url>",
+                       "Clickable link sticker overlay URL",
+                       {}},
+            OptionSpec{"-r",
+                       "--reaction",
+                       "<emoji>",
+                       "Interactive suggested reaction sticker button",
+                       {}},
             OptionSpec{"-C",
                        "--chat",
                        "<id>",
@@ -66,6 +77,143 @@ CommandSpec get_story_spec() {
                        {}},
             OptionSpec{
                 "-h", "--help", "", "Show story post help message", {}}}},
+       SubcommandSpec{
+           "edit",
+           "-s|--story-id <id> [--photo <path>|--video <path>] [--caption "
+           "<caption>] [--link <url>] [--reaction <emoji>] [-C|--chat <id>]",
+           "Edit content, caption, or interactive stickers of a posted story",
+           {OptionSpec{
+                "-s", "--story-id", "<id>", "Story identifier to edit", {}},
+            OptionSpec{"-p",
+                       "--photo",
+                       "<path>",
+                       "New photo image file for story",
+                       {}},
+            OptionSpec{
+                "-v", "--video", "<path>", "New video file for story", {}},
+            OptionSpec{
+                "-c",
+                "--caption",
+                "<caption>",
+                "New story caption (supports URLs and Markdown formatting)",
+                {}},
+            OptionSpec{"-l",
+                       "--link",
+                       "<url>",
+                       "Clickable link sticker overlay URL",
+                       {}},
+            OptionSpec{"-r",
+                       "--reaction",
+                       "<emoji>",
+                       "Interactive suggested reaction sticker button",
+                       {}},
+            OptionSpec{"-C",
+                       "--chat",
+                       "<id>",
+                       "Target chat or channel ID (default: personal account)",
+                       {}},
+            OptionSpec{
+                "-h", "--help", "", "Show story edit help message", {}}}},
+       SubcommandSpec{
+           "info",
+           "-s|--story-id <id> [-C|--chat <id>]",
+           "Show detailed story metadata, views, forwards, and interactive "
+           "stickers",
+           {OptionSpec{
+                "-s", "--story-id", "<id>", "Story identifier to inspect", {}},
+            OptionSpec{"-C",
+                       "--chat",
+                       "<id>",
+                       "Target chat or channel ID (default: personal account)",
+                       {}},
+            OptionSpec{
+                "-h", "--help", "", "Show story info help message", {}}}},
+       SubcommandSpec{
+           "viewers",
+           "-s|--story-id <id> [-n|--limit <N>] [-q|--query <text>] [-C|--chat "
+           "<id>]",
+           "List viewers and reactions for a published story",
+           {OptionSpec{
+                "-s", "--story-id", "<id>", "Story identifier to inspect", {}},
+            OptionSpec{"-n",
+                       "--limit",
+                       "<N>",
+                       "Maximum viewers to display (default: 50)",
+                       {}},
+            OptionSpec{"-q",
+                       "--query",
+                       "<text>",
+                       "Filter viewers by name or username",
+                       {}},
+            OptionSpec{"-C",
+                       "--chat",
+                       "<id>",
+                       "Target chat or channel ID (default: personal account)",
+                       {}},
+            OptionSpec{
+                "-h", "--help", "", "Show story viewers help message", {}}}},
+       SubcommandSpec{
+           "pin",
+           "-s|--story-id <id> [-C|--chat <id>]",
+           "Pin story to profile / chat page under permanent Posts",
+           {OptionSpec{
+                "-s", "--story-id", "<id>", "Story identifier to pin", {}},
+            OptionSpec{"-C",
+                       "--chat",
+                       "<id>",
+                       "Target chat or channel ID (default: personal account)",
+                       {}},
+            OptionSpec{"-h", "--help", "", "Show story pin help message", {}}}},
+       SubcommandSpec{
+           "unpin",
+           "-s|--story-id <id> [-C|--chat <id>]",
+           "Unpin story from profile / chat page",
+           {OptionSpec{
+                "-s", "--story-id", "<id>", "Story identifier to unpin", {}},
+            OptionSpec{"-C",
+                       "--chat",
+                       "<id>",
+                       "Target chat or channel ID (default: personal account)",
+                       {}},
+            OptionSpec{
+                "-h", "--help", "", "Show story unpin help message", {}}}},
+       SubcommandSpec{
+           "react",
+           "-s|--story-id <id> -e|--emoji <emoji> [-C|--chat <id>]",
+           "Set or change reaction on a story",
+           {OptionSpec{
+                "-s", "--story-id", "<id>", "Story identifier to react to", {}},
+            OptionSpec{"-e",
+                       "--emoji",
+                       "<emoji>",
+                       "Reaction emoji (e.g. 🔥, ❤️, 👍; empty string to clear)",
+                       {}},
+            OptionSpec{"-C",
+                       "--chat",
+                       "<id>",
+                       "Target chat or channel ID (default: personal account)",
+                       {}},
+            OptionSpec{
+                "-h", "--help", "", "Show story react help message", {}}}},
+       SubcommandSpec{
+           "privacy",
+           "-s|--story-id <id> --privacy <everyone|contacts|close_friends>",
+           "Update privacy visibility settings of a published story",
+           {OptionSpec{
+                "-s", "--story-id", "<id>", "Story identifier to modify", {}},
+            OptionSpec{"",
+                       "--privacy",
+                       "<setting>",
+                       "Privacy setting (everyone, contacts, close_friends)",
+                       {"everyone", "contacts", "close_friends"}},
+            OptionSpec{
+                "-h", "--help", "", "Show story privacy help message", {}}}},
+       SubcommandSpec{
+           "stealth",
+           "",
+           "Activate story stealth mode for 25 minutes (Telegram Premium)",
+           {OptionSpec{
+               "-h", "--help", "", "Show story stealth help message", {}}}},
        SubcommandSpec{
            "ls",
            "[-C|--chat <id>] [-n|--limit <N>] [-p|--pinned] [-a|--archived] "
@@ -94,32 +242,6 @@ CommandSpec get_story_spec() {
                        {}},
             OptionSpec{
                 "-h", "--help", "", "Show story list help message", {}}}},
-       SubcommandSpec{
-           "edit",
-           "--story-id <id> [--photo <path>|--video <path>] [--caption "
-           "<caption>] [-C|--chat <id>]",
-           "Edit content or caption of a posted story",
-           {OptionSpec{
-                "-s", "--story-id", "<id>", "Story identifier to edit", {}},
-            OptionSpec{"-p",
-                       "--photo",
-                       "<path>",
-                       "New photo image file for story",
-                       {}},
-            OptionSpec{
-                "-v", "--video", "<path>", "New video file for story", {}},
-            OptionSpec{"-c",
-                       "--caption",
-                       "<caption>",
-                       "New story caption (supports Markdown formatting)",
-                       {}},
-            OptionSpec{"-C",
-                       "--chat",
-                       "<id>",
-                       "Target chat or channel ID (default: personal account)",
-                       {}},
-            OptionSpec{
-                "-h", "--help", "", "Show story edit help message", {}}}},
        SubcommandSpec{
            "delete",
            "--story-id <id> [-C|--chat <id>]",
@@ -208,6 +330,22 @@ bool parse_story_post_args(const std::vector<std::string> &args,
       opts.caption = args[++i];
     } else if (arg.starts_with("--caption=")) {
       opts.caption = arg.substr(10);
+    } else if (arg == "-l" || arg == "--link") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      opts.link_url = args[++i];
+    } else if (arg.starts_with("--link=")) {
+      opts.link_url = arg.substr(7);
+    } else if (arg == "-r" || arg == "--reaction") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      opts.reaction_emoji = args[++i];
+    } else if (arg.starts_with("--reaction=")) {
+      opts.reaction_emoji = arg.substr(11);
     } else if (arg == "--privacy") {
       if (i + 1 >= args.size()) {
         err = "Missing argument for " + arg;
@@ -386,6 +524,26 @@ bool parse_story_edit_args(const std::vector<std::string> &args,
     } else if (arg.starts_with("--caption=")) {
       opts.caption = arg.substr(10);
       opts.has_caption = true;
+    } else if (arg == "-l" || arg == "--link") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      opts.link_url = args[++i];
+      opts.has_areas = true;
+    } else if (arg.starts_with("--link=")) {
+      opts.link_url = arg.substr(7);
+      opts.has_areas = true;
+    } else if (arg == "-r" || arg == "--reaction") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      opts.reaction_emoji = args[++i];
+      opts.has_areas = true;
+    } else if (arg.starts_with("--reaction=")) {
+      opts.reaction_emoji = arg.substr(11);
+      opts.has_areas = true;
     } else if (arg == "-C" || arg == "--chat") {
       if (i + 1 >= args.size()) {
         err = "Missing argument for " + arg;
@@ -420,8 +578,11 @@ bool parse_story_edit_args(const std::vector<std::string> &args,
     err = "Cannot specify both --photo and --video";
     return false;
   }
-  if (opts.photo_path.empty() && opts.video_path.empty() && !opts.has_caption) {
-    err = "Must specify at least one of --photo, --video, or --caption to edit";
+  if (opts.photo_path.empty() && opts.video_path.empty() && !opts.has_caption &&
+      !opts.has_areas) {
+    err =
+        "Must specify at least one of --photo, --video, --caption, --link, or "
+        "--reaction to edit";
     return false;
   }
 
@@ -470,6 +631,14 @@ bool parse_story_delete_args(const std::vector<std::string> &args,
       opts.chat_id = *chat_res;
     } else if (arg == "-h" || arg == "--help") {
       return false;
+    } else if (opts.story_id == 0) {
+      auto sid = parse_int32(arg);
+      if (sid && *sid > 0) {
+        opts.story_id = *sid;
+      } else {
+        err = "Unknown option: " + arg;
+        return false;
+      }
     } else {
       err = "Unknown option: " + arg;
       return false;
@@ -481,6 +650,434 @@ bool parse_story_delete_args(const std::vector<std::string> &args,
     return false;
   }
   return true;
+}
+
+bool parse_story_info_args(const std::vector<std::string> &args,
+                           StoryInfoOptions &opts, std::string &err) {
+  for (size_t i = 0; i < args.size(); ++i) {
+    const std::string &arg = args[i];
+    if (arg == "-s" || arg == "--story-id") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      auto sid = parse_int32(args[++i]);
+      if (!sid || *sid <= 0) {
+        err = "Invalid story ID: " + args[i];
+        return false;
+      }
+      opts.story_id = *sid;
+    } else if (arg.starts_with("--story-id=")) {
+      auto sid = parse_int32(arg.substr(11));
+      if (!sid || *sid <= 0) {
+        err = "Invalid story ID: " + arg.substr(11);
+        return false;
+      }
+      opts.story_id = *sid;
+    } else if (arg == "-C" || arg == "--chat") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      auto chat_res = parse_int64(args[++i]);
+      if (!chat_res) {
+        err = chat_res.error();
+        return false;
+      }
+      opts.chat_id = *chat_res;
+    } else if (arg.starts_with("--chat=")) {
+      auto chat_res = parse_int64(arg.substr(7));
+      if (!chat_res) {
+        err = chat_res.error();
+        return false;
+      }
+      opts.chat_id = *chat_res;
+    } else if (arg == "-h" || arg == "--help") {
+      return false;
+    } else if (opts.story_id == 0) {
+      auto sid = parse_int32(arg);
+      if (sid && *sid > 0) {
+        opts.story_id = *sid;
+      } else {
+        err = "Unknown option: " + arg;
+        return false;
+      }
+    } else {
+      err = "Unknown option: " + arg;
+      return false;
+    }
+  }
+
+  if (opts.story_id <= 0) {
+    err = "Missing required option: --story-id <id>";
+    return false;
+  }
+  return true;
+}
+
+bool parse_story_viewers_args(const std::vector<std::string> &args,
+                              StoryViewersOptions &opts, std::string &err) {
+  for (size_t i = 0; i < args.size(); ++i) {
+    const std::string &arg = args[i];
+    if (arg == "-s" || arg == "--story-id") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      auto sid = parse_int32(args[++i]);
+      if (!sid || *sid <= 0) {
+        err = "Invalid story ID: " + args[i];
+        return false;
+      }
+      opts.story_id = *sid;
+    } else if (arg.starts_with("--story-id=")) {
+      auto sid = parse_int32(arg.substr(11));
+      if (!sid || *sid <= 0) {
+        err = "Invalid story ID: " + arg.substr(11);
+        return false;
+      }
+      opts.story_id = *sid;
+    } else if (arg == "-n" || arg == "--limit") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      auto lim = parse_int32(args[++i]);
+      if (!lim || *lim <= 0) {
+        err = "Invalid limit: " + args[i];
+        return false;
+      }
+      opts.limit = *lim;
+    } else if (arg.starts_with("--limit=")) {
+      auto lim = parse_int32(arg.substr(8));
+      if (!lim || *lim <= 0) {
+        err = "Invalid limit: " + arg.substr(8);
+        return false;
+      }
+      opts.limit = *lim;
+    } else if (arg == "-q" || arg == "--query") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      opts.query = args[++i];
+    } else if (arg.starts_with("--query=")) {
+      opts.query = arg.substr(8);
+    } else if (arg == "-C" || arg == "--chat") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      auto chat_res = parse_int64(args[++i]);
+      if (!chat_res) {
+        err = chat_res.error();
+        return false;
+      }
+      opts.chat_id = *chat_res;
+    } else if (arg.starts_with("--chat=")) {
+      auto chat_res = parse_int64(arg.substr(7));
+      if (!chat_res) {
+        err = chat_res.error();
+        return false;
+      }
+      opts.chat_id = *chat_res;
+    } else if (arg == "-h" || arg == "--help") {
+      return false;
+    } else if (opts.story_id == 0) {
+      auto sid = parse_int32(arg);
+      if (sid && *sid > 0) {
+        opts.story_id = *sid;
+      } else {
+        err = "Unknown option: " + arg;
+        return false;
+      }
+    } else {
+      err = "Unknown option: " + arg;
+      return false;
+    }
+  }
+
+  if (opts.story_id <= 0) {
+    err = "Missing required option: --story-id <id>";
+    return false;
+  }
+  return true;
+}
+
+bool parse_story_pin_args(const std::vector<std::string> &args,
+                          StoryPinOptions &opts, std::string &err,
+                          bool default_pinned) {
+  opts.is_pinned = default_pinned;
+  for (size_t i = 0; i < args.size(); ++i) {
+    const std::string &arg = args[i];
+    if (arg == "-s" || arg == "--story-id") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      auto sid = parse_int32(args[++i]);
+      if (!sid || *sid <= 0) {
+        err = "Invalid story ID: " + args[i];
+        return false;
+      }
+      opts.story_id = *sid;
+    } else if (arg.starts_with("--story-id=")) {
+      auto sid = parse_int32(arg.substr(11));
+      if (!sid || *sid <= 0) {
+        err = "Invalid story ID: " + arg.substr(11);
+        return false;
+      }
+      opts.story_id = *sid;
+    } else if (arg == "-C" || arg == "--chat") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      auto chat_res = parse_int64(args[++i]);
+      if (!chat_res) {
+        err = chat_res.error();
+        return false;
+      }
+      opts.chat_id = *chat_res;
+    } else if (arg.starts_with("--chat=")) {
+      auto chat_res = parse_int64(arg.substr(7));
+      if (!chat_res) {
+        err = chat_res.error();
+        return false;
+      }
+      opts.chat_id = *chat_res;
+    } else if (arg == "-h" || arg == "--help") {
+      return false;
+    } else if (opts.story_id == 0) {
+      auto sid = parse_int32(arg);
+      if (sid && *sid > 0) {
+        opts.story_id = *sid;
+      } else {
+        err = "Unknown option: " + arg;
+        return false;
+      }
+    } else {
+      err = "Unknown option: " + arg;
+      return false;
+    }
+  }
+
+  if (opts.story_id <= 0) {
+    err = "Missing required option: --story-id <id>";
+    return false;
+  }
+  return true;
+}
+
+bool parse_story_react_args(const std::vector<std::string> &args,
+                            StoryReactOptions &opts, std::string &err) {
+  for (size_t i = 0; i < args.size(); ++i) {
+    const std::string &arg = args[i];
+    if (arg == "-s" || arg == "--story-id") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      auto sid = parse_int32(args[++i]);
+      if (!sid || *sid <= 0) {
+        err = "Invalid story ID: " + args[i];
+        return false;
+      }
+      opts.story_id = *sid;
+    } else if (arg.starts_with("--story-id=")) {
+      auto sid = parse_int32(arg.substr(11));
+      if (!sid || *sid <= 0) {
+        err = "Invalid story ID: " + arg.substr(11);
+        return false;
+      }
+      opts.story_id = *sid;
+    } else if (arg == "-e" || arg == "--emoji") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      opts.emoji = args[++i];
+    } else if (arg.starts_with("--emoji=")) {
+      opts.emoji = arg.substr(8);
+    } else if (arg == "-C" || arg == "--chat") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      auto chat_res = parse_int64(args[++i]);
+      if (!chat_res) {
+        err = chat_res.error();
+        return false;
+      }
+      opts.chat_id = *chat_res;
+    } else if (arg.starts_with("--chat=")) {
+      auto chat_res = parse_int64(arg.substr(7));
+      if (!chat_res) {
+        err = chat_res.error();
+        return false;
+      }
+      opts.chat_id = *chat_res;
+    } else if (arg == "-h" || arg == "--help") {
+      return false;
+    } else if (opts.story_id == 0) {
+      auto sid = parse_int32(arg);
+      if (sid && *sid > 0) {
+        opts.story_id = *sid;
+      } else {
+        err = "Unknown option: " + arg;
+        return false;
+      }
+    } else {
+      err = "Unknown option: " + arg;
+      return false;
+    }
+  }
+
+  if (opts.story_id <= 0) {
+    err = "Missing required option: --story-id <id>";
+    return false;
+  }
+  return true;
+}
+
+bool parse_story_privacy_args(const std::vector<std::string> &args,
+                              StoryPrivacyOptions &opts, std::string &err) {
+  for (size_t i = 0; i < args.size(); ++i) {
+    const std::string &arg = args[i];
+    if (arg == "-s" || arg == "--story-id") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      auto sid = parse_int32(args[++i]);
+      if (!sid || *sid <= 0) {
+        err = "Invalid story ID: " + args[i];
+        return false;
+      }
+      opts.story_id = *sid;
+    } else if (arg.starts_with("--story-id=")) {
+      auto sid = parse_int32(arg.substr(11));
+      if (!sid || *sid <= 0) {
+        err = "Invalid story ID: " + arg.substr(11);
+        return false;
+      }
+      opts.story_id = *sid;
+    } else if (arg == "--privacy") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      opts.privacy = args[++i];
+    } else if (arg.starts_with("--privacy=")) {
+      opts.privacy = arg.substr(10);
+    } else if (arg == "-C" || arg == "--chat") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      auto chat_res = parse_int64(args[++i]);
+      if (!chat_res) {
+        err = chat_res.error();
+        return false;
+      }
+      opts.chat_id = *chat_res;
+    } else if (arg.starts_with("--chat=")) {
+      auto chat_res = parse_int64(arg.substr(7));
+      if (!chat_res) {
+        err = chat_res.error();
+        return false;
+      }
+      opts.chat_id = *chat_res;
+    } else if (arg == "-h" || arg == "--help") {
+      return false;
+    } else if (opts.story_id == 0) {
+      auto sid = parse_int32(arg);
+      if (sid && *sid > 0) {
+        opts.story_id = *sid;
+      } else {
+        err = "Unknown option: " + arg;
+        return false;
+      }
+    } else {
+      err = "Unknown option: " + arg;
+      return false;
+    }
+  }
+
+  if (opts.story_id <= 0) {
+    err = "Missing required option: --story-id <id>";
+    return false;
+  }
+  if (opts.privacy != "everyone" && opts.privacy != "contacts" &&
+      opts.privacy != "close_friends") {
+    err = "Invalid privacy setting: '" + opts.privacy +
+          "'. Expected: everyone, contacts, close_friends";
+    return false;
+  }
+  return true;
+}
+
+static std::string build_story_areas_json(const std::string &link_url,
+                                          const std::string &reaction_emoji) {
+  if (link_url.empty() && reaction_emoji.empty()) {
+    return "null";
+  }
+  std::vector<std::string> areas_arr;
+  if (!link_url.empty()) {
+    areas_arr.push_back(std::format(
+        R"({{
+          "@type": "inputStoryArea",
+          "position": {{
+            "@type": "storyAreaPosition",
+            "x_percentage": 50.0,
+            "y_percentage": 75.0,
+            "width_percentage": 70.0,
+            "height_percentage": 8.0,
+            "rotation_angle": 0.0,
+            "corner_radius_percentage": 2.0
+          }},
+          "type": {{
+            "@type": "inputStoryAreaTypeLink",
+            "url": "{}"
+          }}
+        }})",
+        escape_json_string(link_url)));
+  }
+  if (!reaction_emoji.empty()) {
+    double y_pos = link_url.empty() ? 75.0 : 85.0;
+    areas_arr.push_back(std::format(
+        R"({{
+          "@type": "inputStoryArea",
+          "position": {{
+            "@type": "storyAreaPosition",
+            "x_percentage": 50.0,
+            "y_percentage": {},
+            "width_percentage": 25.0,
+            "height_percentage": 8.0,
+            "rotation_angle": 0.0,
+            "corner_radius_percentage": 2.0
+          }},
+          "type": {{
+            "@type": "inputStoryAreaTypeSuggestedReaction",
+            "reaction_type": {{
+              "@type": "reactionTypeEmoji",
+              "emoji": "{}"
+            }},
+            "is_dark": false,
+            "is_flipped": false
+          }}
+        }})",
+        y_pos, escape_json_string(reaction_emoji)));
+  }
+
+  std::string joined;
+  for (size_t i = 0; i < areas_arr.size(); ++i) {
+    if (i > 0)
+      joined += ",";
+    joined += areas_arr[i];
+  }
+
+  return std::format(R"({{"@type":"inputStoryAreas","areas":[{}]}})", joined);
 }
 
 std::string build_post_story_json(const StoryPostOptions &opts,
@@ -513,11 +1110,14 @@ std::string build_post_story_json(const StoryPostOptions &opts,
           ? R"({"@type":"formattedText","text":"","entities":[]})"
           : formatted_caption_json;
 
+  std::string areas_part =
+      build_story_areas_json(opts.link_url, opts.reaction_emoji);
+
   return std::format(
       R"({{
         "chat_id": {},
         "content": {},
-        "areas": null,
+        "areas": {},
         "caption": {},
         "privacy_settings": {{"@type":"{}"}},
         "album_ids": [],
@@ -526,7 +1126,7 @@ std::string build_post_story_json(const StoryPostOptions &opts,
         "is_posted_to_chat_page": {},
         "protect_content": {}
       }})",
-      resolved_chat_id, content_json, caption_part, privacy_type,
+      resolved_chat_id, content_json, areas_part, caption_part, privacy_type,
       opts.active_period, opts.is_pinned ? "true" : "false",
       opts.protect_content ? "true" : "false");
 }
@@ -556,15 +1156,20 @@ std::string build_edit_story_json(int64_t chat_id, int32_t story_id,
                  : formatted_caption_json)
           : "null";
 
+  std::string areas_json =
+      opts.has_areas
+          ? build_story_areas_json(opts.link_url, opts.reaction_emoji)
+          : "null";
+
   return std::format(
       R"({{
         "story_poster_chat_id": {},
         "story_id": {},
         "content": {},
-        "areas": null,
+        "areas": {},
         "caption": {}
       }})",
-      chat_id, story_id, content_json, caption_json);
+      chat_id, story_id, content_json, areas_json, caption_json);
 }
 
 std::string build_get_chat_active_stories_json(int64_t chat_id) {
@@ -582,6 +1187,53 @@ std::string build_delete_story_json(int64_t chat_id, int32_t story_id) {
         "story_id": {}
       }})",
       chat_id, story_id);
+}
+
+std::string build_toggle_story_is_posted_to_chat_page_json(
+    int64_t chat_id, int32_t story_id, bool is_posted_to_chat_page) {
+  return std::format(
+      R"({{
+        "story_poster_chat_id": {},
+        "story_id": {},
+        "is_posted_to_chat_page": {}
+      }})",
+      chat_id, story_id, is_posted_to_chat_page ? "true" : "false");
+}
+
+std::string build_set_story_reaction_json(int64_t chat_id, int32_t story_id,
+                                          const std::string &emoji) {
+  std::string reaction_type_json;
+  if (emoji.empty()) {
+    reaction_type_json = "null";
+  } else {
+    reaction_type_json =
+        std::format(R"({{"@type":"reactionTypeEmoji","emoji":"{}"}})",
+                    escape_json_string(emoji));
+  }
+  return std::format(
+      R"({{
+        "story_poster_chat_id": {},
+        "story_id": {},
+        "reaction_type": {},
+        "update_recent_reactions": true
+      }})",
+      chat_id, story_id, reaction_type_json);
+}
+
+std::string build_set_story_privacy_settings_json(int32_t story_id,
+                                                  const std::string &privacy) {
+  std::string privacy_type = "storyPrivacySettingsEveryone";
+  if (privacy == "contacts") {
+    privacy_type = "storyPrivacySettingsContacts";
+  } else if (privacy == "close_friends") {
+    privacy_type = "storyPrivacySettingsCloseFriends";
+  }
+  return std::format(
+      R"({{
+        "story_id": {},
+        "privacy_settings": {{"@type":"{}"}}
+      }})",
+      story_id, privacy_type);
 }
 
 void App::print_story_help(fmt::OutputFormat format) {
@@ -608,6 +1260,27 @@ App::cmd_story(const std::vector<std::string> &args) {
   }
   if (sub == "edit" || sub == "update") {
     return cmd_story_edit(sub_opts);
+  }
+  if (sub == "info") {
+    return cmd_story_info(sub_opts);
+  }
+  if (sub == "viewers" || sub == "interactions") {
+    return cmd_story_viewers(sub_opts);
+  }
+  if (sub == "pin") {
+    return cmd_story_pin(sub_opts);
+  }
+  if (sub == "unpin") {
+    return cmd_story_unpin(sub_opts);
+  }
+  if (sub == "react") {
+    return cmd_story_react(sub_opts);
+  }
+  if (sub == "privacy") {
+    return cmd_story_privacy(sub_opts);
+  }
+  if (sub == "stealth") {
+    return cmd_story_stealth(sub_opts);
   }
   if (sub == "ls" || sub == "list") {
     return cmd_story_ls(sub_opts);
@@ -1064,6 +1737,546 @@ App::cmd_story_delete(const std::vector<std::string> &args) {
                              opts.story_id, target_chat_id);
   }
 
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_story_info(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_story_help(options_.format);
+    return 0;
+  }
+
+  StoryInfoOptions opts;
+  std::string err;
+  if (!parse_story_info_args(args, opts, err)) {
+    print_story_help(options_.format);
+    return std::unexpected(err.empty() ? "Invalid arguments for story info"
+                                       : err);
+  }
+
+  auto auth_res = ensure_authenticated();
+  if (!auth_res) {
+    return std::unexpected(auth_res.error());
+  }
+
+  int64_t target_chat_id = opts.chat_id;
+  if (target_chat_id == 0) {
+    auto me_res = client_->send_request("getMe", "{}", 10.0);
+    if (!me_res) {
+      return std::unexpected("Failed to resolve current user profile: " +
+                             me_res.error());
+    }
+    target_chat_id = me_res->get_int("id").value_or(0);
+  }
+
+  std::string req = std::format(
+      R"({{"story_poster_chat_id": {}, "story_id": {}, "only_local": false}})",
+      target_chat_id, opts.story_id);
+  auto res = client_->send_request("getStory", req, 15.0);
+  if (!res) {
+    return std::unexpected("Failed to fetch story details: " + res.error());
+  }
+  if (res->get_string("@type").value_or("") == "error") {
+    int64_t code = res->get_int("code").value_or(0);
+    std::string msg = res->get_string("message").value_or("Unknown error");
+    return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
+  }
+
+  if (options_.format == fmt::OutputFormat::Json ||
+      options_.format == fmt::OutputFormat::JsonL) {
+    std::cout << res->to_string() << "\n";
+    return 0;
+  }
+
+  int64_t story_id = res->get_int("id").value_or(opts.story_id);
+  int64_t poster_id = res->get_int("sender_chat_id").value_or(target_chat_id);
+  int64_t date_ts = res->get_int("date").value_or(0);
+  bool is_pinned = res->get_bool("is_posted_to_chat_page")
+                       .value_or(res->get_bool("is_pinned").value_or(false));
+  bool is_edited = res->get_bool("is_edited").value_or(false);
+  bool can_edit = res->get_bool("can_be_edited").value_or(false);
+  bool can_delete = res->get_bool("can_be_deleted").value_or(false);
+  bool can_forward = res->get_bool("can_be_forwarded").value_or(false);
+
+  std::string content_type = "Photo";
+  if (auto content_obj = res->get_object("content")) {
+    std::string ctype = content_obj->get_string("@type").value_or("");
+    if (ctype == "storyContentPhoto")
+      content_type = "Photo";
+    else if (ctype == "storyContentVideo")
+      content_type = "Video";
+  }
+
+  std::string caption_text;
+  if (auto caption_obj = res->get_object("caption")) {
+    caption_text = caption_obj->get_string("text").value_or("");
+  }
+
+  int64_t view_count = 0;
+  int64_t forward_count = 0;
+  int64_t reaction_count = 0;
+  if (auto info_obj = res->get_object("interaction_info")) {
+    view_count = info_obj->get_int("view_count").value_or(0);
+    forward_count = info_obj->get_int("forward_count").value_or(0);
+    reaction_count = info_obj->get_int("reaction_count").value_or(0);
+  }
+
+  std::string privacy_str = "Everyone";
+  if (auto priv_obj = res->get_object("privacy_settings")) {
+    std::string ptype = priv_obj->get_string("@type").value_or("");
+    if (ptype == "storyPrivacySettingsContacts")
+      privacy_str = "Contacts";
+    else if (ptype == "storyPrivacySettingsCloseFriends")
+      privacy_str = "Close Friends";
+    else if (ptype == "storyPrivacySettingsSelectedUsers")
+      privacy_str = "Selected Users";
+  }
+
+  std::string date_str = std::to_string(date_ts);
+  if (date_ts > 0) {
+    std::time_t t = static_cast<std::time_t>(date_ts);
+    std::tm tm_buf{};
+    if (localtime_r(&t, &tm_buf)) {
+      char buf[32];
+      if (std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm_buf) > 0) {
+        date_str = buf;
+      }
+    }
+  }
+
+  std::cout << "Story Information:\n";
+  std::cout << std::string(50, '=') << "\n";
+  std::cout << std::format("  Story ID:        {}\n", story_id);
+  std::cout << std::format("  Poster Chat ID:  {}\n", poster_id);
+  std::cout << std::format("  Published Date:  {}\n", date_str);
+  std::cout << std::format("  Media Content:   {}\n", content_type);
+  std::cout << std::format("  Pinned to Page:  {}\n",
+                           is_pinned ? "Yes (Posts tab)" : "No");
+  std::cout << std::format("  Privacy:         {}\n", privacy_str);
+  std::cout << std::format(
+      "  Interactions:    {} views, {} forwards, {} reactions\n", view_count,
+      forward_count, reaction_count);
+  std::cout << std::format(
+      "  Capabilities:    Can Edit: {}, Can Delete: {}, Can Forward: {}\n",
+      can_edit ? "Yes" : "No", can_delete ? "Yes" : "No",
+      can_forward ? "Yes" : "No");
+  if (is_edited) {
+    std::cout << "  Status:          Edited\n";
+  }
+
+  auto areas_arr = res->get_array("areas");
+  if (!areas_arr.empty()) {
+    std::cout << "  Interactive Stickers/Areas:\n";
+    for (const auto &area : areas_arr) {
+      if (auto type_obj = area.get_object("type")) {
+        std::string atype = type_obj->get_string("@type").value_or("");
+        if (atype == "storyAreaTypeLink") {
+          std::cout << std::format("    - Link: {}\n",
+                                   type_obj->get_string("url").value_or(""));
+        } else if (atype == "storyAreaTypeSuggestedReaction") {
+          if (auto rtype = type_obj->get_object("reaction_type")) {
+            std::cout << std::format("    - Reaction: {}\n",
+                                     rtype->get_string("emoji").value_or(""));
+          }
+        } else if (atype == "storyAreaTypeLocation") {
+          std::cout << "    - Location Sticker\n";
+        } else if (atype == "storyAreaTypeMessage") {
+          std::cout << std::format("    - Message Link: chat {} msg {}\n",
+                                   type_obj->get_int("chat_id").value_or(0),
+                                   type_obj->get_int("message_id").value_or(0));
+        } else if (atype == "storyAreaTypeWeather") {
+          std::cout << std::format(
+              "    - Weather: {}°C {}\n",
+              type_obj->get_double("temperature").value_or(0.0),
+              type_obj->get_string("emoji").value_or(""));
+        }
+      }
+    }
+  }
+
+  if (!caption_text.empty()) {
+    std::cout << std::format("  Caption:\n    {}\n", caption_text);
+  }
+  std::cout << std::string(50, '=') << "\n";
+
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_story_viewers(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_story_help(options_.format);
+    return 0;
+  }
+
+  StoryViewersOptions opts;
+  std::string err;
+  if (!parse_story_viewers_args(args, opts, err)) {
+    print_story_help(options_.format);
+    return std::unexpected(err.empty() ? "Invalid arguments for story viewers"
+                                       : err);
+  }
+
+  auto auth_res = ensure_authenticated();
+  if (!auth_res) {
+    return std::unexpected(auth_res.error());
+  }
+
+  std::string req = std::format(
+      R"({{
+        "story_id": {},
+        "query": "{}",
+        "only_contacts": false,
+        "prefer_forwards": true,
+        "prefer_with_reaction": true,
+        "offset": "",
+        "limit": {}
+      }})",
+      opts.story_id, escape_json_string(opts.query), opts.limit);
+
+  auto res = client_->send_request("getStoryInteractions", req, 15.0);
+  if (!res) {
+    return std::unexpected("Failed to get story interactions: " + res.error());
+  }
+  if (res->get_string("@type").value_or("") == "error") {
+    int64_t code = res->get_int("code").value_or(0);
+    std::string msg = res->get_string("message").value_or("Unknown error");
+    return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
+  }
+
+  if (options_.format == fmt::OutputFormat::Json ||
+      options_.format == fmt::OutputFormat::JsonL) {
+    std::cout << res->to_string() << "\n";
+    return 0;
+  }
+
+  int64_t total_count = res->get_int("total_count").value_or(0);
+  auto interactions_arr = res->get_array("interactions");
+
+  std::cout << std::format("Story {} has {} total interaction(s):\n\n",
+                           opts.story_id, total_count);
+
+  if (interactions_arr.empty()) {
+    std::cout << "No viewers or interactions found.\n";
+    return 0;
+  }
+
+  std::cout << std::format("{:<16} {:<20} {:<10} {}\n", "ACTOR ID", "DATE",
+                           "REACTION", "TYPE");
+  std::cout << std::string(60, '-') << "\n";
+
+  for (const auto &item : interactions_arr) {
+    int64_t actor_id = 0;
+    if (auto actor_obj = item.get_object("actor_id")) {
+      actor_id = actor_obj->get_int("user_id").value_or(
+          actor_obj->get_int("chat_id").value_or(0));
+    }
+    int64_t date_ts = item.get_int("interaction_date").value_or(0);
+    std::string date_str = std::to_string(date_ts);
+    if (date_ts > 0) {
+      std::time_t t = static_cast<std::time_t>(date_ts);
+      std::tm tm_buf{};
+      if (localtime_r(&t, &tm_buf)) {
+        char buf[32];
+        if (std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M", &tm_buf) > 0) {
+          date_str = buf;
+        }
+      }
+    }
+
+    std::string itype_str = "View";
+    std::string reaction_str = "-";
+    if (auto type_obj = item.get_object("type")) {
+      std::string tname = type_obj->get_string("@type").value_or("");
+      if (tname == "storyInteractionTypeForward") {
+        itype_str = "Forward";
+      } else if (tname == "storyInteractionTypeRepost") {
+        itype_str = "Repost";
+      } else if (tname == "storyInteractionTypeView") {
+        itype_str = "View";
+        if (auto rx_obj = type_obj->get_object("chosen_reaction_type")) {
+          reaction_str = rx_obj->get_string("emoji").value_or("");
+        }
+      }
+    }
+
+    std::cout << std::format("{:<16} {:<20} {:<10} {}\n", actor_id, date_str,
+                             reaction_str, itype_str);
+  }
+
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_story_pin(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_story_help(options_.format);
+    return 0;
+  }
+
+  StoryPinOptions opts;
+  std::string err;
+  if (!parse_story_pin_args(args, opts, err, true)) {
+    print_story_help(options_.format);
+    return std::unexpected(err.empty() ? "Invalid arguments for story pin"
+                                       : err);
+  }
+
+  auto auth_res = ensure_authenticated();
+  if (!auth_res) {
+    return std::unexpected(auth_res.error());
+  }
+
+  int64_t target_chat_id = opts.chat_id;
+  if (target_chat_id == 0) {
+    auto me_res = client_->send_request("getMe", "{}", 10.0);
+    if (!me_res) {
+      return std::unexpected("Failed to resolve current user profile: " +
+                             me_res.error());
+    }
+    target_chat_id = me_res->get_int("id").value_or(0);
+  }
+
+  // Preload story in TDLib memory
+  std::string prefetch_req = std::format(
+      R"({{"story_poster_chat_id": {}, "story_id": {}, "only_local": false}})",
+      target_chat_id, opts.story_id);
+  [[maybe_unused]] auto prefetch_res =
+      client_->send_request("getStory", prefetch_req, 10.0);
+
+  std::string req = build_toggle_story_is_posted_to_chat_page_json(
+      target_chat_id, opts.story_id, true);
+  auto res = client_->send_request("toggleStoryIsPostedToChatPage", req, 15.0);
+  if (!res) {
+    return std::unexpected("Failed to pin story: " + res.error());
+  }
+  if (res->get_string("@type").value_or("") == "error") {
+    int64_t code = res->get_int("code").value_or(0);
+    std::string msg = res->get_string("message").value_or("Unknown error");
+    return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
+  }
+
+  if (options_.format == fmt::OutputFormat::Json ||
+      options_.format == fmt::OutputFormat::JsonL) {
+    std::cout << res->to_string() << "\n";
+  } else {
+    std::cout << std::format("✓ Story {} pinned to profile / chat page.\n",
+                             opts.story_id);
+  }
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_story_unpin(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_story_help(options_.format);
+    return 0;
+  }
+
+  StoryPinOptions opts;
+  std::string err;
+  if (!parse_story_pin_args(args, opts, err, false)) {
+    print_story_help(options_.format);
+    return std::unexpected(err.empty() ? "Invalid arguments for story unpin"
+                                       : err);
+  }
+
+  auto auth_res = ensure_authenticated();
+  if (!auth_res) {
+    return std::unexpected(auth_res.error());
+  }
+
+  int64_t target_chat_id = opts.chat_id;
+  if (target_chat_id == 0) {
+    auto me_res = client_->send_request("getMe", "{}", 10.0);
+    if (!me_res) {
+      return std::unexpected("Failed to resolve current user profile: " +
+                             me_res.error());
+    }
+    target_chat_id = me_res->get_int("id").value_or(0);
+  }
+
+  // Preload story in TDLib memory
+  std::string prefetch_req = std::format(
+      R"({{"story_poster_chat_id": {}, "story_id": {}, "only_local": false}})",
+      target_chat_id, opts.story_id);
+  [[maybe_unused]] auto prefetch_res =
+      client_->send_request("getStory", prefetch_req, 10.0);
+
+  std::string req = build_toggle_story_is_posted_to_chat_page_json(
+      target_chat_id, opts.story_id, false);
+  auto res = client_->send_request("toggleStoryIsPostedToChatPage", req, 15.0);
+  if (!res) {
+    return std::unexpected("Failed to unpin story: " + res.error());
+  }
+  if (res->get_string("@type").value_or("") == "error") {
+    int64_t code = res->get_int("code").value_or(0);
+    std::string msg = res->get_string("message").value_or("Unknown error");
+    return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
+  }
+
+  if (options_.format == fmt::OutputFormat::Json ||
+      options_.format == fmt::OutputFormat::JsonL) {
+    std::cout << res->to_string() << "\n";
+  } else {
+    std::cout << std::format("✓ Story {} unpinned from profile / chat page.\n",
+                             opts.story_id);
+  }
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_story_react(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_story_help(options_.format);
+    return 0;
+  }
+
+  StoryReactOptions opts;
+  std::string err;
+  if (!parse_story_react_args(args, opts, err)) {
+    print_story_help(options_.format);
+    return std::unexpected(err.empty() ? "Invalid arguments for story react"
+                                       : err);
+  }
+
+  auto auth_res = ensure_authenticated();
+  if (!auth_res) {
+    return std::unexpected(auth_res.error());
+  }
+
+  int64_t target_chat_id = opts.chat_id;
+  if (target_chat_id == 0) {
+    auto me_res = client_->send_request("getMe", "{}", 10.0);
+    if (!me_res) {
+      return std::unexpected("Failed to resolve current user profile: " +
+                             me_res.error());
+    }
+    target_chat_id = me_res->get_int("id").value_or(0);
+  }
+
+  // Preload story in TDLib memory
+  std::string prefetch_req = std::format(
+      R"({{"story_poster_chat_id": {}, "story_id": {}, "only_local": false}})",
+      target_chat_id, opts.story_id);
+  [[maybe_unused]] auto prefetch_res =
+      client_->send_request("getStory", prefetch_req, 10.0);
+
+  std::string req =
+      build_set_story_reaction_json(target_chat_id, opts.story_id, opts.emoji);
+  auto res = client_->send_request("setStoryReaction", req, 15.0);
+  if (!res) {
+    return std::unexpected("Failed to set story reaction: " + res.error());
+  }
+  if (res->get_string("@type").value_or("") == "error") {
+    int64_t code = res->get_int("code").value_or(0);
+    std::string msg = res->get_string("message").value_or("Unknown error");
+    return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
+  }
+
+  if (options_.format == fmt::OutputFormat::Json ||
+      options_.format == fmt::OutputFormat::JsonL) {
+    std::cout << res->to_string() << "\n";
+  } else {
+    if (opts.emoji.empty()) {
+      std::cout << std::format("✓ Removed reaction from Story {}.\n",
+                               opts.story_id);
+    } else {
+      std::cout << std::format("✓ Set reaction {} on Story {}.\n", opts.emoji,
+                               opts.story_id);
+    }
+  }
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_story_privacy(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_story_help(options_.format);
+    return 0;
+  }
+
+  StoryPrivacyOptions opts;
+  std::string err;
+  if (!parse_story_privacy_args(args, opts, err)) {
+    print_story_help(options_.format);
+    return std::unexpected(err.empty() ? "Invalid arguments for story privacy"
+                                       : err);
+  }
+
+  auto auth_res = ensure_authenticated();
+  if (!auth_res) {
+    return std::unexpected(auth_res.error());
+  }
+
+  int64_t target_chat_id = opts.chat_id;
+  if (target_chat_id == 0) {
+    auto me_res = client_->send_request("getMe", "{}", 10.0);
+    if (!me_res) {
+      return std::unexpected("Failed to resolve current user profile: " +
+                             me_res.error());
+    }
+    target_chat_id = me_res->get_int("id").value_or(0);
+  }
+
+  // Preload story in TDLib memory
+  std::string prefetch_req = std::format(
+      R"({{"story_poster_chat_id": {}, "story_id": {}, "only_local": false}})",
+      target_chat_id, opts.story_id);
+  [[maybe_unused]] auto prefetch_res =
+      client_->send_request("getStory", prefetch_req, 10.0);
+
+  std::string req =
+      build_set_story_privacy_settings_json(opts.story_id, opts.privacy);
+  auto res = client_->send_request("setStoryPrivacySettings", req, 15.0);
+  if (!res) {
+    return std::unexpected("Failed to update story privacy: " + res.error());
+  }
+  if (res->get_string("@type").value_or("") == "error") {
+    int64_t code = res->get_int("code").value_or(0);
+    std::string msg = res->get_string("message").value_or("Unknown error");
+    return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
+  }
+
+  if (options_.format == fmt::OutputFormat::Json ||
+      options_.format == fmt::OutputFormat::JsonL) {
+    std::cout << res->to_string() << "\n";
+  } else {
+    std::cout << std::format("✓ Story {} privacy updated to {}.\n",
+                             opts.story_id, opts.privacy);
+  }
+  return 0;
+}
+
+std::expected<int, std::string>
+App::cmd_story_stealth(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_story_help(options_.format);
+    return 0;
+  }
+
+  auto auth_res = ensure_authenticated();
+  if (!auth_res) {
+    return std::unexpected(auth_res.error());
+  }
+
+  auto res = client_->send_request("activateStoryStealthMode", "{}", 15.0);
+  if (!res) {
+    return std::unexpected("Failed to activate stealth mode: " + res.error());
+  }
+  if (res->get_string("@type").value_or("") == "error") {
+    int64_t code = res->get_int("code").value_or(0);
+    std::string msg = res->get_string("message").value_or("Unknown error");
+    return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
+  }
+
+  if (options_.format == fmt::OutputFormat::Json ||
+      options_.format == fmt::OutputFormat::JsonL) {
+    std::cout << res->to_string() << "\n";
+  } else {
+    std::cout << "✓ Story stealth mode activated for 25 minutes.\n";
+  }
   return 0;
 }
 

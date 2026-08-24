@@ -278,8 +278,8 @@ grm topic delete <supergroup_id> <topic_id>
 Story Management (CRUD)
 ------------------------
 
-grm story post [--photo <path>|--video <path>] [--caption <caption>] [--privacy everyone|contacts|close_friends] [--period <time>] [--pinned] [--protect] [-C|--chat <id>]
-   Publish a new photo or video story. Supports Markdown hyperlink entity formatting in captions.
+grm story post [--photo <path>|--video <path>] [--caption <caption>] [--privacy everyone|contacts|close_friends] [--period <time>] [--pinned] [--protect] [-l|--link <url>] [-r|--reaction <emoji>] [-C|--chat <id>]
+   Publish a new photo or video story with optional link and reaction sticker overlays.
 
    -p, --photo <path>
       Path to local photo image file to publish as story.
@@ -288,7 +288,7 @@ grm story post [--photo <path>|--video <path>] [--caption <caption>] [--privacy 
       Path to local video file to publish as story.
 
    -c, --caption <caption>
-      Story caption (supports Markdown hyperlinks and formatting).
+      Story caption (supports URLs and Markdown formatting).
 
    --privacy <setting>
       Privacy setting: ``everyone`` (default), ``contacts``, or ``close_friends``.
@@ -302,11 +302,17 @@ grm story post [--photo <path>|--video <path>] [--caption <caption>] [--privacy 
    --protect
       Protect story content from saving and forwarding.
 
+   -l, --link <url>
+      Add a clickable link sticker overlay on the story.
+
+   -r, --reaction <emoji>
+      Add an interactive suggested reaction sticker button.
+
    -C, --chat <id>
       Target chat or channel ID (default: personal account).
 
-grm story edit -s|--story-id <id> [--photo <path>|--video <path>] [--caption <caption>] [-C|--chat <id>]
-   Edit media content or caption of an existing story.
+grm story edit -s|--story-id <id> [--photo <path>|--video <path>] [--caption <caption>] [-l|--link <url>] [-r|--reaction <emoji>] [-C|--chat <id>]
+   Edit media content, caption, or interactive stickers of an existing story.
 
    -s, --story-id <id>
       Story identifier to edit.
@@ -318,10 +324,82 @@ grm story edit -s|--story-id <id> [--photo <path>|--video <path>] [--caption <ca
       New video file for story.
 
    -c, --caption <caption>
-      New story caption (supports Markdown hyperlinks and formatting).
+      New story caption.
+
+   -l, --link <url>
+      Add or update clickable link sticker overlay URL.
+
+   -r, --reaction <emoji>
+      Add or update interactive reaction button emoji.
 
    -C, --chat <id>
       Target chat or channel ID (default: personal account).
+
+grm story info -s|--story-id <id> [-C|--chat <id>]
+   Display full story metadata, interaction counters, views, forwards, and attached interactive stickers.
+
+   -s, --story-id <id>
+      Story identifier to inspect.
+
+   -C, --chat <id>
+      Target chat or channel ID.
+
+grm story viewers -s|--story-id <id> [-n|--limit <N>] [-q|--query <text>] [-C|--chat <id>]
+   List viewers and reactions for a story posted by your account.
+
+   -s, --story-id <id>
+      Story identifier.
+
+   -n, --limit <N>
+      Maximum number of viewers to display (default: 50).
+
+   -q, --query <text>
+      Filter viewers by name or username.
+
+   -C, --chat <id>
+      Target chat or channel ID.
+
+grm story pin -s|--story-id <id> [-C|--chat <id>]
+   Pin an active story to your profile page under the permanent "Posts" tab.
+
+   -s, --story-id <id>
+      Story identifier to pin.
+
+   -C, --chat <id>
+      Target chat or channel ID.
+
+grm story unpin -s|--story-id <id> [-C|--chat <id>]
+   Unpin a story from your profile page "Posts" tab.
+
+   -s, --story-id <id>
+      Story identifier to unpin.
+
+   -C, --chat <id>
+      Target chat or channel ID.
+
+grm story react -s|--story-id <id> -e|--emoji <emoji> [-C|--chat <id>]
+   Set or remove a reaction on a story.
+
+   -s, --story-id <id>
+      Story identifier.
+
+   -e, --emoji <emoji>
+      Reaction emoji (pass empty string ``""`` to remove reaction).
+
+   -C, --chat <id>
+      Target chat or channel ID.
+
+grm story privacy -s|--story-id <id> --privacy <everyone|contacts|close_friends>
+   Update the privacy scope of an existing story.
+
+   -s, --story-id <id>
+      Story identifier to modify.
+
+   --privacy <setting>
+      New privacy scope (``everyone``, ``contacts``, ``close_friends``).
+
+grm story stealth
+   Activate story stealth mode for 25 minutes, hiding your story views (Telegram Premium).
 
 grm story ls [-C|--chat <id>] [-n|--limit <N>] [-p|--pinned] [-a|--archived] [-A|--all]
    List active stories, pinned profile posts, and archived stories.

@@ -107,6 +107,30 @@ int main() {
   assert(res12b.has_value());
   assert(*res12b == 0);
 
+  // Test 13: Story commands routing and help
+  auto res13a = app.run({"story"});
+  assert(res13a.has_value());
+  assert(*res13a == 0);
+
+  auto res13b = app.run({"story", "--help"});
+  assert(res13b.has_value());
+  assert(*res13b == 0);
+
+  const std::vector<std::string> story_subcmds = {
+      "post", "edit",  "ls",    "delete",  "info",   "viewers",
+      "pin",  "unpin", "react", "privacy", "stealth"};
+  for (const auto &sub : story_subcmds) {
+    auto res_help = app.run({"story", sub, "--help"});
+    assert(res_help.has_value());
+    assert(*res_help == 0);
+  }
+
+  auto res13c = app.run({"story", "invalid_story_subcmd"});
+  assert(!res13c.has_value());
+  assert(
+      res13c.error().find("Unknown story subcommand: invalid_story_subcmd") !=
+      std::string::npos);
+
   std::cout << "test_cli_routing passed successfully!\n";
   return 0;
 }
