@@ -9,6 +9,12 @@
 
 namespace grm {
 
+struct StatusListOptions {
+  std::string filter;
+  bool recent{false};
+  bool packs{false};
+};
+
 struct StatusSetOptions {
   std::string custom_emoji_id;
   int32_t duration_seconds{0}; // 0 = default / permanent
@@ -20,6 +26,10 @@ struct StatusClearOptions {
 };
 
 [[nodiscard]] CommandSpec get_status_spec();
+
+[[nodiscard]] bool parse_status_ls_args(const std::vector<std::string> &args,
+                                        StatusListOptions &opts,
+                                        std::string &err);
 
 [[nodiscard]] std::expected<int32_t, std::string>
 parse_duration_string(std::string_view str);

@@ -26,8 +26,10 @@ Component Architecture
 -------------------------
 
 * **Story Posting**: Uses TDLib ``postStory`` with ``inputStoryContentPhoto`` or ``inputStoryContentVideo`` and nested ``storyPrivacySettings``.
-* **Story Listing**: Dispatches ``getChatActiveStories``.
-* **Story Deletion**: Dispatches ``deleteStory``.
+* **Story Listing**: Dispatches ``getChatActiveStories``, ``getChatPostedToChatPageStories``, and ``getChatArchivedStories``, fetching detailed story metadata via ``getStory`` with human-readable timestamps and pinned/posted indicators.
+* **Story Editing**: Uses TDLib ``editStory`` with ``inputStoryContentPhoto`` or ``inputStoryContentVideo`` and ``formattedText`` entities for Markdown hyperlinks.
+* **Story Deletion**: Dispatches ``deleteStory`` with ``story_poster_chat_id``.
+* **Emoji Status Discovery**: Dispatches ``getDefaultEmojiStatuses``, ``getRecentEmojiStatuses``, and ``getInstalledStickerSets`` (incorporating official sticker packs such as ``Animated Emoji``, ``Emoticon Emoji``, and ``Kawaii Emoji``). Custom emojis in Telegram are vector document objects (TGS Lottie, WebM VP9, or WebP) identified by 64-bit ``document_id`` (TDLib ``custom_emoji_id``) with a Unicode fallback ``alt`` string. Document details are resolved in chunks of 50 via ``getCustomEmojiStickers`` (extracting ``custom_emoji_id`` from ``stickerFullTypeCustomEmoji``) and pack titles via ``getStickerSet``.
 * **Emoji Status Setting**: Dispatches ``setEmojiStatus`` (for user profiles) or ``setChatEmojiStatus`` (for supergroups/channels) with ``emojiStatusTypeCustomEmoji``.
 * **Emoji Status Clearing**: Dispatches ``setEmojiStatus`` / ``setChatEmojiStatus`` with ``null`` status payload.
 

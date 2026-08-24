@@ -275,6 +275,114 @@ grm topic unpin <supergroup_id> <topic_id>
 grm topic delete <supergroup_id> <topic_id>
    Delete a forum topic and its history.
 
+Story Management (CRUD)
+------------------------
+
+grm story post [--photo <path>|--video <path>] [--caption <caption>] [--privacy everyone|contacts|close_friends] [--period <time>] [--pinned] [--protect] [-C|--chat <id>]
+   Publish a new photo or video story. Supports Markdown hyperlink entity formatting in captions.
+
+   -p, --photo <path>
+      Path to local photo image file to publish as story.
+
+   -v, --video <path>
+      Path to local video file to publish as story.
+
+   -c, --caption <caption>
+      Story caption (supports Markdown hyperlinks and formatting).
+
+   --privacy <setting>
+      Privacy setting: ``everyone`` (default), ``contacts``, or ``close_friends``.
+
+   --period <time>
+      Active story duration: ``6h``, ``12h``, ``24h`` (default), or ``48h``.
+
+   --pinned
+      Pin story to chat page / profile under the permanent "Posts" tab (sets ``is_posted_to_chat_page: true``).
+
+   --protect
+      Protect story content from saving and forwarding.
+
+   -C, --chat <id>
+      Target chat or channel ID (default: personal account).
+
+grm story edit -s|--story-id <id> [--photo <path>|--video <path>] [--caption <caption>] [-C|--chat <id>]
+   Edit media content or caption of an existing story.
+
+   -s, --story-id <id>
+      Story identifier to edit.
+
+   -p, --photo <path>
+      New photo image file for story.
+
+   -v, --video <path>
+      New video file for story.
+
+   -c, --caption <caption>
+      New story caption (supports Markdown hyperlinks and formatting).
+
+   -C, --chat <id>
+      Target chat or channel ID (default: personal account).
+
+grm story ls [-C|--chat <id>] [-n|--limit <N>] [-p|--pinned] [-a|--archived] [-A|--all]
+   List active stories, pinned profile posts, and archived stories.
+
+   -C, --chat <id>
+      Target chat or channel ID (default: personal account).
+
+   -n, --limit <N>
+      Maximum number of stories to display (default: 20).
+
+   -p, --pinned, --posts
+      List stories posted to profile / chat page.
+
+   -a, --archived
+      List archived stories.
+
+   -A, --all
+      List active, pinned profile, and archived stories combined.
+
+grm story delete -s|--story-id <id> [-C|--chat <id>]
+   Delete a published story by identifier.
+
+   -s, --story-id <id>
+      Story identifier to delete.
+
+   -C, --chat <id>
+      Target chat or channel ID (default: personal account).
+
+Emoji Status Management
+-----------------------
+
+grm status ls [-f|--filter <query>] [-r|--recent] [-p|--packs] [<query>]
+   List and search available default, recent, and custom status emojis across installed packs (including official ``Animated Emoji``).
+
+   -f, --filter <query>
+      Filter emojis by unicode character, description, pack name, or ID.
+
+   -r, --recent
+      Show recent custom emoji statuses.
+
+   -p, --packs
+      Show installed custom emoji packs.
+
+grm status set -e|--emoji <id> [-d|--duration <time>] [-C|--chat <id>]
+   Set a custom Telegram emoji status badge.
+
+   -e, --emoji <id>
+      Custom Telegram emoji identifier (int64 string).
+
+   -d, --duration <time>
+      Status badge duration (e.g. ``30m``, ``1h``, ``8h``, ``2d``, ``1w``).
+
+   -C, --chat <id>
+      Target boosted channel or supergroup chat ID.
+
+grm status clear [-C|--chat <id>]
+   Clear active custom emoji status badge.
+
+   -C, --chat <id>
+      Target boosted channel or supergroup chat ID.
+
 File Download Engine
 --------------------
 
@@ -322,6 +430,34 @@ Examples
    .. code-block:: bash
 
       grm file download-all -o ~/Downloads -t 2 --type photo -1003750297693
+
+5. Publish a Telegram Story with Markdown hyperlinks and pin to profile page:
+
+   .. code-block:: bash
+
+      grm story post --photo assets/logo.png --caption "[grm](https://gitlab.com/renich/grm) ya soporta historias 🚀" --pinned --period 24h
+
+6. Edit an existing story's caption and media:
+
+   .. code-block:: bash
+
+      grm story edit --story-id 32 --caption "Updated caption with link: https://gitlab.com/renich/grm"
+
+7. List active, profile, and archived stories:
+
+   .. code-block:: bash
+
+      grm story ls --all
+
+8. Search and set a 3D animated emoji status badge for 8 hours:
+
+   .. code-block:: bash
+
+      # Search for laptop emojis across installed packs
+      grm status ls 💻
+
+      # Set 3D Animated Laptop badge for 8 hours
+      grm status set --emoji 5431376038628171216 --duration 8h
 
 Planned Features & Architectural Roadmap
 ========================================

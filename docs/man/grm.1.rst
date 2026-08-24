@@ -309,14 +309,41 @@ grm story post [--photo *PATH* | --video *PATH*] [-c *CAPTION*] [--privacy every
    -C, --chat *CHAT_ID*
       Target chat or channel ID (default: personal account).
 
-grm story ls [-C *CHAT_ID*] [-n *LIMIT*]
-   List active stories for personal account or target channel.
+grm story ls [-C *CHAT_ID*] [-n *LIMIT*] [-p] [-a] [-A]
+   List active, pinned profile, and archived stories.
 
    -C, --chat *CHAT_ID*
       Target chat or channel ID.
 
    -n, --limit *LIMIT*
       Maximum stories to display (default: 20).
+
+   -p, --pinned
+      List stories posted to profile / chat page (profile posts).
+
+   -a, --archived
+      List archived stories.
+
+   -A, --all
+      List active, pinned profile, and archived stories combined.
+
+grm story edit -s *STORY_ID* [-p *PHOTO*] [-v *VIDEO*] [-c *CAPTION*] [-C *CHAT_ID*]
+   Edit media content or caption of an existing story. Supports Markdown hyperlinks in captions.
+
+   -s, --story-id *ID*
+      Story identifier to edit.
+
+   -p, --photo *PATH*
+      New photo image file.
+
+   -v, --video *PATH*
+      New video file.
+
+   -c, --caption *TEXT*
+      New story caption (supports Markdown hyperlinks and formatting).
+
+   -C, --chat *CHAT_ID*
+      Target chat or channel ID.
 
 grm story delete -s *STORY_ID* [-C *CHAT_ID*]
    Delete a published story.
@@ -329,6 +356,18 @@ grm story delete -s *STORY_ID* [-C *CHAT_ID*]
 
 status
 ------
+
+grm status ls [-f *QUERY*] [-r] [-p] [*QUERY*]
+   List and search available default, recent, and custom status emojis.
+
+   -f, --filter *QUERY*
+      Filter emojis by unicode character, description, pack name, or ID.
+
+   -r, --recent
+      Show recent custom emoji statuses.
+
+   -p, --packs
+      Show installed custom emoji packs.
 
 grm status set -e *EMOJI_ID* [-d *DURATION*] [-C *CHAT_ID*]
    Set custom Telegram emoji status badge.

@@ -9,18 +9,23 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 [Unreleased]
 ============
 
+[0.8.0] — 2026-08-24
+====================
+
 .. rubric:: Added
 
+* Complete Telegram Stories CRUD suite (``grm story post``, ``grm story edit``, ``grm story ls``, ``grm story delete``) supporting photo and video publishing, caption Markdown hyperlinks and entity formatting, privacy scopes (``everyone``, ``contacts``, ``close_friends``), active durations (6h, 12h, 24h, 48h), profile "Posts" pinning, content forwarding protection, and multi-source story listing across active, pinned profile, and archived stories.
+* Custom Telegram Emoji Status CLI suite (``grm status ls``, ``grm status set``, ``grm status clear``) supporting emoji discovery across default, recent, and custom sticker sets, query filtering, custom emoji IDs, human duration strings (``30m``, ``1h``, ``8h``, ``2d``), and channel/supergroup boosted status badges.
 * Dynamic Git-based build versioning in CMake (``include/grm/version.hpp.in``) reporting ``devel (<commit-hash>[-dirty])`` for unreleased/master builds and exact release tag for release builds.
-* Telegram Stories CLI suite (``grm story post``, ``grm story ls``, ``grm story delete``) supporting photo and video story publishing, Markdown captions, privacy scopes (``everyone``, ``contacts``, ``close_friends``), active durations (6h, 12h, 24h, 48h), profile pinning, and content forwarding protection.
-* Custom Telegram Emoji Status CLI suite (``grm status set``, ``grm status clear``) supporting custom emoji IDs, human duration strings (``30m``, ``1h``, ``2d``), and channel/supergroup boosted status badges.
 * Automated ``make tdlib-bootstrap`` target in GNUmakefile to compile and install upstream TDLib into ``~/.local``.
 * Priority search and automatic fallback architecture in CMake and GNUmakefile for local TDLib installations with seamless reversion to Fedora system packages upon upstream package update.
-* Unit test suites ``tests/test_story.cpp`` and ``tests/test_status.cpp`` covering CLI parsing, validation, and JSON payload building.
+* Comprehensive unit test suites ``tests/test_story.cpp`` and ``tests/test_status.cpp`` covering CLI parsing, validation, and JSON payload building.
 * Full Bash tab autocompletions and manual page documentation for ``grm story`` and ``grm status``.
 
 .. rubric:: Fixed
 
+* Corrected ``deleteStory`` parameter from ``story_sender_chat_id`` to TDLib standard ``story_poster_chat_id``.
+* Added automatic story prefetching via ``getStory`` before ``editStory`` to ensure TDLib caches story metadata prior to mutation.
 * Resolved TDLib $\ge 1.8.20$ (1.8.66) parameter schema incompatibility by flattening the ``setTdlibParameters`` request payload at the top-level, eliminating authentication timeouts and startup rejection (``TDLib Error [400]: Valid api_id must be provided``).
 * Synchronized ``TdClient::stop()`` with TDLib ``authorizationStateClosed`` before terminating the receiver thread, guaranteeing clean SQLite binlog/WAL flushing and preventing database lock contention across successive CLI invocations.
 * Reordered ``App`` member variable destruction sequence and added explicit ``App::~App()`` destructor to stop ``TdClient`` and join background threads before destroying synchronization primitives, eliminating heap-use-after-free and double-free faults on CLI exit.

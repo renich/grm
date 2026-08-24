@@ -164,12 +164,14 @@ _grm_completions() {
         if [[ "${cur}" == -* ]]; then
           COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
         else
-          COMPREPLY=($(compgen -W "post ls delete" -- "${cur}"))
+          COMPREPLY=($(compgen -W "post ls edit delete" -- "${cur}"))
         fi
       elif [[ "${words[2]}" == "post" ]]; then
         COMPREPLY=($(compgen -W "-h --help -p --photo -v --video -c --caption --privacy --period --pinned --protect -C --chat" -- "${cur}"))
       elif [[ "${words[2]}" == "ls" ]]; then
-        COMPREPLY=($(compgen -W "-h --help -C --chat -n --limit" -- "${cur}"))
+        COMPREPLY=($(compgen -W "-h --help -C --chat -n --limit -p --pinned -a --archived -A --all" -- "${cur}"))
+      elif [[ "${words[2]}" == "edit" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -s --story-id -p --photo -v --video -c --caption -C --chat" -- "${cur}"))
       elif [[ "${words[2]}" == "delete" ]]; then
         COMPREPLY=($(compgen -W "-h --help -s --story-id -C --chat" -- "${cur}"))
       fi
@@ -179,8 +181,10 @@ _grm_completions() {
         if [[ "${cur}" == -* ]]; then
           COMPREPLY=($(compgen -W "-h --help" -- "${cur}"))
         else
-          COMPREPLY=($(compgen -W "set clear" -- "${cur}"))
+          COMPREPLY=($(compgen -W "ls set clear" -- "${cur}"))
         fi
+      elif [[ "${words[2]}" == "ls" ]]; then
+        COMPREPLY=($(compgen -W "-h --help -f --filter -r --recent -p --packs" -- "${cur}"))
       elif [[ "${words[2]}" == "set" ]]; then
         COMPREPLY=($(compgen -W "-h --help -e --emoji -d --duration -C --chat" -- "${cur}"))
       elif [[ "${words[2]}" == "clear" ]]; then

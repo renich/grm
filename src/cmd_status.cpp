@@ -7,6 +7,9 @@
 #include <chrono>
 #include <format>
 #include <iostream>
+#include <json-c/json.h>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace grm {
 
@@ -15,6 +18,22 @@ CommandSpec get_status_spec() {
       "status",
       "Manage Telegram custom emoji statuses",
       {SubcommandSpec{
+           "ls",
+           "[-f|--filter <query>] [--recent] [--packs] [query]",
+           "List and search available default, recent, and custom status "
+           "emojis",
+           {OptionSpec{"-f",
+                       "--filter",
+                       "<query>",
+                       "Filter emojis by unicode character, description, pack "
+                       "name, or ID",
+                       {}},
+            OptionSpec{
+                "-r", "--recent", "", "Show recent custom emoji statuses", {}},
+            OptionSpec{
+                "-p", "--packs", "", "Show installed custom emoji packs", {}},
+            OptionSpec{"-h", "--help", "", "Show status ls help message", {}}}},
+       SubcommandSpec{
            "set",
            "--emoji <id> [--duration <time>] [-C|--chat <id>]",
            "Set custom emoji status badge",
@@ -51,6 +70,52 @@ CommandSpec get_status_spec() {
             OptionSpec{
                 "-h", "--help", "", "Show status clear help message", {}}}}},
       {}};
+}
+
+static bool contains_ignore_case(std::string_view haystack,
+                                 std::string_view needle) {
+  if (needle.empty()) {
+    return true;
+  }
+  auto it =
+      std::search(haystack.begin(), haystack.end(), needle.begin(),
+                  needle.end(), [](char ch1, char ch2) {
+                    return std::tolower(static_cast<unsigned char>(ch1)) ==
+                           std::tolower(static_cast<unsigned char>(ch2));
+                  });
+  return it != haystack.end();
+}
+
+bool parse_status_ls_args(const std::vector<std::string> &args,
+                          StatusListOptions &opts, std::string &err) {
+  for (size_t i = 0; i < args.size(); ++i) {
+    const std::string &arg = args[i];
+    if (arg == "-r" || arg == "--recent") {
+      opts.recent = true;
+    } else if (arg == "-p" || arg == "--packs") {
+      opts.packs = true;
+    } else if (arg == "-f" || arg == "--filter") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      opts.filter = args[++i];
+    } else if (arg.starts_with("--filter=")) {
+      opts.filter = arg.substr(9);
+    } else if (arg == "-h" || arg == "--help") {
+      return false;
+    } else if (!arg.starts_with("-")) {
+      if (opts.filter.empty()) {
+        opts.filter = arg;
+      } else {
+        opts.filter += " " + arg;
+      }
+    } else {
+      err = "Unknown option: " + arg;
+      return false;
+    }
+  }
+  return true;
 }
 
 static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
@@ -295,6 +360,9 @@ App::cmd_status(const std::vector<std::string> &args) {
   const std::string &sub = args[0];
   std::vector<std::string> sub_opts(args.begin() + 1, args.end());
 
+  if (sub == "ls" || sub == "list") {
+    return cmd_status_ls(sub_opts);
+  }
   if (sub == "set") {
     return cmd_status_set(sub_opts);
   }
@@ -304,6 +372,262 @@ App::cmd_status(const std::vector<std::string> &args) {
 
   print_status_help(options_.format);
   return std::unexpected("Unknown status subcommand: " + sub);
+}
+
+static std::string get_sticker_custom_emoji_id(const JsonValue &st) {
+  if (auto ft = st.get_object("full_type")) {
+    if (auto ce_id = ft->get_string("custom_emoji_id")) {
+      return *ce_id;
+    }
+  }
+  if (auto ce_id = st.get_string("custom_emoji_id")) {
+    return *ce_id;
+  }
+  return {};
+}
+
+std::expected<int, std::string>
+App::cmd_status_ls(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_status_help(options_.format);
+    return 0;
+  }
+
+  StatusListOptions opts;
+  std::string err;
+  if (!parse_status_ls_args(args, opts, err)) {
+    print_status_help(options_.format);
+    return std::unexpected(err.empty() ? "Invalid arguments for status ls"
+                                       : err);
+  }
+
+  auto auth_res = ensure_authenticated();
+  if (!auth_res) {
+    return std::unexpected(auth_res.error());
+  }
+
+  std::vector<std::string> emoji_ids;
+  std::unordered_map<int64_t, std::string> pack_titles;
+
+  if (opts.recent) {
+    auto res = client_->send_request("getRecentEmojiStatuses", "{}", 10.0);
+    if (res && res->get_string("@type").value_or("") != "error") {
+      auto statuses = res->get_array("emoji_statuses");
+      for (const auto &st : statuses) {
+        if (auto type_obj = st.get_object("type")) {
+          if (type_obj->get_string("@type").value_or("") ==
+              "emojiStatusTypeCustomEmoji") {
+            if (auto id_str = type_obj->get_string("custom_emoji_id")) {
+              emoji_ids.push_back(*id_str);
+            } else if (auto id_num = type_obj->get_int("custom_emoji_id")) {
+              emoji_ids.push_back(std::to_string(*id_num));
+            }
+          }
+        }
+      }
+    }
+  } else if (opts.packs) {
+    auto res = client_->send_request(
+        "getInstalledStickerSets",
+        R"({"sticker_type": {"@type": "stickerTypeCustomEmoji"}})", 15.0);
+    if (res && res->get_string("@type").value_or("") != "error") {
+      auto sets = res->get_array("sets");
+      for (const auto &s : sets) {
+        int64_t set_id = s.get_int("id").value_or(0);
+        std::string title = s.get_string("title").value_or("");
+        if (set_id != 0) {
+          pack_titles[set_id] = title;
+          auto set_res = client_->send_request(
+              "getStickerSet", std::format(R"({{"set_id": {}}})", set_id),
+              10.0);
+          if (set_res && set_res->get_string("@type").value_or("") != "error") {
+            auto stickers = set_res->get_array("stickers");
+            for (const auto &st : stickers) {
+              std::string cid = get_sticker_custom_emoji_id(st);
+              if (!cid.empty()) {
+                emoji_ids.push_back(cid);
+              }
+            }
+          }
+        }
+      }
+    }
+  } else {
+    // 1. Installed custom emoji sticker packs (includes official "Animated
+    // Emoji", "Emoticon Emoji", etc.)
+    auto packs_res = client_->send_request(
+        "getInstalledStickerSets",
+        R"({"sticker_type": {"@type": "stickerTypeCustomEmoji"}})", 15.0);
+    if (packs_res && packs_res->get_string("@type").value_or("") != "error") {
+      auto sets = packs_res->get_array("sets");
+      for (const auto &s : sets) {
+        int64_t set_id = s.get_int("id").value_or(0);
+        std::string title = s.get_string("title").value_or("");
+        if (set_id != 0) {
+          pack_titles[set_id] = title;
+          auto set_res = client_->send_request(
+              "getStickerSet", std::format(R"({{"set_id": {}}})", set_id),
+              10.0);
+          if (set_res && set_res->get_string("@type").value_or("") != "error") {
+            auto stickers = set_res->get_array("stickers");
+            for (const auto &st : stickers) {
+              std::string cid = get_sticker_custom_emoji_id(st);
+              if (!cid.empty()) {
+                emoji_ids.push_back(cid);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Default emoji statuses
+    auto res = client_->send_request("getDefaultEmojiStatuses", "{}", 10.0);
+    if (res && res->get_string("@type").value_or("") != "error") {
+      auto ids = res->get_array("custom_emoji_ids");
+      for (const auto &id_val : ids) {
+        if (auto s = id_val.as_string()) {
+          emoji_ids.push_back(*s);
+        } else if (auto n = id_val.as_int64()) {
+          emoji_ids.push_back(std::to_string(*n));
+        }
+      }
+    }
+  }
+
+  // Deduplicate emoji IDs while preserving order
+  std::vector<std::string> unique_ids;
+  std::unordered_set<std::string> seen;
+  for (const auto &id : emoji_ids) {
+    if (!id.empty() && seen.insert(id).second) {
+      unique_ids.push_back(id);
+    }
+  }
+
+  // Fetch emoji details using getCustomEmojiStickers
+  struct EmojiDetail {
+    std::string id;
+    std::string emoji;
+    int64_t set_id{0};
+    std::string pack_title;
+  };
+  std::vector<EmojiDetail> details;
+
+  if (!unique_ids.empty()) {
+    // Batch in chunks of 50
+    for (size_t i = 0; i < unique_ids.size(); i += 50) {
+      size_t end = std::min(i + 50, unique_ids.size());
+      std::string ids_json = "[";
+      for (size_t j = i; j < end; ++j) {
+        if (j > i) {
+          ids_json += ", ";
+        }
+        ids_json += "\"" + unique_ids[j] + "\"";
+      }
+      ids_json += "]";
+
+      std::string req = std::format(R"({{"custom_emoji_ids": {}}})", ids_json);
+      auto stickers_res =
+          client_->send_request("getCustomEmojiStickers", req, 10.0);
+      if (stickers_res &&
+          stickers_res->get_string("@type").value_or("") != "error") {
+        auto stickers = stickers_res->get_array("stickers");
+        for (size_t idx = 0; idx < stickers.size(); ++idx) {
+          const auto &st = stickers[idx];
+          std::string em = st.get_string("emoji").value_or("");
+          int64_t set_id = st.get_int("set_id").value_or(0);
+          std::string id;
+          if (auto ft = st.get_object("full_type")) {
+            if (auto ce_id = ft->get_string("custom_emoji_id")) {
+              id = *ce_id;
+            }
+          }
+          if (id.empty()) {
+            if (auto ce_id = st.get_string("custom_emoji_id")) {
+              id = *ce_id;
+            }
+          }
+          if (id.empty() && i + idx < unique_ids.size()) {
+            id = unique_ids[i + idx];
+          }
+          details.push_back(EmojiDetail{
+              .id = id, .emoji = em, .set_id = set_id, .pack_title = ""});
+        }
+      }
+    }
+  }
+
+  // Resolve pack titles
+  for (auto &d : details) {
+    if (d.set_id != 0) {
+      auto it = pack_titles.find(d.set_id);
+      if (it != pack_titles.end()) {
+        d.pack_title = it->second;
+      } else {
+        auto set_res = client_->send_request(
+            "getStickerSet", std::format(R"({{"set_id": {}}})", d.set_id), 5.0);
+        if (set_res && set_res->get_string("@type").value_or("") != "error") {
+          std::string t = set_res->get_string("title").value_or("");
+          pack_titles[d.set_id] = t;
+          d.pack_title = t;
+        }
+      }
+    }
+  }
+
+  if (!opts.filter.empty()) {
+    std::vector<EmojiDetail> filtered;
+    for (const auto &d : details) {
+      if (contains_ignore_case(d.id, opts.filter) ||
+          contains_ignore_case(d.emoji, opts.filter) ||
+          contains_ignore_case(d.pack_title, opts.filter)) {
+        filtered.push_back(d);
+      }
+    }
+    details = std::move(filtered);
+  }
+
+  // Render output
+  if (options_.format == fmt::OutputFormat::Json ||
+      options_.format == fmt::OutputFormat::JsonL) {
+    json_object *arr = json_object_new_array();
+    for (const auto &d : details) {
+      json_object *obj = json_object_new_object();
+      json_object_object_add(obj, "custom_emoji_id",
+                             json_object_new_string(d.id.c_str()));
+      json_object_object_add(obj, "emoji",
+                             json_object_new_string(d.emoji.c_str()));
+      json_object_object_add(obj, "set_id", json_object_new_int64(d.set_id));
+      json_object_object_add(obj, "pack_title",
+                             json_object_new_string(d.pack_title.c_str()));
+      json_object_array_add(arr, obj);
+    }
+    int flags = options_.pretty
+                    ? (JSON_C_TO_STRING_PRETTY | JSON_C_TO_STRING_SPACED)
+                    : JSON_C_TO_STRING_PLAIN;
+    std::cout << json_object_to_json_string_ext(arr, flags) << "\n";
+    json_object_put(arr);
+  } else if (options_.format == fmt::OutputFormat::Markdown) {
+    std::cout << "| Custom Emoji ID | Emoji | Sticker Pack |\n";
+    std::cout << "| :--- | :---: | :--- |\n";
+    for (const auto &d : details) {
+      std::cout << std::format(
+          "| `{}` | {} | {} |\n", d.id, d.emoji.empty() ? "-" : d.emoji,
+          d.pack_title.empty() ? "Standard" : d.pack_title);
+    }
+  } else {
+    // Human format
+    std::cout << std::format("{:<22} {:<8} {}\n", "EMOJI ID", "EMOJI",
+                             "PACK / TITLE");
+    std::cout << std::string(65, '-') << "\n";
+    for (const auto &d : details) {
+      std::cout << std::format(
+          "{:<22} {:<8} {}\n", d.id, d.emoji.empty() ? "-" : d.emoji,
+          d.pack_title.empty() ? "Telegram Status" : d.pack_title);
+    }
+  }
+
+  return 0;
 }
 
 std::expected<int, std::string>

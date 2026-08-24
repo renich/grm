@@ -20,9 +20,21 @@ struct StoryPostOptions {
   int64_t chat_id{0}; // 0 for personal account, or channel ID
 };
 
+struct StoryEditOptions {
+  int32_t story_id{0};
+  std::string photo_path;
+  std::string video_path;
+  std::string caption;
+  bool has_caption{false};
+  int64_t chat_id{0};
+};
+
 struct StoryListOptions {
   int64_t chat_id{0};
   int32_t limit{20};
+  bool pinned{false};
+  bool archived{false};
+  bool all{false};
 };
 
 struct StoryDeleteOptions {
@@ -39,6 +51,10 @@ parse_period_string(std::string_view str);
                                          StoryPostOptions &opts,
                                          std::string &err);
 
+[[nodiscard]] bool parse_story_edit_args(const std::vector<std::string> &args,
+                                         StoryEditOptions &opts,
+                                         std::string &err);
+
 [[nodiscard]] bool parse_story_ls_args(const std::vector<std::string> &args,
                                        StoryListOptions &opts,
                                        std::string &err);
@@ -49,6 +65,11 @@ parse_period_string(std::string_view str);
 
 [[nodiscard]] std::string
 build_post_story_json(const StoryPostOptions &opts, int64_t resolved_chat_id,
+                      const std::string &formatted_caption_json);
+
+[[nodiscard]] std::string
+build_edit_story_json(int64_t chat_id, int32_t story_id,
+                      const StoryEditOptions &opts,
                       const std::string &formatted_caption_json);
 
 [[nodiscard]] std::string build_get_chat_active_stories_json(int64_t chat_id);

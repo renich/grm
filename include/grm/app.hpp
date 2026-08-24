@@ -174,6 +174,8 @@ private:
   [[nodiscard]] std::expected<int, std::string>
   cmd_story_post(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
+  cmd_story_edit(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
   cmd_story_ls(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
   cmd_story_delete(const std::vector<std::string> &args);
@@ -181,6 +183,8 @@ private:
   // Status Management
   [[nodiscard]] std::expected<int, std::string>
   cmd_status(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_status_ls(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>
   cmd_status_set(const std::vector<std::string> &args);
   [[nodiscard]] std::expected<int, std::string>

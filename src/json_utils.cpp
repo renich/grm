@@ -1,7 +1,8 @@
 #include "grm/json_utils.hpp"
+#include <charconv>
+#include <cstring>
 #include <format>
 #include <json-c/json.h>
-
 #include <mutex>
 
 namespace grm {
@@ -129,6 +130,9 @@ std::optional<std::string> JsonValue::get_string(const std::string &key) const {
     if (json_object_is_type(val, json_type_string)) {
       return std::string(json_object_get_string(val));
     }
+    if (json_object_is_type(val, json_type_int)) {
+      return std::to_string(json_object_get_int64(val));
+    }
   }
   return std::nullopt;
 }
@@ -144,6 +148,14 @@ std::optional<int64_t> JsonValue::get_int(const std::string &key) const {
   if (json_object_object_get_ex(obj_, key.c_str(), &val) && val) {
     if (json_object_is_type(val, json_type_int)) {
       return json_object_get_int64(val);
+    }
+    if (json_object_is_type(val, json_type_string)) {
+      const char *str = json_object_get_string(val);
+      int64_t parsed_val = 0;
+      auto [ptr, ec] = std::from_chars(str, str + std::strlen(str), parsed_val);
+      if (ec == std::errc{}) {
+        return parsed_val;
+      }
     }
   }
   return std::nullopt;
@@ -169,15 +181,30 @@ std::optional<bool> JsonValue::get_bool(const std::string &key) const {
 }
 
 std::optional<int64_t> JsonValue::as_int64() const {
-  if (obj_ && json_object_is_type(obj_, json_type_int)) {
-    return json_object_get_int64(obj_);
+  if (obj_) {
+    if (json_object_is_type(obj_, json_type_int)) {
+      return json_object_get_int64(obj_);
+    }
+    if (json_object_is_type(obj_, json_type_string)) {
+      const char *str = json_object_get_string(obj_);
+      int64_t parsed_val = 0;
+      auto [ptr, ec] = std::from_chars(str, str + std::strlen(str), parsed_val);
+      if (ec == std::errc{}) {
+        return parsed_val;
+      }
+    }
   }
   return std::nullopt;
 }
 
 std::optional<std::string> JsonValue::as_string() const {
-  if (obj_ && json_object_is_type(obj_, json_type_string)) {
-    return std::string(json_object_get_string(obj_));
+  if (obj_) {
+    if (json_object_is_type(obj_, json_type_string)) {
+      return std::string(json_object_get_string(obj_));
+    }
+    if (json_object_is_type(obj_, json_type_int)) {
+      return std::to_string(json_object_get_int64(obj_));
+    }
   }
   return std::nullopt;
 }

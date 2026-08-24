@@ -52,16 +52,16 @@ User / Build Dependencies
 
 To build and run **grm**, end users need the following C++ libraries and build toolchain:
 
-=================== ================== =========================================================
-Dependency          Minimum Version    Purpose
-=================== ================== =========================================================
-``tdlib-devel``     ``>= 1.8.20``      Telegram C++ JSON interface library (``libtdjson``)
-``json-c-devel``    ``>= 0.15``        C JSON parser and object serialization engine
-``cmake``           ``>= 3.25``        Cross-platform build system generator
-``ninja-build``     ``>= 1.10``        Fast build execution engine
-``gcc-c++`` / ``clang`` ``C++23``     C++23 compiler suite (ISO/IEC 14882:2023)
-``python3-docutils`` ``>= 0.18``      reStructuredText man page compiler (``rst2man``)
-=================== ================== =========================================================
+======================= ================== =========================================================
+Dependency              Minimum Version    Purpose
+======================= ================== =========================================================
+``tdlib-devel``         ``>= 1.8.20``      Telegram C++ JSON interface library (``libtdjson``)
+``json-c-devel``        ``>= 0.15``        C JSON parser and object serialization engine
+``cmake``               ``>= 3.25``        Cross-platform build system generator
+``ninja-build``         ``>= 1.10``        Fast build execution engine
+``gcc-c++`` / ``clang`` ``C++23``          C++23 compiler suite (ISO/IEC 14882:2023)
+``python3-docutils``    ``>= 0.18``        reStructuredText man page compiler (``rst2man``)
+======================= ================== =========================================================
 
 .. note::
 
@@ -216,6 +216,19 @@ Usage Highlights
 
    # Bulk download all photos from a forum topic
    grm file download-all -o ~/Downloads -t 2 --type photo -1003750297693
+
+   # Publish a Telegram Story with Markdown hyperlinks and pin to profile
+   grm story post --photo assets/logo.png --caption "[grm](https://gitlab.com/renich/grm) ya soporta historias 🚀" --pinned --period 24h
+
+   # Edit an existing story's caption or media
+   grm story edit --story-id 32 --caption "Updated story caption with link: https://gitlab.com/renich/grm"
+
+   # List all active, profile, and archived stories
+   grm story ls --all
+
+   # Search and set 3D animated emoji status badge for 8 hours
+   grm status ls 💻
+   grm status set --emoji 5431376038628171216 --duration 8h
 
    # Log out from Telegram and clear session credentials
    grm logout

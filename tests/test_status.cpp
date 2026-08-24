@@ -73,6 +73,28 @@ void test_status_args_parsing() {
     TEST_ASSERT(opts.chat_id == -10098765);
   }
 
+  {
+    grm::StatusListOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--recent", "-f", "laptop"};
+    bool ok = grm::parse_status_ls_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.recent);
+    TEST_ASSERT(!opts.packs);
+    TEST_ASSERT(opts.filter == "laptop");
+  }
+
+  {
+    grm::StatusListOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--packs", "💻"};
+    bool ok = grm::parse_status_ls_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.packs);
+    TEST_ASSERT(!opts.recent);
+    TEST_ASSERT(opts.filter == "💻");
+  }
+
   std::cout << "[PASS] test_status_args_parsing\n";
 }
 

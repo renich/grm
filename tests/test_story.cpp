@@ -115,7 +115,64 @@ void test_story_ls_and_delete_args() {
     bool ok = grm::parse_story_ls_args(args, opts, err);
     TEST_ASSERT(ok);
     TEST_ASSERT(opts.chat_id == -100123456);
-    TEST_ASSERT(opts.limit == 50);
+    TEST_ASSERT(!opts.pinned);
+    TEST_ASSERT(!opts.archived);
+    TEST_ASSERT(!opts.all);
+  }
+
+  {
+    grm::StoryListOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"-p", "-n", "10"};
+    bool ok = grm::parse_story_ls_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.pinned);
+    TEST_ASSERT(!opts.archived);
+    TEST_ASSERT(!opts.all);
+    TEST_ASSERT(opts.limit == 10);
+  }
+
+  {
+    grm::StoryListOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--all", "-a"};
+    bool ok = grm::parse_story_ls_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.all);
+    TEST_ASSERT(opts.archived);
+  }
+
+  {
+    grm::StoryEditOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--story-id",  "42",      "--caption",
+                                     "New Caption", "--photo", "/tmp/test.jpg",
+                                     "--chat",      "98765"};
+    bool ok = grm::parse_story_edit_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.story_id == 42);
+    TEST_ASSERT(opts.caption == "New Caption");
+    TEST_ASSERT(opts.has_caption);
+    TEST_ASSERT(opts.photo_path == "/tmp/test.jpg");
+    TEST_ASSERT(opts.chat_id == 98765);
+  }
+
+  {
+    // Missing story ID
+    grm::StoryEditOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--caption", "New Caption"};
+    bool ok = grm::parse_story_edit_args(args, opts, err);
+    TEST_ASSERT(!ok);
+  }
+
+  {
+    // Missing edit payload
+    grm::StoryEditOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--story-id", "42"};
+    bool ok = grm::parse_story_edit_args(args, opts, err);
+    TEST_ASSERT(!ok);
   }
 
   {
@@ -180,13 +237,28 @@ void test_story_json_builders() {
   TEST_ASSERT(content_obj->get_string("@type").value_or("") ==
               "inputStoryContentPhoto");
 
+  // Test build_edit_story_json
+  grm::StoryEditOptions edit_opts;
+  edit_opts.story_id = 42;
+  edit_opts.caption = "Updated Caption";
+  edit_opts.has_caption = true;
+  std::string edit_caption_json =
+      R"({"@type":"formattedText","text":"Updated Caption","entities":[]})";
+  std::string edit_json =
+      grm::build_edit_story_json(112233, 42, edit_opts, edit_caption_json);
+  auto parsed_edit = grm::JsonValue::parse(edit_json);
+  TEST_ASSERT(parsed_edit.has_value());
+  TEST_ASSERT(parsed_edit->get_int("story_poster_chat_id").value_or(0) ==
+              112233);
+  TEST_ASSERT(parsed_edit->get_int("story_id").value_or(0) == 42);
+
   std::string del_json = grm::build_delete_story_json(112233, 42);
   auto parsed_del = grm::JsonValue::parse(del_json);
   if (!parsed_del.has_value()) {
     TEST_ASSERT(false);
     return;
   }
-  TEST_ASSERT(parsed_del->get_int("story_sender_chat_id").value_or(0) ==
+  TEST_ASSERT(parsed_del->get_int("story_poster_chat_id").value_or(0) ==
               112233);
   TEST_ASSERT(parsed_del->get_int("story_id").value_or(0) == 42);
 
