@@ -14,6 +14,7 @@ RUN dnf -y install \
     gcc-c++ \
     clang-tools-extra \
     python3-docutils \
+    python3-sphinx \
     rstcheck \
     git \
     make \
