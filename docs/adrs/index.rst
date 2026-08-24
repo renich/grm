@@ -6,6 +6,7 @@ Architecture Decision Records (ADRs)
    :maxdepth: 1
 
    2026-08-03-grm-tdlib-c++23-architecture
+   2026-08-24-static-aot-shell-completion
 
 Overview
 ========

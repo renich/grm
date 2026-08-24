@@ -19,7 +19,7 @@ man:
 	sed -i 's/\.SH Author/\.SH Authors/' $(BUILD_DIR)/grm.1
 
 doc-check:
-	$(RSTCHECK) user/grm.rst man/grm.1.rst
+	$(RSTCHECK) user/grm.rst man/grm.1.rst adrs/*.rst
 
 clean:
 	rm -f $(BUILD_DIR)/grm.1
