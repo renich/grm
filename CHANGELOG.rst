@@ -9,6 +9,21 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 [Unreleased]
 ============
 
+.. rubric:: Added
+
+* Dedicated per-subcommand ``--help`` architecture and routing across all multi-command suites (``story``, ``chat``, ``msg``, ``topic``, ``file``, ``folder``, ``search``, ``status``, ``completion``), rendering isolated synopsis, usage, and option definitions.
+* Architecture Decision Record ``ADR-002`` (``docs/adrs/2026-08-24-static-aot-shell-completion.rst``) documenting the static Ahead-of-Time (AOT) shell autocompletion architecture and evaluating JIT runtime binary callbacks vs compile-time generation.
+
+.. rubric:: Changed
+
+* Streamlined top-level command overview help (``grm <command> --help``) to cleanly summarize available subcommands with pointers to ``grm <command> <subcommand> --help`` without duplicating option lists.
+* Standardized option specifications, synopsis strings, and alias resolution across all subcommands in ``CommandRegistry``.
+
+.. rubric:: Fixed
+
+* Added CLI argument support for ``--format=<fmt>``, ``--color=<mode>``, and ``--config=<file>`` syntax.
+* Fixed subcommand option forwarding in CLI runner to prevent swallowing flags.
+
 [0.8.1] — 2026-08-24
 ====================
 
