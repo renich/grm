@@ -35,7 +35,7 @@ struct SenderInfo {
 class App {
 public:
   explicit App(Config config, CliOptions options = {});
-  ~App() = default;
+  ~App();
 
   App(const App &) = delete;
   App &operator=(const App &) = delete;
@@ -47,15 +47,27 @@ public:
 
   static void print_usage(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void print_version();
-  static void print_login_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
-  static void print_logout_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void
+  print_login_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void
+  print_logout_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   [[nodiscard]] static CommandSpec get_search_spec();
-  static void print_search_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
-  static void print_chat_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
-  static void print_msg_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
-  static void print_topic_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
-  static void print_file_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
-  static void print_folder_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void
+  print_search_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void
+  print_chat_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void
+  print_msg_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void
+  print_topic_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void
+  print_file_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void
+  print_folder_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void
+  print_story_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
+  static void
+  print_status_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static bool is_help_requested(const std::vector<std::string> &args);
   [[nodiscard]] static std::expected<int64_t, std::string>
   parse_since_timestamp(std::string_view raw_str);
@@ -156,12 +168,31 @@ private:
   [[nodiscard]] std::expected<int, std::string>
   cmd_file_download_all(const std::vector<std::string> &args);
 
+  // Story Management
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_story(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_story_post(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_story_ls(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_story_delete(const std::vector<std::string> &args);
+
+  // Status Management
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_status(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_status_set(const std::vector<std::string> &args);
+  [[nodiscard]] std::expected<int, std::string>
+  cmd_status_clear(const std::vector<std::string> &args);
+
   [[nodiscard]] std::expected<void, std::string> ensure_authenticated();
   [[nodiscard]] std::expected<void, std::string> init_tdlib();
   void send_tdlib_parameters();
   void ensure_chat_loaded(int64_t chat_id);
   [[nodiscard]] std::expected<int64_t, std::string>
-  send_message_and_wait(const std::string &payload, double timeout_seconds = 15.0);
+  send_message_and_wait(const std::string &payload,
+                        double timeout_seconds = 15.0);
   [[nodiscard]] std::expected<JsonValue, std::string>
   parse_formatted_text(const std::string &text,
                        const std::string &mode = "markdown");
@@ -177,7 +208,6 @@ private:
 
   Config config_;
   CliOptions options_;
-  std::unique_ptr<TdClient> client_;
   mutable std::mutex auth_mutex_;
   std::condition_variable auth_cv_;
   std::string auth_state_;
@@ -185,6 +215,7 @@ private:
   bool is_closed_{false};
   std::unordered_map<int64_t, SenderInfo> sender_cache_;
   mutable std::mutex sender_cache_mutex_;
+  std::unique_ptr<TdClient> client_;
 };
 
 } // namespace grm

@@ -50,6 +50,15 @@ void TdClient::stop() {
     send_async("close", "{}");
   }
 
+  // Allow receiver_thread_ up to 500ms to process authorizationStateClosed and
+  // flush DB
+  const auto start = std::chrono::steady_clock::now();
+  while (is_running_ && !is_closed_ &&
+         std::chrono::steady_clock::now() - start <
+             std::chrono::milliseconds(500)) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
   is_running_ = false;
 
   if (receiver_thread_.joinable()) {
@@ -61,8 +70,10 @@ void TdClient::stop() {
     std::lock_guard<std::mutex> lock(promises_mutex_);
     for (auto &[extra, promise] : pending_promises_) {
       try {
-        promise.set_exception(std::make_exception_ptr(std::runtime_error("TDLib client stopped")));
-      } catch (...) {}
+        promise.set_exception(std::make_exception_ptr(
+            std::runtime_error("TDLib client stopped")));
+      } catch (...) {
+      }
     }
     pending_promises_.clear();
   }
@@ -82,7 +93,8 @@ void TdClient::send_async(const std::string &type,
 
   json_object *raw_obj = json_tokener_parse(std::string(payload_json).c_str());
   if (!raw_obj || !json_object_is_type(raw_obj, json_type_object)) {
-    if (raw_obj) json_c_put(raw_obj);
+    if (raw_obj)
+      json_c_put(raw_obj);
     raw_obj = json_object_new_object();
   }
 
@@ -113,7 +125,8 @@ TdClient::send_request(const std::string &type, std::string_view payload_json,
 
   json_object *raw_obj = json_tokener_parse(std::string(payload_json).c_str());
   if (!raw_obj || !json_object_is_type(raw_obj, json_type_object)) {
-    if (raw_obj) json_c_put(raw_obj);
+    if (raw_obj)
+      json_c_put(raw_obj);
     raw_obj = json_object_new_object();
   }
 
@@ -176,6 +189,14 @@ void TdClient::handle_incoming(const JsonValue &value) {
     if (*type == "updateChatFolders") {
       std::scoped_lock lock(chat_folders_mutex_);
       cached_chat_folders_ = value.get_array("chat_folders");
+    } else if (*type == "updateAuthorizationState") {
+      if (auto state = value.get_object("authorization_state")) {
+        if (auto sttype = state->get_type();
+            sttype && *sttype == "authorizationStateClosed") {
+          is_closed_ = true;
+          is_running_ = false;
+        }
+      }
     }
   }
 
@@ -196,7 +217,8 @@ void TdClient::handle_incoming(const JsonValue &value) {
     if (found) {
       prom.set_value(value);
     }
-    // Early return for @extra responses so timed-out requests don't leak into subscriber update callbacks
+    // Early return for @extra responses so timed-out requests don't leak into
+    // subscriber update callbacks
     return;
   }
 
@@ -218,4 +240,3 @@ std::vector<JsonValue> TdClient::get_cached_chat_folders() const {
 }
 
 } // namespace grm
-

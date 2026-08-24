@@ -42,6 +42,7 @@ The script hooks into Bash completion via ``complete -F _grm_completions grm``:
    Completes ``login``, ``chat``, ``msg``, ``send``, ``topic``, and global flags (``-h``, ``--help``, ``-V``, ``--version``, ``-v``, ``--verbose``, ``-d``, ``--debug``, ``-q``, ``--quiet``, ``-c``, ``--config``).
 
 2. **Subcommands & Flags**:
+
    - ``grm login`` $\rightarrow$ ``-p``, ``--phone``, ``-k``, ``--code``
    - ``grm chat`` $\rightarrow$ ``ls``
    - ``grm msg`` $\rightarrow$ ``ls``, ``export``, ``search``

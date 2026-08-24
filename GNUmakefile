@@ -17,7 +17,10 @@ CLANG_FORMAT ?= clang-format
 CLANG_TIDY ?= clang-tidy
 SCAN_BUILD ?= scan-build
 
-.PHONY: all build release clean distclean format lint analyze check asan tsan sanitize man doc-check install install-user install-man install-completions install-hooks hooks uninstall uninstall-user help
+# Fallback search order: ~/.local first, then system paths
+export PKG_CONFIG_PATH := $(PREFIX_USER)/lib64/pkgconfig:$(PREFIX_USER)/lib/pkgconfig:$(shell pkg-config --variable=pc_path pkg-config 2>/dev/null):$(PKG_CONFIG_PATH)
+
+.PHONY: all build release clean distclean format lint analyze check asan tsan sanitize man doc-check install install-user install-man install-completions install-hooks hooks uninstall uninstall-user help tdlib-bootstrap
 
 all: build
 
@@ -28,6 +31,7 @@ help:
 	@echo "  all                  Build debug executable (default goal)"
 	@echo "  build                Build unoptimized debug binary in $(BUILD_DIR)/"
 	@echo "  release              Build optimized release binary in $(BUILD_DIR)/ and strip symbols"
+	@echo "  tdlib-bootstrap      Clone, compile, and install latest TDLib into $(PREFIX_USER)"
 	@echo ""
 	@echo "Quality & Testing Targets:"
 	@echo "  check                Run full CTest automated test suite"
@@ -57,6 +61,15 @@ release:
 	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_ASAN=OFF -DENABLE_TSAN=OFF -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 	$(CMAKE) --build $(BUILD_DIR)
 	$(STRIP) --strip-unneeded $(BUILD_DIR)/grm
+
+tdlib-bootstrap:
+	@echo "Bootstrapping latest TDLib (>= 1.8.20) into $(PREFIX_USER)..."
+	@rm -rf /tmp/tdlib-bootstrap
+	git clone --depth 1 https://github.com/tdlib/td.git /tmp/tdlib-bootstrap
+	$(CMAKE) -B /tmp/tdlib-bootstrap/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(PREFIX_USER) -DTD_ENABLE_LTO=ON /tmp/tdlib-bootstrap
+	$(CMAKE) --build /tmp/tdlib-bootstrap/build --target install
+	@rm -rf /tmp/tdlib-bootstrap
+	@echo "TDLib successfully installed to $(PREFIX_USER)"
 
 clean:
 	rm -rf $(BUILD_DIR)

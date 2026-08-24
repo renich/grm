@@ -13,14 +13,17 @@ Key Capabilities
 ================
 
 1. **Rich Text Formatting Engine**:
+
    - Integration of TDLib ``parseTextEntities`` method.
    - Support for bold, italic, inline code, links, and code blocks.
 
 2. **Supergroup Topic Emoji Customization**:
+
    - Support for ``-e | --emoji | --icon <custom_emoji_id>`` flags in ``grm topic create`` and ``grm topic edit``.
    - TDLib payload mapping for ``icon_custom_emoji_id``.
 
 3. **Brand Visual Identity & Logo**:
+
    - Creation of high-resolution vector SVG (``assets/logo.svg``) and raster PNG (``assets/logo.png``) logo assets.
    - Styled after Crystal Shard geometric facet aesthetic.
    - README and Sphinx documentation integration.

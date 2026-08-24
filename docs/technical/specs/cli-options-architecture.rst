@@ -39,18 +39,25 @@ Subcommand Option Parsers
 Subcommands parse GNU options using clean helper loops with ``std::from_chars`` for exception-free numeric parsing:
 
 - **Message Listing**: ``grm msg ls [-n|--limit <N>] <chat_id>``
+
   - Option ``-n, --limit``: limit (int32, default 20)
   - Operands: ``chat_id`` (int64)
+
 - **Message Search**: ``grm msg search [-q|--query "<pattern>"] [-n|--limit <N>] <chat_id>``
+
   - Option ``-q, --query``: query regex string
   - Option ``-n, --limit``: limit (int32, default 100)
   - Operands: ``chat_id`` (int64)
+
 - **Message Export**: ``grm msg export [-f|--format csv|json] [-o|--output <file>] [-n|--limit <N>] <chat_id>``
+
   - Option ``-f, --format``: format type (default ``json``)
   - Option ``-o, --output``: output file path
   - Option ``-n, --limit``: max records (default 1000)
   - Operands: ``chat_id`` (int64)
+
 - **Message & File Dispatch**: ``grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"]``
+
   - Option ``-a, --attach``: file attachment path (repeatable)
   - Option ``-m, --media``: media mode flag
   - Option ``-C, --caption``: caption string

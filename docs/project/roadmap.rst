@@ -13,6 +13,7 @@ grm Project Roadmap
    roadmaps/phase-6-full-crud-and-downloads
    roadmaps/phase-7-rich-text-emojis-and-branding
    roadmaps/phase-8-packaging
+   roadmaps/phase-9-stories-and-status
    development-workflow
 
 Executive Summary
@@ -31,3 +32,5 @@ Phase Breakdown
 * **Phase 6 (Full CRUD & File Download Engine)**: Full CRUD operations across Chats, Groups, Channels, Forum Topics, Messages, and Single/Bulk File Attachment Downloading. *(Completed & Deployed)*
 * **Phase 7 (Rich Text, Topic Emojis & Branding)**: Telegram Rich Text Entities, Supergroup Custom Topic Emojis, and Crystal Shard Visual Brand Assets. *(Completed & Deployed)*
 * **Phase 8 (Automated Release Pipeline & FHS 3.0 Packaging)**: Tag-Triggered GitLab/GitHub Release Pipelines, POSIX Release Notes Extraction, and FHS 3.0 / XDG Base Directory User Packaging. *(Completed & Deployed)*
+* **Phase 9 (Stories & Custom Emoji Status Management)**: Photo/Video Stories, Markdown Captions, Privacy/Duration Controls, Custom Emoji Status Badges, and Upstream Fallback Architecture. *(Completed & Deployed)*
+

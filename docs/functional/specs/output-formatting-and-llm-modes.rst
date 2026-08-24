@@ -11,8 +11,10 @@ Key Features & Requirements
 ---------------------------
 
 1. **Human-Friendly Defaults (TTY Mode)**:
+
    - **Splash of Color**: Styled headers, colored level badges (``[INFO]``, ``[WARN]``, ``[ERROR]``, ``[AUTH]``), and distinct accent colors for Chat IDs (Cyan) and Chat Titles (Green).
    - **Humanized Naming Mappings**: Raw TDLib internal type strings are converted into intuitive human names:
+
      - ``chatTypeSupergroup`` → ``Supergroup``
      - ``chatTypeBasicGroup`` → ``Basic Group``
      - ``chatTypePrivate`` → ``Private Chat``
@@ -22,15 +24,18 @@ Key Features & Requirements
      - ``authenticationCodeTypeCall`` → ``Phone Call``
 
 2. **LLM & Pipeline Friendly Formats**:
+
    - **Markdown Mode (``--format markdown``)**: Generates GitHub-flavored Markdown tables and headers optimized for LLM prompting and document insertion.
    - **JSON Mode (``--format json``)**: Outputs clean, uncolored JSON arrays or objects for automated LLM pipelines and Unix tools (e.g. ``jq``).
    - **Plain Text Mode (``--format plain``)**: Suppresses ANSI color escape codes while retaining readable spacing.
 
 3. **Multi-Line Message Alignment & Markdown Escaping**:
+
    - **Interactive Terminal Indentation**: Embedded newlines (``\n``) in multi-line message texts are split and continuation lines are indented to match the width of the ``[MsgID <id>]: `` prefix.
    - **Markdown Table Escaping**: Embedded newlines inside Markdown table cells are replaced with ``<br>`` tags to preserve Markdown table alignment and parser compatibility.
 
 4. **TTY Auto-Detection & Color Control**:
+
    - **Automatic Color Suppression**: ANSI color codes are automatically disabled when stdout is redirected to a pipe or file (via ``isatty(STDOUT_FILENO)``).
    - **Environment & Flags**: Honor the standard ``NO_COLOR`` environment variable and explicit CLI flags (``--color=always|never|auto``).
 

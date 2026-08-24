@@ -55,13 +55,18 @@ To build and run **grm**, end users need the following C++ libraries and build t
 =================== ================== =========================================================
 Dependency          Minimum Version    Purpose
 =================== ================== =========================================================
-``tdlib-devel``     ``>= 1.8.0``       Telegram C++ JSON interface library (``libtdjson``)
+``tdlib-devel``     ``>= 1.8.20``      Telegram C++ JSON interface library (``libtdjson``)
 ``json-c-devel``    ``>= 0.15``        C JSON parser and object serialization engine
 ``cmake``           ``>= 3.25``        Cross-platform build system generator
 ``ninja-build``     ``>= 1.10``        Fast build execution engine
 ``gcc-c++`` / ``clang`` ``C++23``     C++23 compiler suite (ISO/IEC 14882:2023)
 ``python3-docutils`` ``>= 0.18``      reStructuredText man page compiler (``rst2man``)
 =================== ================== =========================================================
+
+.. note::
+
+   **Fedora Package Compatibility & Local Bootstrap**:
+   Fedora 44 currently ships ``tdlib-1.8.0``. To build **grm** with full Telegram Stories and Emoji Status capabilities, run ``make tdlib-bootstrap`` to compile and install the latest TDLib release into ``~/.local``. **grm**'s build system prioritizes ``~/.local`` and will automatically and seamlessly fall back to Fedora's system package once the official RPM updates.
 
 Installing User Dependencies (Fedora Linux / RHEL)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -76,6 +81,9 @@ Installing User Dependencies (Fedora Linux / RHEL)
        gcc-c++ \
        python3-docutils \
        git
+
+   # If system tdlib is < 1.8.20:
+   make tdlib-bootstrap
 
 Developer & Quality Toolchain Dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

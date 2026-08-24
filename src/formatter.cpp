@@ -212,11 +212,11 @@ void Formatter::print_chats(const std::vector<ChatItem> &chats,
       const auto human_type = humanize_chat_type(c.type);
       const auto rel_time = humanize_relative_time(c.last_message_date);
       if (use_color) {
-        out << std::format("{}{:<20}{} {}{:<15}{} {}{:<30}{} {}{:<8}{} {}{}{}\n",
-                           COLOR_CYAN, c.id, COLOR_RESET, COLOR_YELLOW,
-                           human_type, COLOR_RESET, COLOR_GREEN, c.title,
-                           COLOR_RESET, COLOR_RED, c.unread_count, COLOR_RESET,
-                           COLOR_GRAY, rel_time, COLOR_RESET);
+        out << std::format(
+            "{}{:<20}{} {}{:<15}{} {}{:<30}{} {}{:<8}{} {}{}{}\n", COLOR_CYAN,
+            c.id, COLOR_RESET, COLOR_YELLOW, human_type, COLOR_RESET,
+            COLOR_GREEN, c.title, COLOR_RESET, COLOR_RED, c.unread_count,
+            COLOR_RESET, COLOR_GRAY, rel_time, COLOR_RESET);
       } else {
         out << std::format("{:<20} {:<15} {:<30} {:<8} {}\n", c.id, human_type,
                            c.title, c.unread_count, rel_time);
@@ -228,8 +228,8 @@ void Formatter::print_chats(const std::vector<ChatItem> &chats,
                          "TYPE", "TITLE", "UNREAD", COLOR_RESET);
       out << COLOR_GRAY << std::string(75, '-') << COLOR_RESET << "\n";
     } else {
-      out << std::format("{:<20} {:<15} {:<30} {}\n", "CHAT ID", "TYPE", "TITLE",
-                         "UNREAD");
+      out << std::format("{:<20} {:<15} {:<30} {}\n", "CHAT ID", "TYPE",
+                         "TITLE", "UNREAD");
       out << std::string(75, '-') << "\n";
     }
 
@@ -241,8 +241,8 @@ void Formatter::print_chats(const std::vector<ChatItem> &chats,
                            human_type, COLOR_RESET, COLOR_GREEN, c.title,
                            COLOR_RESET, COLOR_RED, c.unread_count, COLOR_RESET);
       } else {
-        out << std::format("{:<20} {:<15} {:<30} {}\n", c.id, human_type, c.title,
-                           c.unread_count);
+        out << std::format("{:<20} {:<15} {:<30} {}\n", c.id, human_type,
+                           c.title, c.unread_count);
       }
     }
   }
@@ -293,8 +293,8 @@ void Formatter::print_topics(const std::vector<TopicItem> &topics,
     out << "| Topic ID | Name | Message Count | Last Activity |\n";
     out << "| :--- | :--- | :--- | :--- |\n";
     for (const auto &t : topics) {
-      out << std::format("| {} | {} | {} | {} |\n", t.id, t.name, t.message_count,
-                         format_iso8601(t.last_message_date));
+      out << std::format("| {} | {} | {} | {} |\n", t.id, t.name,
+                         t.message_count, format_iso8601(t.last_message_date));
     }
     return;
   }
@@ -302,8 +302,9 @@ void Formatter::print_topics(const std::vector<TopicItem> &topics,
   // Human / Plain mode
   if (verbose) {
     if (use_color) {
-      out << std::format("{}{:<15} {:<30} {:<15} {}{}\n", COLOR_BOLD, "TOPIC ID",
-                         "NAME", "MESSAGES COUNT", "LAST ACTIVITY", COLOR_RESET);
+      out << std::format("{}{:<15} {:<30} {:<15} {}{}\n", COLOR_BOLD,
+                         "TOPIC ID", "NAME", "MESSAGES COUNT", "LAST ACTIVITY",
+                         COLOR_RESET);
       out << COLOR_GRAY << std::string(85, '-') << COLOR_RESET << "\n";
     } else {
       out << std::format("{:<15} {:<30} {:<15} {}\n", "TOPIC ID", "NAME",
@@ -314,10 +315,10 @@ void Formatter::print_topics(const std::vector<TopicItem> &topics,
     for (const auto &t : topics) {
       const auto rel_time = humanize_relative_time(t.last_message_date);
       if (use_color) {
-        out << std::format("{}{:<15}{} {}{:<30}{} {}{:<15}{} {}{}{}\n", COLOR_CYAN,
-                           t.id, COLOR_RESET, COLOR_GREEN, t.name, COLOR_RESET,
-                           COLOR_YELLOW, t.message_count, COLOR_RESET,
-                           COLOR_GRAY, rel_time, COLOR_RESET);
+        out << std::format("{}{:<15}{} {}{:<30}{} {}{:<15}{} {}{}{}\n",
+                           COLOR_CYAN, t.id, COLOR_RESET, COLOR_GREEN, t.name,
+                           COLOR_RESET, COLOR_YELLOW, t.message_count,
+                           COLOR_RESET, COLOR_GRAY, rel_time, COLOR_RESET);
       } else {
         out << std::format("{:<15} {:<30} {:<15} {}\n", t.id, t.name,
                            t.message_count, rel_time);
@@ -325,8 +326,8 @@ void Formatter::print_topics(const std::vector<TopicItem> &topics,
     }
   } else {
     if (use_color) {
-      out << std::format("{}{:<15} {:<30} {}{}\n", COLOR_BOLD, "TOPIC ID", "NAME",
-                         "MESSAGES COUNT", COLOR_RESET);
+      out << std::format("{}{:<15} {:<30} {}{}\n", COLOR_BOLD, "TOPIC ID",
+                         "NAME", "MESSAGES COUNT", COLOR_RESET);
       out << COLOR_GRAY << std::string(65, '-') << COLOR_RESET << "\n";
     } else {
       out << std::format("{:<15} {:<30} {}\n", "TOPIC ID", "NAME",
@@ -444,8 +445,9 @@ void Formatter::print_messages(const std::vector<MessageItem> &messages,
       sender_part = std::format("<{}> ", m.sender);
     }
     const std::string prefix_plain =
-        verbose ? std::format("[MsgID {} | {}] {}: ", m.id, date_str, sender_part)
-                : std::format("({}) {}: ", date_str, sender_part);
+        verbose
+            ? std::format("[MsgID {} | {}] {}: ", m.id, date_str, sender_part)
+            : std::format("({}) {}: ", date_str, sender_part);
     const std::string indent(prefix_plain.size(), ' ');
 
     if (use_color) {
@@ -476,8 +478,8 @@ void Formatter::print_messages(const std::vector<MessageItem> &messages,
 }
 
 void Formatter::print_folders(const std::vector<ChatFolderSummary> &folders,
-                            OutputFormat format, ColorMode color_mode,
-                            std::ostream &out, bool verbose) {
+                              OutputFormat format, ColorMode color_mode,
+                              std::ostream &out, bool verbose) {
   const bool is_tty =
       (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
   const OutputFormat fmt = resolve_format(format, is_tty);
@@ -487,43 +489,53 @@ void Formatter::print_folders(const std::vector<ChatFolderSummary> &folders,
     out << "[\n";
     for (size_t i = 0; i < folders.size(); ++i) {
       const auto &f = folders[i];
-      out << std::format("  {{\n"
-                         "    \"id\": {},\n"
-                         "    \"title\": \"{}\",\n"
-                         "    \"icon\": \"{}\",\n"
-                         "    \"color_id\": {},\n"
-                         "    \"include_groups\": {},\n"
-                         "    \"include_channels\": {},\n"
-                         "    \"include_bots\": {},\n"
-                         "    \"include_contacts\": {},\n"
-                         "    \"include_non_contacts\": {},\n"
-                         "    \"exclude_muted\": {},\n"
-                         "    \"exclude_read\": {},\n"
-                         "    \"exclude_archived\": {}\n"
-                         "  }}{}",
-                         f.id, escape_json_string(f.title), escape_json_string(f.icon),
-                         f.color_id, f.include_groups ? "true" : "false",
-                         f.include_channels ? "true" : "false", f.include_bots ? "true" : "false",
-                         f.include_contacts ? "true" : "false", f.include_non_contacts ? "true" : "false",
-                         f.exclude_muted ? "true" : "false", f.exclude_read ? "true" : "false",
-                         f.exclude_archived ? "true" : "false",
-                         (i + 1 < folders.size()) ? ",\n" : "\n");
+      out << std::format(
+          "  {{\n"
+          "    \"id\": {},\n"
+          "    \"title\": \"{}\",\n"
+          "    \"icon\": \"{}\",\n"
+          "    \"color_id\": {},\n"
+          "    \"include_groups\": {},\n"
+          "    \"include_channels\": {},\n"
+          "    \"include_bots\": {},\n"
+          "    \"include_contacts\": {},\n"
+          "    \"include_non_contacts\": {},\n"
+          "    \"exclude_muted\": {},\n"
+          "    \"exclude_read\": {},\n"
+          "    \"exclude_archived\": {}\n"
+          "  }}{}",
+          f.id, escape_json_string(f.title), escape_json_string(f.icon),
+          f.color_id, f.include_groups ? "true" : "false",
+          f.include_channels ? "true" : "false",
+          f.include_bots ? "true" : "false",
+          f.include_contacts ? "true" : "false",
+          f.include_non_contacts ? "true" : "false",
+          f.exclude_muted ? "true" : "false", f.exclude_read ? "true" : "false",
+          f.exclude_archived ? "true" : "false",
+          (i + 1 < folders.size()) ? ",\n" : "\n");
     }
     out << "]\n";
     return;
   }
 
   if (fmt == OutputFormat::Markdown) {
-    out << "| Folder ID | Title | Categories | Pinned Chats | Included Chats |\n";
+    out << "| Folder ID | Title | Categories | Pinned Chats | Included Chats "
+           "|\n";
     out << "|---|---|---|---|---|\n";
     for (const auto &f : folders) {
       std::string cats;
-      if (f.include_groups) cats += "Groups ";
-      if (f.include_channels) cats += "Channels ";
-      if (f.include_bots) cats += "Bots ";
-      if (f.include_contacts) cats += "Contacts ";
-      if (f.include_non_contacts) cats += "Non-Contacts ";
-      if (cats.empty()) cats = "Explicit IDs";
+      if (f.include_groups)
+        cats += "Groups ";
+      if (f.include_channels)
+        cats += "Channels ";
+      if (f.include_bots)
+        cats += "Bots ";
+      if (f.include_contacts)
+        cats += "Contacts ";
+      if (f.include_non_contacts)
+        cats += "Non-Contacts ";
+      if (cats.empty())
+        cats = "Explicit IDs";
 
       out << std::format("| {} | {} | {} | {} | {} |\n", f.id, f.title, cats,
                          f.pinned_chat_ids.size(), f.included_chat_ids.size());
@@ -536,31 +548,41 @@ void Formatter::print_folders(const std::vector<ChatFolderSummary> &folders,
     return;
   }
 
-  out << std::format("{:<6} {:<24} {:<32} {:<12}\n", "ID", "TITLE", "CATEGORIES", "CHATS");
+  out << std::format("{:<6} {:<24} {:<32} {:<12}\n", "ID", "TITLE",
+                     "CATEGORIES", "CHATS");
   out << std::string(76, '-') << "\n";
 
   for (const auto &f : folders) {
     std::string cats;
-    if (f.include_groups) cats += "[Groups] ";
-    if (f.include_channels) cats += "[Channels] ";
-    if (f.include_bots) cats += "[Bots] ";
-    if (f.include_contacts) cats += "[Contacts] ";
-    if (f.include_non_contacts) cats += "[NonContacts] ";
-    if (cats.empty()) cats = "[Custom]";
+    if (f.include_groups)
+      cats += "[Groups] ";
+    if (f.include_channels)
+      cats += "[Channels] ";
+    if (f.include_bots)
+      cats += "[Bots] ";
+    if (f.include_contacts)
+      cats += "[Contacts] ";
+    if (f.include_non_contacts)
+      cats += "[NonContacts] ";
+    if (cats.empty())
+      cats = "[Custom]";
 
-    std::string counts = std::format("{} pinned / {} incl", f.pinned_chat_ids.size(), f.included_chat_ids.size());
+    std::string counts =
+        std::format("{} pinned / {} incl", f.pinned_chat_ids.size(),
+                    f.included_chat_ids.size());
 
     if (use_color) {
       out << std::format("{}{:<6}{} {}{:<24}{} {}{:<32}{} {}{:<12}{}\n",
-                         COLOR_CYAN, f.id, COLOR_RESET,
-                         COLOR_BOLD, f.title, COLOR_RESET,
-                         COLOR_GREEN, cats, COLOR_RESET,
-                         COLOR_DIM, counts, COLOR_RESET);
+                         COLOR_CYAN, f.id, COLOR_RESET, COLOR_BOLD, f.title,
+                         COLOR_RESET, COLOR_GREEN, cats, COLOR_RESET, COLOR_DIM,
+                         counts, COLOR_RESET);
     } else {
-      out << std::format("{:<6} {:<24} {:<32} {:<12}\n", f.id, f.title, cats, counts);
+      out << std::format("{:<6} {:<24} {:<32} {:<12}\n", f.id, f.title, cats,
+                         counts);
     }
 
-    if (verbose && (!f.pinned_chat_ids.empty() || !f.included_chat_ids.empty())) {
+    if (verbose &&
+        (!f.pinned_chat_ids.empty() || !f.included_chat_ids.empty())) {
       if (!f.pinned_chat_ids.empty()) {
         out << "       Pinned Chat IDs: ";
         for (size_t i = 0; i < f.pinned_chat_ids.size(); ++i) {
@@ -580,8 +602,8 @@ void Formatter::print_folders(const std::vector<ChatFolderSummary> &folders,
 }
 
 void Formatter::print_users(const std::vector<UserItem> &users,
-                        OutputFormat format, ColorMode color_mode,
-                        std::ostream &out, bool verbose) {
+                            OutputFormat format, ColorMode color_mode,
+                            std::ostream &out, bool verbose) {
   (void)verbose;
   const bool is_tty =
       (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
@@ -592,18 +614,19 @@ void Formatter::print_users(const std::vector<UserItem> &users,
     out << "[\n";
     for (size_t i = 0; i < users.size(); ++i) {
       const auto &u = users[i];
-      out << std::format("  {{\n"
-                         "    \"id\": {},\n"
-                         "    \"first_name\": \"{}\",\n"
-                         "    \"last_name\": \"{}\",\n"
-                         "    \"username\": \"{}\",\n"
-                         "    \"phone_number\": \"{}\",\n"
-                         "    \"status\": \"{}\"\n"
-                         "  }}{}",
-                         u.id, escape_json_string(u.first_name), escape_json_string(u.last_name),
-                         escape_json_string(u.username), escape_json_string(u.phone_number),
-                         escape_json_string(u.status),
-                         (i + 1 < users.size()) ? ",\n" : "\n");
+      out << std::format(
+          "  {{\n"
+          "    \"id\": {},\n"
+          "    \"first_name\": \"{}\",\n"
+          "    \"last_name\": \"{}\",\n"
+          "    \"username\": \"{}\",\n"
+          "    \"phone_number\": \"{}\",\n"
+          "    \"status\": \"{}\"\n"
+          "  }}{}",
+          u.id, escape_json_string(u.first_name),
+          escape_json_string(u.last_name), escape_json_string(u.username),
+          escape_json_string(u.phone_number), escape_json_string(u.status),
+          (i + 1 < users.size()) ? ",\n" : "\n");
     }
     out << "]\n";
     return;
@@ -613,8 +636,10 @@ void Formatter::print_users(const std::vector<UserItem> &users,
     out << "| User ID | Name | Username | Phone | Status |\n";
     out << "|---|---|---|---|---|\n";
     for (const auto &u : users) {
-      std::string fullname = u.first_name + (u.last_name.empty() ? "" : " " + u.last_name);
-      out << std::format("| {} | {} | {} | {} | {} |\n", u.id, fullname, u.username, u.phone_number, u.status);
+      std::string fullname =
+          u.first_name + (u.last_name.empty() ? "" : " " + u.last_name);
+      out << std::format("| {} | {} | {} | {} | {} |\n", u.id, fullname,
+                         u.username, u.phone_number, u.status);
     }
     return;
   }
@@ -624,34 +649,40 @@ void Formatter::print_users(const std::vector<UserItem> &users,
     return;
   }
 
-  out << std::format("{:<15} {:<25} {:<20} {:<15}\n", "USER ID", "NAME", "USERNAME", "STATUS");
+  out << std::format("{:<15} {:<25} {:<20} {:<15}\n", "USER ID", "NAME",
+                     "USERNAME", "STATUS");
   out << std::string(75, '-') << "\n";
 
   for (const auto &u : users) {
-    std::string fullname = u.first_name + (u.last_name.empty() ? "" : " " + u.last_name);
+    std::string fullname =
+        u.first_name + (u.last_name.empty() ? "" : " " + u.last_name);
     std::string uname = u.username.empty() ? "-" : "@" + u.username;
     if (use_color) {
       out << std::format("{}{:<15}{} {}{:<25}{} {}{:<20}{} {}{:<15}{}\n",
-                         COLOR_CYAN, u.id, COLOR_RESET,
-                         COLOR_BOLD, fullname, COLOR_RESET,
-                         COLOR_GREEN, uname, COLOR_RESET,
+                         COLOR_CYAN, u.id, COLOR_RESET, COLOR_BOLD, fullname,
+                         COLOR_RESET, COLOR_GREEN, uname, COLOR_RESET,
                          COLOR_DIM, u.status, COLOR_RESET);
     } else {
-      out << std::format("{:<15} {:<25} {:<20} {:<15}\n", u.id, fullname, uname, u.status);
+      out << std::format("{:<15} {:<25} {:<20} {:<15}\n", u.id, fullname, uname,
+                         u.status);
     }
   }
 }
 
 void Formatter::print_search_summary(const SearchSummary &summary,
-                                   OutputFormat format, ColorMode color_mode,
-                                   std::ostream &out, bool verbose) {
+                                     OutputFormat format, ColorMode color_mode,
+                                     std::ostream &out, bool verbose) {
   const bool is_tty =
       (out.rdbuf() == std::cout.rdbuf() && isatty(STDOUT_FILENO) != 0);
   const OutputFormat fmt = resolve_format(format, is_tty);
 
   if (fmt == OutputFormat::Json || fmt == OutputFormat::JsonL) {
-    out << std::format("{{\n  \"query\": \"{}\",\n  \"chats_count\": {},\n  \"supergroups_count\": {},\n  \"users_count\": {},\n  \"messages_count\": {},\n  \"files_count\": {}\n}}\n",
-                       escape_json_string(summary.query), summary.chats.size(), summary.supergroups.size(), summary.users.size(), summary.messages.size(), summary.files.size());
+    out << std::format("{{\n  \"query\": \"{}\",\n  \"chats_count\": {},\n  "
+                       "\"supergroups_count\": {},\n  \"users_count\": {},\n  "
+                       "\"messages_count\": {},\n  \"files_count\": {}\n}}\n",
+                       escape_json_string(summary.query), summary.chats.size(),
+                       summary.supergroups.size(), summary.users.size(),
+                       summary.messages.size(), summary.files.size());
     return;
   }
 
@@ -682,7 +713,9 @@ void Formatter::print_search_summary(const SearchSummary &summary,
     out << "\n";
   }
 
-  if (summary.chats.empty() && summary.supergroups.empty() && summary.users.empty() && summary.messages.empty() && summary.files.empty()) {
+  if (summary.chats.empty() && summary.supergroups.empty() &&
+      summary.users.empty() && summary.messages.empty() &&
+      summary.files.empty()) {
     out << "[INFO] No search results matching query.\n";
   }
 }
@@ -736,7 +769,8 @@ void Formatter::render(const RenderablePayload &payload,
           print_topics(data, format, color_mode, out, verbose);
         } else if constexpr (std::is_same_v<T, std::vector<MessageItem>>) {
           print_messages(data, format, color_mode, out, verbose);
-        } else if constexpr (std::is_same_v<T, std::vector<ChatFolderSummary>>) {
+        } else if constexpr (std::is_same_v<T,
+                                            std::vector<ChatFolderSummary>>) {
           print_folders(data, format, color_mode, out, verbose);
         } else if constexpr (std::is_same_v<T, std::vector<UserItem>>) {
           print_users(data, format, color_mode, out, verbose);
@@ -750,4 +784,3 @@ void Formatter::render(const RenderablePayload &payload,
 }
 
 } // namespace grm::fmt
-

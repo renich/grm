@@ -117,6 +117,7 @@ Commit Message Standards
 
 * **Format**: ``type(scope): concise description in imperative mood``
 * **Allowed Types**:
+
   * ``feat``: New CLI command, flag, or output capability.
   * ``fix``: Bug fix or crash resolution.
   * ``docs``: Documentation, man page, or spec updates.

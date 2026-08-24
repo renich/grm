@@ -11,12 +11,15 @@ TDLib Method Mappings
 ---------------------
 
 1. **Get Chat Folders (``getChatFolders``)**:
+
    * Payload: ``{"@type": "getChatFolders", "main_chat_list_position": 0}``
    * Response: ``chatFolders`` object containing array ``chat_folders`` of ``chatFolderInfo`` items (``id``, ``title``, ``icon``, ``color_id``).
 
 2. **Get Detailed Chat Folder Settings (``getChatFolder``)**:
+
    * Payload: ``{"@type": "getChatFolder", "chat_folder_id": <id>}``
    * Response: ``chatFolder`` object:
+
      * ``title`` (string)
      * ``icon`` (chatFolderIcon object)
      * ``color_id`` (integer)
@@ -27,6 +30,7 @@ TDLib Method Mappings
      * ``include_contacts``, ``include_non_contacts``, ``include_bots``, ``include_groups``, ``include_channels`` (booleans)
 
 3. **Create Chat Folder (``createChatFolder``)**:
+
    * Payload:
      .. code-block:: json
 
@@ -50,9 +54,11 @@ TDLib Method Mappings
             "include_channels": true
           }
         }
+
    * Response: ``chatFolderInfo`` object containing assigned integer ID.
 
 4. **Edit Chat Folder (``editChatFolder``)**:
+
    * Payload:
      .. code-block:: json
 
@@ -65,13 +71,16 @@ TDLib Method Mappings
             ...
           }
         }
+
    * Response: ``ok`` or ``chatFolderInfo``.
 
 5. **Delete Chat Folder (``deleteChatFolder``)**:
+
    * Payload: ``{"@type": "deleteChatFolder", "chat_folder_id": <id>}``
    * Response: ``ok``.
 
 6. **Filter Chat Listing by Folder (``getChats``)**:
+
    * Payload:
      .. code-block:: json
 

@@ -11,15 +11,19 @@ GNU Option Design Principles
 ----------------------------
 
 1. **Strict GNU Option Compatibility**:
+
    - Short options use a single dash (e.g. ``-n 50``).
    - Long options use double dashes (e.g. ``--limit 50`` or ``--limit=50``).
    - Positional operands are restricted strictly to primary target identifiers (e.g., ``<chat_id>`` or ``<file>``). Optional flags, limits, formats, and outputs are configured via explicit short/long options.
+
 2. **No Emoji Clutter**: Terminal output is clean, professional, and free of emojis.
 3. **Structured Level Prefixes**: Output messages use clear, bracketed level indicators:
+
    - ``[INFO]``: General status and informational messages.
    - ``[WARN]``: Warning alerts and retries.
    - ``[ERROR]``: Fatal errors and failed operations.
    - ``[AUTH]``: Authentication progress and state transitions.
+
 4. **Controlled Verbosity**: Internal TDLib protocol updates (e.g. ``authorizationStateWaitTdlibParameters``) are suppressed by default in normal mode and only displayed when ``-v, --verbose`` or ``-d, --debug`` is set.
 
 Global Options (GNU Long & POSIX Short Pairs)
@@ -51,6 +55,7 @@ Login Command:
 ~~~~~~~~~~~~~~
 
 - ``grm login [-p|--phone <number>] [-k|--code <code>]``
+
   - ``-p, --phone <number>``: Pre-fill Telegram phone number in E.164 format.
   - ``-k, --code <code>``: Pre-fill authentication code for non-interactive scripts.
 
@@ -58,15 +63,22 @@ Message Subcommands:
 ~~~~~~~~~~~~~~~~~~~~
 
 - ``grm msg ls [-n|--limit <N>] <chat_id>``
+
   - ``-n, --limit <N>``: Limit maximum messages to fetch (default: 20).
+
 - ``grm msg search [-q|--query "<pattern>"] [-n|--limit <N>] <chat_id>``
+
   - ``-q, --query "<pattern>"``: Filter messages using regex search pattern.
   - ``-n, --limit <N>``: Scan limit (default: 100).
+
 - ``grm msg export [-f|--format csv|json] [-o|--output <file>] [-n|--limit <N>] <chat_id>``
+
   - ``-f, --format <fmt>``: Export format (``json`` or ``csv``, default: ``json``).
   - ``-o, --output <file>``: Destination export file path.
   - ``-n, --limit <N>``: Maximum records to export (default: 1000).
+
 - ``grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "<text>"] [-t|--topic <id>] <chat_id> ["<message>"]``
+
   - ``-a, --attach <file>``: Attach local file or document (repeatable for multiple files).
   - ``-m, --media``: Send attached files as media (photo/video/audio) rather than raw document.
   - ``-C, --caption "<text>"``: Caption text for attachments (or specified as positional message text operand).

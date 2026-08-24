@@ -1,4 +1,5 @@
-// TestTdClientFlush validates TdClient shutdown flush timing and lifecycle safety
+// TestTdClientFlush validates TdClient shutdown flush timing and lifecycle
+// safety
 #include "grm/config.hpp"
 #include "grm/td_client.hpp"
 #include <chrono>
@@ -24,19 +25,25 @@ void test_td_client_flush_timing() {
   client.stop();
   auto t_end = std::chrono::steady_clock::now();
 
-  auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count();
-  
+  auto elapsed_ms =
+      std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start)
+          .count();
+
   // Verify that TdClient::stop shuts down cleanly and quickly (< 1000ms)
   check(elapsed_ms < 1000, "TdClient::stop shut down cleanly (< 1000ms)");
-  std::cout << "[PASS] test_td_client_flush_timing (elapsed: " << elapsed_ms << "ms)\n";
+  std::cout << "[PASS] test_td_client_flush_timing (elapsed: " << elapsed_ms
+            << "ms)\n";
 
   // Second call to stop should be a fast no-op since client is already stopped
   auto t2_start = std::chrono::steady_clock::now();
   client.stop();
   auto t2_end = std::chrono::steady_clock::now();
 
-  auto elapsed2_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2_end - t2_start).count();
-  check(elapsed2_ms < 200, "Second TdClient::stop is idempotent and fast (< 200ms)");
+  auto elapsed2_ms =
+      std::chrono::duration_cast<std::chrono::milliseconds>(t2_end - t2_start)
+          .count();
+  check(elapsed2_ms < 200,
+        "Second TdClient::stop is idempotent and fast (< 200ms)");
   std::cout << "[PASS] test_td_client_double_stop_idempotency\n";
 }
 

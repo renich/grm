@@ -85,8 +85,7 @@ ListOptions::parse(const std::vector<std::string> &args,
       combined += std::format("({})", opts.filter_patterns[i]);
     }
     try {
-      opts.compiled_filter_regex =
-          std::regex(combined, std::regex::icase);
+      opts.compiled_filter_regex = std::regex(combined, std::regex::icase);
       opts.has_filter = true;
     } catch (const std::regex_error &e) {
       return std::unexpected("Invalid filter pattern: " +

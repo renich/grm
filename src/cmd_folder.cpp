@@ -12,38 +12,83 @@ CommandSpec get_folder_spec() {
   return CommandSpec{
       "folder",
       "Manage Telegram chat folders and organization filters",
-      {
-          SubcommandSpec{"ls", "[-v|--verbose]", "List all configured chat folders and organization filters", {
-              OptionSpec{"-v", "--verbose", "", "Display verbose folder details and chat ID lists", {}},
-              OptionSpec{"-h", "--help", "", "Show folder list help message", {}}
-          }},
-          SubcommandSpec{"create", "<title> [options...]", "Create a new chat folder filter", {
-              OptionSpec{"-g", "--include-groups", "", "Include group chats in folder", {}},
-              OptionSpec{"-c", "--include-channels", "", "Include channels in folder", {}},
-              OptionSpec{"-b", "--include-bots", "", "Include bots in folder", {}},
-              OptionSpec{"-C", "--include-contacts", "", "Include contacts in folder", {}},
-              OptionSpec{"-N", "--include-non-contacts", "", "Include non-contacts in folder", {}},
-              OptionSpec{"", "--exclude-muted", "", "Exclude muted chats", {}},
-              OptionSpec{"", "--exclude-read", "", "Exclude read chats", {}},
-              OptionSpec{"", "--exclude-archived", "", "Exclude archived chats", {}},
-              OptionSpec{"-i", "--include-chats", "<ids...>", "Comma-separated chat IDs to include", {}},
-              OptionSpec{"-p", "--pinned-chats", "<ids...>", "Comma-separated chat IDs to pin", {}},
-              OptionSpec{"-h", "--help", "", "Show folder create help message", {}}
-          }},
-          SubcommandSpec{"edit", "<folder_id> [options...]", "Modify an existing chat folder title, filters, or chats", {
-              OptionSpec{"-t", "--title", "<title>", "Update folder title", {}},
-              OptionSpec{"-a", "--add-chat", "<id>", "Add chat ID to included list", {}},
-              OptionSpec{"-r", "--remove-chat", "<id>", "Remove chat ID from included list", {}},
-              OptionSpec{"-P", "--pin-chat", "<id>", "Pin chat ID in folder", {}},
-              OptionSpec{"-U", "--unpin-chat", "<id>", "Unpin chat ID in folder", {}},
-              OptionSpec{"-h", "--help", "", "Show folder edit help message", {}}
-          }},
-          SubcommandSpec{"delete", "<folder_id>", "Remove a chat folder filter by ID", {
-              OptionSpec{"-h", "--help", "", "Show folder delete help message", {}}
-          }}
-      },
-      {}
-  };
+      {SubcommandSpec{
+           "ls",
+           "[-v|--verbose]",
+           "List all configured chat folders and organization filters",
+           {OptionSpec{"-v",
+                       "--verbose",
+                       "",
+                       "Display verbose folder details and chat ID lists",
+                       {}},
+            OptionSpec{
+                "-h", "--help", "", "Show folder list help message", {}}}},
+       SubcommandSpec{
+           "create",
+           "<title> [options...]",
+           "Create a new chat folder filter",
+           {OptionSpec{"-g",
+                       "--include-groups",
+                       "",
+                       "Include group chats in folder",
+                       {}},
+            OptionSpec{"-c",
+                       "--include-channels",
+                       "",
+                       "Include channels in folder",
+                       {}},
+            OptionSpec{
+                "-b", "--include-bots", "", "Include bots in folder", {}},
+            OptionSpec{"-C",
+                       "--include-contacts",
+                       "",
+                       "Include contacts in folder",
+                       {}},
+            OptionSpec{"-N",
+                       "--include-non-contacts",
+                       "",
+                       "Include non-contacts in folder",
+                       {}},
+            OptionSpec{"", "--exclude-muted", "", "Exclude muted chats", {}},
+            OptionSpec{"", "--exclude-read", "", "Exclude read chats", {}},
+            OptionSpec{
+                "", "--exclude-archived", "", "Exclude archived chats", {}},
+            OptionSpec{"-i",
+                       "--include-chats",
+                       "<ids...>",
+                       "Comma-separated chat IDs to include",
+                       {}},
+            OptionSpec{"-p",
+                       "--pinned-chats",
+                       "<ids...>",
+                       "Comma-separated chat IDs to pin",
+                       {}},
+            OptionSpec{
+                "-h", "--help", "", "Show folder create help message", {}}}},
+       SubcommandSpec{
+           "edit",
+           "<folder_id> [options...]",
+           "Modify an existing chat folder title, filters, or chats",
+           {OptionSpec{"-t", "--title", "<title>", "Update folder title", {}},
+            OptionSpec{
+                "-a", "--add-chat", "<id>", "Add chat ID to included list", {}},
+            OptionSpec{"-r",
+                       "--remove-chat",
+                       "<id>",
+                       "Remove chat ID from included list",
+                       {}},
+            OptionSpec{"-P", "--pin-chat", "<id>", "Pin chat ID in folder", {}},
+            OptionSpec{
+                "-U", "--unpin-chat", "<id>", "Unpin chat ID in folder", {}},
+            OptionSpec{
+                "-h", "--help", "", "Show folder edit help message", {}}}},
+       SubcommandSpec{
+           "delete",
+           "<folder_id>",
+           "Remove a chat folder filter by ID",
+           {OptionSpec{
+               "-h", "--help", "", "Show folder delete help message", {}}}}},
+      {}};
 }
 
 static std::expected<int32_t, std::string> parse_int32(std::string_view str) {
@@ -66,9 +111,12 @@ static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
 
 void App::print_folder_help(fmt::OutputFormat format) {
   if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
-    std::cout << CommandRegistry::get_instance().render_command_help_json("folder", false) << "\n";
+    std::cout << CommandRegistry::get_instance().render_command_help_json(
+                     "folder", false)
+              << "\n";
   } else {
-    std::cout << CommandRegistry::get_instance().render_command_help("folder") << "\n";
+    std::cout << CommandRegistry::get_instance().render_command_help("folder")
+              << "\n";
   }
 }
 
@@ -110,7 +158,8 @@ static std::string extract_folder_title(const JsonValue &item) {
 
 std::expected<int, std::string>
 App::cmd_folder_ls(const std::vector<std::string> &args) {
-  bool verbose = (options_.verbosity == log::VerbosityLevel::Verbose || options_.verbosity == log::VerbosityLevel::Debug);
+  bool verbose = (options_.verbosity == log::VerbosityLevel::Verbose ||
+                  options_.verbosity == log::VerbosityLevel::Debug);
   for (const auto &arg : args) {
     if (arg == "-v" || arg == "--verbose") {
       verbose = true;
@@ -130,7 +179,8 @@ App::cmd_folder_ls(const std::vector<std::string> &args) {
     for (int i = 0; i < 5; ++i) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       folders_arr = client_->get_cached_chat_folders();
-      if (!folders_arr.empty()) break;
+      if (!folders_arr.empty())
+        break;
     }
   }
 
@@ -139,11 +189,13 @@ App::cmd_folder_ls(const std::vector<std::string> &args) {
   if (!folders_arr.empty()) {
     for (const auto &item : folders_arr) {
       auto id_opt = item.get_int("id");
-      if (!id_opt) continue;
+      if (!id_opt)
+        continue;
 
       int32_t fid = static_cast<int32_t>(*id_opt);
       std::string title = extract_folder_title(item);
-      if (title.empty()) title = "Folder " + std::to_string(fid);
+      if (title.empty())
+        title = "Folder " + std::to_string(fid);
       std::string icon = "Custom";
 
       if (auto icon_val = item.get_object("icon")) {
@@ -154,27 +206,41 @@ App::cmd_folder_ls(const std::vector<std::string> &args) {
       summary.id = fid;
       summary.title = title;
       summary.icon = icon;
-      summary.color_id = static_cast<int32_t>(item.get_int("color_id").value_or(-1));
+      summary.color_id =
+          static_cast<int32_t>(item.get_int("color_id").value_or(-1));
 
-      const std::string detail_req = std::format(R"({{"chat_folder_id": {}}})", fid);
-      if (auto detail_res = client_->send_request("getChatFolder", detail_req, 5.0)) {
-        summary.include_groups = detail_res->get_bool("include_groups").value_or(false);
-        summary.include_channels = detail_res->get_bool("include_channels").value_or(false);
-        summary.include_bots = detail_res->get_bool("include_bots").value_or(false);
-        summary.include_contacts = detail_res->get_bool("include_contacts").value_or(false);
-        summary.include_non_contacts = detail_res->get_bool("include_non_contacts").value_or(false);
-        summary.exclude_muted = detail_res->get_bool("exclude_muted").value_or(false);
-        summary.exclude_read = detail_res->get_bool("exclude_read").value_or(false);
-        summary.exclude_archived = detail_res->get_bool("exclude_archived").value_or(false);
+      const std::string detail_req =
+          std::format(R"({{"chat_folder_id": {}}})", fid);
+      if (auto detail_res =
+              client_->send_request("getChatFolder", detail_req, 5.0)) {
+        summary.include_groups =
+            detail_res->get_bool("include_groups").value_or(false);
+        summary.include_channels =
+            detail_res->get_bool("include_channels").value_or(false);
+        summary.include_bots =
+            detail_res->get_bool("include_bots").value_or(false);
+        summary.include_contacts =
+            detail_res->get_bool("include_contacts").value_or(false);
+        summary.include_non_contacts =
+            detail_res->get_bool("include_non_contacts").value_or(false);
+        summary.exclude_muted =
+            detail_res->get_bool("exclude_muted").value_or(false);
+        summary.exclude_read =
+            detail_res->get_bool("exclude_read").value_or(false);
+        summary.exclude_archived =
+            detail_res->get_bool("exclude_archived").value_or(false);
 
         for (const auto &cid : detail_res->get_array("pinned_chat_ids")) {
-          if (auto id = cid.as_int64()) summary.pinned_chat_ids.push_back(*id);
+          if (auto id = cid.as_int64())
+            summary.pinned_chat_ids.push_back(*id);
         }
         for (const auto &cid : detail_res->get_array("included_chat_ids")) {
-          if (auto id = cid.as_int64()) summary.included_chat_ids.push_back(*id);
+          if (auto id = cid.as_int64())
+            summary.included_chat_ids.push_back(*id);
         }
         for (const auto &cid : detail_res->get_array("excluded_chat_ids")) {
-          if (auto id = cid.as_int64()) summary.excluded_chat_ids.push_back(*id);
+          if (auto id = cid.as_int64())
+            summary.excluded_chat_ids.push_back(*id);
         }
       }
 
@@ -182,29 +248,43 @@ App::cmd_folder_ls(const std::vector<std::string> &args) {
     }
   } else {
     for (int32_t fid = 1; fid <= 10; ++fid) {
-      const std::string detail_req = std::format(R"({{"chat_folder_id": {}}})", fid);
-      if (auto detail_res = client_->send_request("getChatFolder", detail_req, 0.1)) {
+      const std::string detail_req =
+          std::format(R"({{"chat_folder_id": {}}})", fid);
+      if (auto detail_res =
+              client_->send_request("getChatFolder", detail_req, 0.1)) {
         fmt::ChatFolderSummary summary;
         summary.id = fid;
         summary.title = extract_folder_title(*detail_res);
-        if (summary.title.empty()) summary.title = "Folder " + std::to_string(fid);
-        summary.include_groups = detail_res->get_bool("include_groups").value_or(false);
-        summary.include_channels = detail_res->get_bool("include_channels").value_or(false);
-        summary.include_bots = detail_res->get_bool("include_bots").value_or(false);
-        summary.include_contacts = detail_res->get_bool("include_contacts").value_or(false);
-        summary.include_non_contacts = detail_res->get_bool("include_non_contacts").value_or(false);
-        summary.exclude_muted = detail_res->get_bool("exclude_muted").value_or(false);
-        summary.exclude_read = detail_res->get_bool("exclude_read").value_or(false);
-        summary.exclude_archived = detail_res->get_bool("exclude_archived").value_or(false);
+        if (summary.title.empty())
+          summary.title = "Folder " + std::to_string(fid);
+        summary.include_groups =
+            detail_res->get_bool("include_groups").value_or(false);
+        summary.include_channels =
+            detail_res->get_bool("include_channels").value_or(false);
+        summary.include_bots =
+            detail_res->get_bool("include_bots").value_or(false);
+        summary.include_contacts =
+            detail_res->get_bool("include_contacts").value_or(false);
+        summary.include_non_contacts =
+            detail_res->get_bool("include_non_contacts").value_or(false);
+        summary.exclude_muted =
+            detail_res->get_bool("exclude_muted").value_or(false);
+        summary.exclude_read =
+            detail_res->get_bool("exclude_read").value_or(false);
+        summary.exclude_archived =
+            detail_res->get_bool("exclude_archived").value_or(false);
 
         for (const auto &cid : detail_res->get_array("pinned_chat_ids")) {
-          if (auto id = cid.as_int64()) summary.pinned_chat_ids.push_back(*id);
+          if (auto id = cid.as_int64())
+            summary.pinned_chat_ids.push_back(*id);
         }
         for (const auto &cid : detail_res->get_array("included_chat_ids")) {
-          if (auto id = cid.as_int64()) summary.included_chat_ids.push_back(*id);
+          if (auto id = cid.as_int64())
+            summary.included_chat_ids.push_back(*id);
         }
         for (const auto &cid : detail_res->get_array("excluded_chat_ids")) {
-          if (auto id = cid.as_int64()) summary.excluded_chat_ids.push_back(*id);
+          if (auto id = cid.as_int64())
+            summary.excluded_chat_ids.push_back(*id);
         }
 
         folders.push_back(summary);
@@ -212,7 +292,8 @@ App::cmd_folder_ls(const std::vector<std::string> &args) {
     }
   }
 
-  fmt::Formatter::print_folders(folders, options_.format, options_.color_mode, std::cout, verbose);
+  fmt::Formatter::print_folders(folders, options_.format, options_.color_mode,
+                                std::cout, verbose);
   return 0;
 }
 
@@ -242,18 +323,29 @@ App::cmd_folder_create(const std::vector<std::string> &args) {
 
   for (size_t i = 1; i < args.size(); ++i) {
     const auto &arg = args[i];
-    if (arg == "-g" || arg == "--include-groups") inc_groups = true;
-    else if (arg == "-c" || arg == "--include-channels") inc_channels = true;
-    else if (arg == "-b" || arg == "--include-bots") inc_bots = true;
-    else if (arg == "-C" || arg == "--include-contacts") inc_contacts = true;
-    else if (arg == "-N" || arg == "--include-non-contacts") inc_non_contacts = true;
-    else if (arg == "--exclude-muted") exc_muted = true;
-    else if (arg == "--exclude-read") exc_read = true;
-    else if (arg == "--exclude-archived") exc_archived = true;
+    if (arg == "-g" || arg == "--include-groups")
+      inc_groups = true;
+    else if (arg == "-c" || arg == "--include-channels")
+      inc_channels = true;
+    else if (arg == "-b" || arg == "--include-bots")
+      inc_bots = true;
+    else if (arg == "-C" || arg == "--include-contacts")
+      inc_contacts = true;
+    else if (arg == "-N" || arg == "--include-non-contacts")
+      inc_non_contacts = true;
+    else if (arg == "--exclude-muted")
+      exc_muted = true;
+    else if (arg == "--exclude-read")
+      exc_read = true;
+    else if (arg == "--exclude-archived")
+      exc_archived = true;
     else if ((arg == "-i" || arg == "--include-chats") && i + 1 < args.size()) {
-      if (auto cid = parse_int64(args[++i])) included_ids.push_back(*cid);
-    } else if ((arg == "-p" || arg == "--pinned-chats") && i + 1 < args.size()) {
-      if (auto cid = parse_int64(args[++i])) pinned_ids.push_back(*cid);
+      if (auto cid = parse_int64(args[++i]))
+        included_ids.push_back(*cid);
+    } else if ((arg == "-p" || arg == "--pinned-chats") &&
+               i + 1 < args.size()) {
+      if (auto cid = parse_int64(args[++i]))
+        pinned_ids.push_back(*cid);
     }
   }
 
@@ -263,19 +355,22 @@ App::cmd_folder_create(const std::vector<std::string> &args) {
 
   std::string inc_json = "[";
   for (size_t i = 0; i < included_ids.size(); ++i) {
-    if (i > 0) inc_json += ",";
+    if (i > 0)
+      inc_json += ",";
     inc_json += std::to_string(included_ids[i]);
   }
   inc_json += "]";
 
   std::string pin_json = "[";
   for (size_t i = 0; i < pinned_ids.size(); ++i) {
-    if (i > 0) pin_json += ",";
+    if (i > 0)
+      pin_json += ",";
     pin_json += std::to_string(pinned_ids[i]);
   }
   pin_json += "]";
 
-  const std::string payload = std::format(R"({{
+  const std::string payload = std::format(
+      R"({{
     "folder": {{
       "@type": "chatFolder",
       "title": "{}",
@@ -293,10 +388,12 @@ App::cmd_folder_create(const std::vector<std::string> &args) {
       "include_groups": {},
       "include_channels": {}
     }}
-  }})", escape_json_string(title), pin_json, inc_json,
-        exc_muted ? "true" : "false", exc_read ? "true" : "false", exc_archived ? "true" : "false",
-        inc_contacts ? "true" : "false", inc_non_contacts ? "true" : "false", inc_bots ? "true" : "false",
-        inc_groups ? "true" : "false", inc_channels ? "true" : "false");
+  }})",
+      escape_json_string(title), pin_json, inc_json,
+      exc_muted ? "true" : "false", exc_read ? "true" : "false",
+      exc_archived ? "true" : "false", inc_contacts ? "true" : "false",
+      inc_non_contacts ? "true" : "false", inc_bots ? "true" : "false",
+      inc_groups ? "true" : "false", inc_channels ? "true" : "false");
 
   auto res = client_->send_request("createChatFolder", payload, 10.0);
   if (!res) {
@@ -305,10 +402,16 @@ App::cmd_folder_create(const std::vector<std::string> &args) {
 
   int32_t new_id = static_cast<int32_t>(res->get_int("id").value_or(0));
 
-  if (options_.format == fmt::OutputFormat::Json || options_.format == fmt::OutputFormat::JsonL) {
-    std::cout << std::format(R"({{"ok":true,"action":"create","id":{},"title":"{}"}})", new_id, escape_json_string(title)) << "\n";
+  if (options_.format == fmt::OutputFormat::Json ||
+      options_.format == fmt::OutputFormat::JsonL) {
+    std::cout << std::format(
+                     R"({{"ok":true,"action":"create","id":{},"title":"{}"}})",
+                     new_id, escape_json_string(title))
+              << "\n";
   } else {
-    std::cout << std::format("[INFO] Chat folder '{}' created successfully (ID: {})\n", title, new_id);
+    std::cout << std::format(
+        "[INFO] Chat folder '{}' created successfully (ID: {})\n", title,
+        new_id);
   }
 
   return 0;
@@ -339,15 +442,18 @@ App::cmd_folder_edit(const std::vector<std::string> &args) {
   const std::string get_req = std::format(R"({{"chat_folder_id": {}}})", fid);
   auto curr_res = client_->send_request("getChatFolder", get_req, 5.0);
   if (!curr_res) {
-    return std::unexpected(std::format("Folder ID {} not found: {}", fid, curr_res.error()));
+    return std::unexpected(
+        std::format("Folder ID {} not found: {}", fid, curr_res.error()));
   }
 
-  std::string title = curr_res->get_string("title").value_or("Folder " + std::to_string(fid));
+  std::string title =
+      curr_res->get_string("title").value_or("Folder " + std::to_string(fid));
   bool inc_groups = curr_res->get_bool("include_groups").value_or(false);
   bool inc_channels = curr_res->get_bool("include_channels").value_or(false);
   bool inc_bots = curr_res->get_bool("include_bots").value_or(false);
   bool inc_contacts = curr_res->get_bool("include_contacts").value_or(false);
-  bool inc_non_contacts = curr_res->get_bool("include_non_contacts").value_or(false);
+  bool inc_non_contacts =
+      curr_res->get_bool("include_non_contacts").value_or(false);
   bool exc_muted = curr_res->get_bool("exclude_muted").value_or(false);
   bool exc_read = curr_res->get_bool("exclude_read").value_or(false);
   bool exc_archived = curr_res->get_bool("exclude_archived").value_or(false);
@@ -357,10 +463,12 @@ App::cmd_folder_edit(const std::vector<std::string> &args) {
   std::vector<int64_t> excluded_ids;
 
   for (const auto &val : curr_res->get_array("included_chat_ids")) {
-    if (auto id = val.as_int64()) included_ids.push_back(*id);
+    if (auto id = val.as_int64())
+      included_ids.push_back(*id);
   }
   for (const auto &val : curr_res->get_array("pinned_chat_ids")) {
-    if (auto id = val.as_int64()) pinned_ids.push_back(*id);
+    if (auto id = val.as_int64())
+      pinned_ids.push_back(*id);
   }
 
   for (size_t i = 1; i < args.size(); ++i) {
@@ -368,34 +476,40 @@ App::cmd_folder_edit(const std::vector<std::string> &args) {
     if ((arg == "-t" || arg == "--title") && i + 1 < args.size()) {
       title = args[++i];
     } else if ((arg == "-a" || arg == "--add-chat") && i + 1 < args.size()) {
-      if (auto cid = parse_int64(args[++i])) included_ids.push_back(*cid);
+      if (auto cid = parse_int64(args[++i]))
+        included_ids.push_back(*cid);
     } else if ((arg == "-r" || arg == "--remove-chat") && i + 1 < args.size()) {
       if (auto cid = parse_int64(args[++i])) {
         std::erase(included_ids, *cid);
         std::erase(pinned_ids, *cid);
       }
     } else if ((arg == "-P" || arg == "--pin-chat") && i + 1 < args.size()) {
-      if (auto cid = parse_int64(args[++i])) pinned_ids.push_back(*cid);
+      if (auto cid = parse_int64(args[++i]))
+        pinned_ids.push_back(*cid);
     } else if ((arg == "-U" || arg == "--unpin-chat") && i + 1 < args.size()) {
-      if (auto cid = parse_int64(args[++i])) std::erase(pinned_ids, *cid);
+      if (auto cid = parse_int64(args[++i]))
+        std::erase(pinned_ids, *cid);
     }
   }
 
   std::string inc_json = "[";
   for (size_t i = 0; i < included_ids.size(); ++i) {
-    if (i > 0) inc_json += ",";
+    if (i > 0)
+      inc_json += ",";
     inc_json += std::to_string(included_ids[i]);
   }
   inc_json += "]";
 
   std::string pin_json = "[";
   for (size_t i = 0; i < pinned_ids.size(); ++i) {
-    if (i > 0) pin_json += ",";
+    if (i > 0)
+      pin_json += ",";
     pin_json += std::to_string(pinned_ids[i]);
   }
   pin_json += "]";
 
-  const std::string payload = std::format(R"({{
+  const std::string payload = std::format(
+      R"({{
     "chat_folder_id": {},
     "folder": {{
       "@type": "chatFolder",
@@ -414,20 +528,27 @@ App::cmd_folder_edit(const std::vector<std::string> &args) {
       "include_groups": {},
       "include_channels": {}
     }}
-  }})", fid, escape_json_string(title), pin_json, inc_json,
-        exc_muted ? "true" : "false", exc_read ? "true" : "false", exc_archived ? "true" : "false",
-        inc_contacts ? "true" : "false", inc_non_contacts ? "true" : "false", inc_bots ? "true" : "false",
-        inc_groups ? "true" : "false", inc_channels ? "true" : "false");
+  }})",
+      fid, escape_json_string(title), pin_json, inc_json,
+      exc_muted ? "true" : "false", exc_read ? "true" : "false",
+      exc_archived ? "true" : "false", inc_contacts ? "true" : "false",
+      inc_non_contacts ? "true" : "false", inc_bots ? "true" : "false",
+      inc_groups ? "true" : "false", inc_channels ? "true" : "false");
 
   auto res = client_->send_request("editChatFolder", payload, 10.0);
   if (!res) {
     return std::unexpected("Failed to edit chat folder: " + res.error());
   }
 
-  if (options_.format == fmt::OutputFormat::Json || options_.format == fmt::OutputFormat::JsonL) {
-    std::cout << std::format(R"({{"ok":true,"action":"edit","id":{},"title":"{}"}})", fid, escape_json_string(title)) << "\n";
+  if (options_.format == fmt::OutputFormat::Json ||
+      options_.format == fmt::OutputFormat::JsonL) {
+    std::cout << std::format(
+                     R"({{"ok":true,"action":"edit","id":{},"title":"{}"}})",
+                     fid, escape_json_string(title))
+              << "\n";
   } else {
-    std::cout << std::format("[INFO] Chat folder ID {} ('{}') updated successfully\n", fid, title);
+    std::cout << std::format(
+        "[INFO] Chat folder ID {} ('{}') updated successfully\n", fid, title);
   }
 
   return 0;
@@ -457,13 +578,17 @@ App::cmd_folder_delete(const std::vector<std::string> &args) {
   const std::string payload = std::format(R"({{"chat_folder_id": {}}})", fid);
   auto res = client_->send_request("deleteChatFolder", payload, 10.0);
   if (!res) {
-    return std::unexpected(std::format("Failed to delete chat folder ID {}: {}", fid, res.error()));
+    return std::unexpected(std::format("Failed to delete chat folder ID {}: {}",
+                                       fid, res.error()));
   }
 
-  if (options_.format == fmt::OutputFormat::Json || options_.format == fmt::OutputFormat::JsonL) {
-    std::cout << std::format(R"({{"ok":true,"action":"delete","id":{}}})", fid) << "\n";
+  if (options_.format == fmt::OutputFormat::Json ||
+      options_.format == fmt::OutputFormat::JsonL) {
+    std::cout << std::format(R"({{"ok":true,"action":"delete","id":{}}})", fid)
+              << "\n";
   } else {
-    std::cout << std::format("[INFO] Chat folder ID {} deleted successfully\n", fid);
+    std::cout << std::format("[INFO] Chat folder ID {} deleted successfully\n",
+                             fid);
   }
 
   return 0;

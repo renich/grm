@@ -1,6 +1,6 @@
-===============================================================
+
 [TECH-008] Universal Search Refactoring & Hardening Specification
-===============================================================
+
 
 Overview
 ========
@@ -17,6 +17,7 @@ Architectural Weaknesses Identified
 
 2. **Duplicated Candidate Resolution Loops (DRY Violation)**
    The handlers ``cmd_search_chats``, ``cmd_search_supergroups``, and universal ``cmd_search`` duplicate identical logic for:
+
    * Querying ``searchChats`` and ``searchPublicChats``.
    * Calling ``ensure_chat_loaded``.
    * Sending ``getChat`` and parsing chat metadata into ``fmt::ChatItem``.
@@ -40,6 +41,7 @@ All JSON payloads constructed for TDLib search requests MUST wrap query strings 
        escaped_query, limit);
 
 Target RPC Requests:
+
 * ``searchChats``
 * ``searchPublicChats``
 * ``searchContacts``
@@ -63,17 +65,19 @@ Consolidate chat metadata fetching and type classification into a single private
        int limit);
 
 Responsibilities:
+
 * Loop through candidate ``chat_ids``.
 * Execute ``ensure_chat_loaded(id)`` for each candidate.
 * Fetch ``getChat`` and classify into ``Basic Group``, ``Supergroup``, ``Forum Supergroup``, ``Channel``, or ``Private Chat``.
 * Partition into ``chats`` and ``supergroups`` vectors.
 
 3. Multi-Type File Attachment Search (``--type`` Option)
--------------------------------------------------------
+
 
 Enhance ``grm search files <query> [options]`` to accept a ``--type <doc|photo|video|audio|all>`` option flag.
 
 Supported Filters:
+
 * ``doc`` (default): ``searchMessagesFilterDocument``
 * ``photo``: ``searchMessagesFilterPhoto``
 * ``video``: ``searchMessagesFilterVideo``

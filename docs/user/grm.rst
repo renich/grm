@@ -374,9 +374,11 @@ Complete management for Telegram contact lists and user profiles:
 Advanced message delivery controls utilizing TDLib's ``messageSendOptions``:
 
 * ``grm msg send <chat_id> "<message>" [--silent] [--schedule-at "<datetime|duration>"] [--send-when-online]``:
+
   * ``--silent`` / ``-s``: Delivers the message silently without triggering sound or vibration notifications (``disable_notification: true``).
   * ``--schedule-at "<datetime|duration>"``: Schedules delivery at a specific date/time (e.g. ``"2026-08-07T09:00:00Z"``) or natural language relative duration (e.g. ``"in 2 hours"``, ``"tomorrow 9am"``) via ``messageSchedulingStateSendAtDate``.
   * ``--send-when-online``: Delivers private chat messages automatically when the recipient comes online via ``messageSchedulingStateSendWhenOnline``.
+
 * ``grm msg scheduled ls <chat_id>``: View pending scheduled messages in a chat or topic thread.
 * ``grm msg scheduled delete <chat_id> <message_id>``: Cancel and delete a pending scheduled message.
 
@@ -407,6 +409,7 @@ Domain-driven, modular command specification architecture (``include/grm/command
 * **Modular Feature Self-Registration**: Every feature module (``src/cmd_auth.cpp``, ``src/cmd_chat.cpp``, ``src/cmd_msg.cpp``, ``src/cmd_topic.cpp``, ``src/cmd_file.cpp``, ``src/cmd_completion.cpp``) owns and exports its own ``CommandSpec`` data structure containing its subcommands, synopsis, option flags, descriptions, and allowed parameter choices (e.g. ``photo|video|doc|audio|all`` for ``--type``).
 * **Automatic Discovery & Aggregation**: ``CommandRegistry`` aggregates feature specs directly from module accessors without maintaining separate text files or duplicate registry files.
 * **Dual Automatic Rendering**:
+
   * **Help Engine**: ``CommandRegistry::render_help()`` and ``render_all_help()`` dynamically format all CLI ``--help`` screens and exhaustive master reference manuals with consistent padding and option alignment.
   * **Completion Engine**: ``CommandRegistry::render_completion()`` automatically generates context-aware shell autocompletions for Bash, Zsh, and Fish directly from the feature definitions.
 

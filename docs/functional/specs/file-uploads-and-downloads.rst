@@ -25,7 +25,9 @@ The system must support uploading local files and media attachments directly to 
 The system must support downloading attachments (documents, photos, videos, audio) from chats and forum topics:
 
 1. **Single / Selective File Download**:
+
    - `grm file get [-o|--output <dir|file>] [-t|--topic <id>] <chat_id> <message_ids...>`: Download file attachment(s) from specified message ID(s) to a target local path or directory (defaults to current directory).
 
 2. **Bulk / Directory File Download**:
+
    - `grm file download-all [-o|--output <dir>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id>`: Batch download all attachments from a chat or specific forum topic matching file type filters.

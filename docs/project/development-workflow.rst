@@ -1,6 +1,6 @@
-=========================================================
+
 Development Workflow: Feature Addition & Bug Repair Procedures
-=========================================================
+
 
 Overview
 ========
@@ -33,15 +33,18 @@ When introducing a new CLI subcommand, flag, or core subsystem to **grm**, follo
 --------------------------------------------------
 
 * Register the new command/subcommand specification in `CommandRegistry` (`include/grm/command_registry.hpp`):
+
   * Create `get_<module>_spec()` in `src/cmd_<module>.cpp`.
   * Push the spec into `CommandRegistry` in `src/command_registry.cpp`.
+
 * **Automated Output**: The single-source spec automatically generates:
+
   * Terminal help (`grm <cmd> --help` and `grm --help=all`).
   * Programmatic JSON help (`grm -F json --help` and `grm -F json <cmd> --help`).
   * Introspective shell completions (`grm completion bash|zsh|fish`).
 
 4. Documentation & Changelog Synchronization
--------------------------------------------
+
 
 * Update **Changelog**: Document all user-facing additions, changes, and fixes under the `[Unreleased]` section of `CHANGELOG.rst` following Keep a Changelog 1.1.0 guidelines.
 * Update **Man Page**: Document all new flags, subcommands, and usage examples in `docs/man/grm.1.rst`.
@@ -133,7 +136,7 @@ Bug repairs must be practical, root-cause focused, and rapid while maintaining q
      make check
 
 5. Documentation & Changelog Synchronization
--------------------------------------------
+
 
 * Document the bug resolution under `.. rubric:: Fixed` in `CHANGELOG.rst`.
 * If the bugfix altered option flags, defaults, or behavior, update `CommandRegistry`, `docs/man/grm.1.rst`, and `docs/user/grm.rst`.

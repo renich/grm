@@ -13,19 +13,46 @@ CommandSpec get_file_spec() {
   return CommandSpec{
       "file",
       "Download attachments and media files",
-      {
-          SubcommandSpec{"get", "[-a|-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> [<message_ids...>]", "Download media and file attachments from chats and topics", {
-              OptionSpec{"-a", "--all", "", "Bulk download all attachment files in chat or topic", {}},
-              OptionSpec{"-A", "", "", "Bulk download all attachment files in chat or topic (alias for -a)", {}},
-              OptionSpec{"-o", "--output", "<dir|file>", "Destination output directory or filepath", {}},
-              OptionSpec{"-t", "--topic", "<id>", "Target specific forum topic thread ID", {}},
-              OptionSpec{"-n", "--limit", "<N>", "Maximum messages to fetch or search", {}},
-              OptionSpec{"", "--type", "<type>", "Filter media type for bulk download (photo, video, doc, audio, all)", {"photo", "video", "doc", "audio", "all"}},
-              OptionSpec{"-h", "--help", "", "Show file get help message", {}}
-          }}
-      },
-      {}
-  };
+      {SubcommandSpec{
+          "get",
+          "[-a|-A|--all] [-o|--output <dir|file>] [-t|--topic <id>] "
+          "[-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> "
+          "[<message_ids...>]",
+          "Download media and file attachments from chats and topics",
+          {OptionSpec{"-a",
+                      "--all",
+                      "",
+                      "Bulk download all attachment files in chat or topic",
+                      {}},
+           OptionSpec{"-A",
+                      "",
+                      "",
+                      "Bulk download all attachment files in chat or topic "
+                      "(alias for -a)",
+                      {}},
+           OptionSpec{"-o",
+                      "--output",
+                      "<dir|file>",
+                      "Destination output directory or filepath",
+                      {}},
+           OptionSpec{"-t",
+                      "--topic",
+                      "<id>",
+                      "Target specific forum topic thread ID",
+                      {}},
+           OptionSpec{"-n",
+                      "--limit",
+                      "<N>",
+                      "Maximum messages to fetch or search",
+                      {}},
+           OptionSpec{"",
+                      "--type",
+                      "<type>",
+                      "Filter media type for bulk download (photo, video, doc, "
+                      "audio, all)",
+                      {"photo", "video", "doc", "audio", "all"}},
+           OptionSpec{"-h", "--help", "", "Show file get help message", {}}}}},
+      {}};
 }
 
 static std::expected<int64_t, std::string> parse_int64(std::string_view str) {

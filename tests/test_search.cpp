@@ -19,10 +19,14 @@ void test_search_spec_registration() {
   bool has_users = false;
 
   for (const auto &sub : spec.subcommands) {
-    if (sub.name == "chats") has_chats = true;
-    if (sub.name == "supergroups") has_supergroups = true;
-    if (sub.name == "msgs") has_msgs = true;
-    if (sub.name == "users") has_users = true;
+    if (sub.name == "chats")
+      has_chats = true;
+    if (sub.name == "supergroups")
+      has_supergroups = true;
+    if (sub.name == "msgs")
+      has_msgs = true;
+    if (sub.name == "users")
+      has_users = true;
   }
 
   assert(has_chats);
@@ -65,15 +69,20 @@ void test_search_formatter() {
   summary.messages.push_back(m1);
 
   std::ostringstream ss_human;
-  grm::fmt::Formatter::print_search_summary(summary, grm::fmt::OutputFormat::Plain, grm::fmt::ColorMode::Never, ss_human, false);
+  grm::fmt::Formatter::print_search_summary(
+      summary, grm::fmt::OutputFormat::Plain, grm::fmt::ColorMode::Never,
+      ss_human, false);
   std::string human_out = ss_human.str();
   assert(human_out.find("SEARCH RESULTS FOR: \"linux\"") != std::string::npos);
   assert(human_out.find("Linux Kernel Devs") != std::string::npos);
   assert(human_out.find("Linus Torvalds") != std::string::npos);
-  assert(human_out.find("Fedora Linux Release 42 is live!") != std::string::npos);
+  assert(human_out.find("Fedora Linux Release 42 is live!") !=
+         std::string::npos);
 
   std::ostringstream ss_json;
-  grm::fmt::Formatter::print_search_summary(summary, grm::fmt::OutputFormat::Json, grm::fmt::ColorMode::Never, ss_json, false);
+  grm::fmt::Formatter::print_search_summary(
+      summary, grm::fmt::OutputFormat::Json, grm::fmt::ColorMode::Never,
+      ss_json, false);
   std::string json_out = ss_json.str();
   assert(json_out.find("\"query\": \"linux\"") != std::string::npos);
   assert(json_out.find("\"chats_count\": 1") != std::string::npos);

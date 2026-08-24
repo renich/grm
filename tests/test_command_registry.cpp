@@ -50,7 +50,8 @@ int main() {
   assert(!compact_json.empty());
   assert(compact_json.find("\"program\":\"grm\"") != std::string::npos);
   assert(compact_json.find("\"global_options\"") != std::string::npos);
-  // Compact output must not contain pretty-print indentation newlines before keys
+  // Compact output must not contain pretty-print indentation newlines before
+  // keys
   assert(compact_json.find("{\n  \"program\"") == std::string::npos);
 
   std::string pretty_json = registry.render_global_help_json(true);
@@ -71,8 +72,10 @@ int main() {
 
   std::string all_json_pretty = registry.render_all_help_json(true);
   assert(!all_json_pretty.empty());
-  assert(all_json_pretty.find("{\n  \"program\": \"grm\"") != std::string::npos);
+  assert(all_json_pretty.find("{\n  \"program\": \"grm\"") !=
+         std::string::npos);
 
-  std::cout << "All CommandRegistry unit tests passed successfully!" << std::endl;
+  std::cout << "All CommandRegistry unit tests passed successfully!"
+            << std::endl;
   return 0;
 }

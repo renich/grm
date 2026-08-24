@@ -135,8 +135,7 @@ public:
   static void print_users(const std::vector<UserItem> &users,
                           OutputFormat format = OutputFormat::Auto,
                           ColorMode color_mode = ColorMode::Auto,
-                          std::ostream &out = std::cout,
-                          bool verbose = false);
+                          std::ostream &out = std::cout, bool verbose = false);
 
   static void print_search_summary(const SearchSummary &summary,
                                    OutputFormat format = OutputFormat::Auto,
@@ -154,8 +153,7 @@ public:
                      std::string_view command_name,
                      OutputFormat format = OutputFormat::Auto,
                      ColorMode color_mode = ColorMode::Auto,
-                     std::ostream &out = std::cout,
-                     bool verbose = false);
+                     std::ostream &out = std::cout, bool verbose = false);
 };
 
 } // namespace grm::fmt

@@ -52,6 +52,7 @@ private:
   Config config_;
   int client_id_{-1};
   std::atomic<bool> is_running_{false};
+  std::atomic<bool> is_closed_{false};
   std::thread receiver_thread_;
 
   std::mutex promises_mutex_;
@@ -66,4 +67,3 @@ private:
 };
 
 } // namespace grm
-

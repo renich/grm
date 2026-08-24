@@ -13,41 +13,73 @@ CommandSpec get_chat_spec() {
   return CommandSpec{
       "chat",
       "Manage Telegram chats, groups, and channels",
-      {
-          SubcommandSpec{"ls", "[-n|--limit <N>] [-S|--since <time>] [-f|--filter <pattern>] [-F|--folder <id>]", "List active conversations, groups, channels, and private chats", {
-              OptionSpec{"-n", "--limit", "<N>", "Maximum number of chats to display (default: 100)", {}},
-              OptionSpec{"-S", "--since", "<time>", "Filter chats active since duration (e.g. '1 day ago')", {}},
-              OptionSpec{"-f", "--filter", "<pattern>", "Filter chats by title or ID pattern filter", {}},
-              OptionSpec{"-F", "--folder", "<id>", "Filter chat listing to specific chat folder ID", {}},
-              OptionSpec{"-h", "--help", "", "Show list help message", {}}
-          }},
+      {SubcommandSpec{
+           "ls",
+           "[-n|--limit <N>] [-S|--since <time>] [-f|--filter <pattern>] "
+           "[-F|--folder <id>]",
+           "List active conversations, groups, channels, and private chats",
+           {OptionSpec{"-n",
+                       "--limit",
+                       "<N>",
+                       "Maximum number of chats to display (default: 100)",
+                       {}},
+            OptionSpec{"-S",
+                       "--since",
+                       "<time>",
+                       "Filter chats active since duration (e.g. '1 day ago')",
+                       {}},
+            OptionSpec{"-f",
+                       "--filter",
+                       "<pattern>",
+                       "Filter chats by title or ID pattern filter",
+                       {}},
+            OptionSpec{"-F",
+                       "--folder",
+                       "<id>",
+                       "Filter chat listing to specific chat folder ID",
+                       {}},
+            OptionSpec{"-h", "--help", "", "Show list help message", {}}}},
 
-          SubcommandSpec{"create", "<group|channel> [--private|--public] \"<title>\"", "Create a new basic group, supergroup, or broadcast channel", {
-              OptionSpec{"", "--private", "", "Create as a private chat/channel", {}},
-              OptionSpec{"", "--public", "", "Create as a public chat/channel", {}},
-              OptionSpec{"-h", "--help", "", "Show create help message", {}}
-          }},
-          SubcommandSpec{"info", "<chat_id>", "Display detailed chat or supergroup metadata", {
-              OptionSpec{"-h", "--help", "", "Show info help message", {}}
-          }},
-          SubcommandSpec{"set-title", "<chat_id> \"<title>\"", "Update group or channel title", {
-              OptionSpec{"-h", "--help", "", "Show set-title help message", {}}
-          }},
-          SubcommandSpec{"set-desc", "<chat_id> \"<description>\"", "Update group or channel description", {
-              OptionSpec{"-h", "--help", "", "Show set-desc help message", {}}
-          }},
-          SubcommandSpec{"pin", "<chat_id>", "Pin chat to top of chat list", {
-              OptionSpec{"-h", "--help", "", "Show pin help message", {}}
-          }},
-          SubcommandSpec{"unpin", "<chat_id>", "Unpin chat from chat list", {
-              OptionSpec{"-h", "--help", "", "Show unpin help message", {}}
-          }},
-          SubcommandSpec{"delete", "<chat_id>", "Delete chat history or leave group/channel", {
-              OptionSpec{"-h", "--help", "", "Show delete help message", {}}
-          }}
-      },
-      {}
-  };
+       SubcommandSpec{
+           "create",
+           "<group|channel> [--private|--public] \"<title>\"",
+           "Create a new basic group, supergroup, or broadcast channel",
+           {OptionSpec{
+                "", "--private", "", "Create as a private chat/channel", {}},
+            OptionSpec{
+                "", "--public", "", "Create as a public chat/channel", {}},
+            OptionSpec{"-h", "--help", "", "Show create help message", {}}}},
+       SubcommandSpec{
+           "info",
+           "<chat_id>",
+           "Display detailed chat or supergroup metadata",
+           {OptionSpec{"-h", "--help", "", "Show info help message", {}}}},
+       SubcommandSpec{
+           "set-title",
+           "<chat_id> \"<title>\"",
+           "Update group or channel title",
+           {OptionSpec{"-h", "--help", "", "Show set-title help message", {}}}},
+       SubcommandSpec{
+           "set-desc",
+           "<chat_id> \"<description>\"",
+           "Update group or channel description",
+           {OptionSpec{"-h", "--help", "", "Show set-desc help message", {}}}},
+       SubcommandSpec{
+           "pin",
+           "<chat_id>",
+           "Pin chat to top of chat list",
+           {OptionSpec{"-h", "--help", "", "Show pin help message", {}}}},
+       SubcommandSpec{
+           "unpin",
+           "<chat_id>",
+           "Unpin chat from chat list",
+           {OptionSpec{"-h", "--help", "", "Show unpin help message", {}}}},
+       SubcommandSpec{
+           "delete",
+           "<chat_id>",
+           "Delete chat history or leave group/channel",
+           {OptionSpec{"-h", "--help", "", "Show delete help message", {}}}}},
+      {}};
 }
 
 static std::expected<int32_t, std::string> parse_int32(std::string_view str) {
@@ -91,7 +123,8 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
   if (!chat_query.empty()) {
     const std::string search_req = std::format(
         R"({{"query": "{}", "limit": 100}})", escape_json_string(chat_query));
-    if (auto search_res = client_->send_request("searchChats", search_req, 5.0)) {
+    if (auto search_res =
+            client_->send_request("searchChats", search_req, 5.0)) {
       auto found_ids = search_res->get_array("chat_ids");
       for (const auto &val : found_ids) {
         if (auto cid = val.as_int64()) {
@@ -120,17 +153,23 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
   }
 
   if (target_chat_ids.empty()) {
-    std::string load_req = (folder_id >= 0)
-        ? std::format(R"({{"chat_list": {{"@type": "chatListFolder", "chat_folder_id": {}}}, "limit": 100}})", folder_id)
-        : R"({"limit": 100})";
+    std::string load_req =
+        (folder_id >= 0)
+            ? std::format(
+                  R"({{"chat_list": {{"@type": "chatListFolder", "chat_folder_id": {}}}, "limit": 100}})",
+                  folder_id)
+            : R"({"limit": 100})";
     auto load_res = client_->send_request("loadChats", load_req, 5.0);
     if (!load_res) {
       grm::log::debug("loadChats: " + load_res.error());
     }
 
-    std::string chats_req = (folder_id >= 0)
-        ? std::format(R"({{"chat_list": {{"@type": "chatListFolder", "chat_folder_id": {}}}, "limit": 100}})", folder_id)
-        : R"({"limit": 100})";
+    std::string chats_req =
+        (folder_id >= 0)
+            ? std::format(
+                  R"({{"chat_list": {{"@type": "chatListFolder", "chat_folder_id": {}}}, "limit": 100}})",
+                  folder_id)
+            : R"({"limit": 100})";
     auto chats_res = client_->send_request("getChats", chats_req, 10.0);
     if (!chats_res) {
       return std::unexpected("Failed to get chats: " + chats_res.error());
@@ -149,46 +188,46 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
 
   for (const int64_t cid : target_chat_ids) {
     const std::string chat_req = std::format(R"({{"chat_id": {}}})", cid);
-      auto chat_info = client_->send_request("getChat", chat_req, 3.0);
-      if (chat_info) {
-        std::string title = chat_info->get_string("title").value_or("Private");
-        std::string type_name = "Chat";
-        if (auto type_obj = chat_info->get_object("type")) {
-          type_name = type_obj->get_type().value_or("Chat");
-        }
-        int32_t unread = static_cast<int32_t>(
-            chat_info->get_int("unread_count").value_or(0));
-        int64_t last_date = 0;
-        if (auto last_msg = chat_info->get_object("last_message")) {
-          last_date = last_msg->get_int("date").value_or(0);
-        }
-
-        if (!opts.matches_since(last_date)) {
-          continue;
-        }
-
-        if (!opts.matches_filter_multi({title, type_name, std::to_string(cid)})) {
-          continue;
-        }
-
-        items.push_back(fmt::ChatItem{.id = cid,
-                                      .type = type_name,
-                                      .title = title,
-                                      .unread_count = unread,
-                                      .last_message_date = last_date});
-        if (items.size() >= static_cast<size_t>(opts.limit)) {
-          break;
-        }
+    auto chat_info = client_->send_request("getChat", chat_req, 3.0);
+    if (chat_info) {
+      std::string title = chat_info->get_string("title").value_or("Private");
+      std::string type_name = "Chat";
+      if (auto type_obj = chat_info->get_object("type")) {
+        type_name = type_obj->get_type().value_or("Chat");
       }
+      int32_t unread =
+          static_cast<int32_t>(chat_info->get_int("unread_count").value_or(0));
+      int64_t last_date = 0;
+      if (auto last_msg = chat_info->get_object("last_message")) {
+        last_date = last_msg->get_int("date").value_or(0);
+      }
+
+      if (!opts.matches_since(last_date)) {
+        continue;
+      }
+
+      if (!opts.matches_filter_multi({title, type_name, std::to_string(cid)})) {
+        continue;
+      }
+
+      items.push_back(fmt::ChatItem{.id = cid,
+                                    .type = type_name,
+                                    .title = title,
+                                    .unread_count = unread,
+                                    .last_message_date = last_date});
+      if (items.size() >= static_cast<size_t>(opts.limit)) {
+        break;
+      }
+    }
   }
 
   if (opts.reverse_order) {
     std::reverse(items.begin(), items.end());
   }
 
-  fmt::Formatter::render(
-      items, "chat.ls", options_.format, options_.color_mode, std::cout,
-      (options_.verbosity >= log::VerbosityLevel::Verbose));
+  fmt::Formatter::render(items, "chat.ls", options_.format, options_.color_mode,
+                         std::cout,
+                         (options_.verbosity >= log::VerbosityLevel::Verbose));
   return 0;
 }
 
@@ -413,7 +452,8 @@ App::cmd_chat_unpin(const std::vector<std::string> &args) {
     return std::unexpected("Failed to unpin chat: " + res.error());
   }
 
-  grm::log::info("Chat " + std::to_string(*cid_res) + " unpinned successfully.");
+  grm::log::info("Chat " + std::to_string(*cid_res) +
+                 " unpinned successfully.");
   return 0;
 }
 

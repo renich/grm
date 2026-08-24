@@ -14,11 +14,13 @@ Milestone 2.1: Test Infrastructure & App Modularization
 -------------------------------------------------------
 
 * **Task 2.1.1**: Setup CTest and implement unit tests for ``grm::JsonValue`` and ``grm::Config``.
+
   * *Delivers*: ``tests/test_json_utils.cpp``, ``tests/test_config.cpp``
   * *Status*: ``[x]`` Completed
   * *Unblocks*: Task 2.1.2
 
 * **Task 2.1.2**: Refactor monolithic ``src/app.cpp`` (>300 lines) into modular command handlers.
+
   * *Delivers*: ``src/cmd_auth.cpp``, ``src/cmd_chat.cpp``, ``src/cmd_msg.cpp``
   * *Status*: ``[x]`` Completed
   * *Unblocks*: Task 2.2.1
@@ -27,11 +29,13 @@ Milestone 2.2: Data Export & Search Filtering Engine
 ----------------------------------------------------
 
 * **Task 2.2.1**: Implement ``grm msg export <chat_id> csv|json [filename]`` command for exporting chat history into structured CSV and JSON formats.
+
   * *Delivers*: ``src/cmd_export.cpp``, ``include/grm/exporter.hpp``, ``src/exporter.cpp``
   * *Status*: ``[x]`` Completed
   * *Unblocks*: Task 2.2.2
 
 * **Task 2.2.2**: Implement ``grm msg search <chat_id> "<query>"`` regex search filtering CLI command.
+
   * *Delivers*: ``src/cmd_search.cpp``
   * *Status*: ``[x]`` Completed
   * *Unblocks*: Phase 2 Completion

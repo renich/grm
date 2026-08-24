@@ -1,0 +1,8 @@
+#pragma once
+
+#include <string_view>
+
+namespace grm {
+inline constexpr std::string_view VERSION = "@GRM_VERSION_STR@";
+inline constexpr std::string_view BANNER_VERSION = "@GRM_BANNER_VERSION_STR@";
+} // namespace grm

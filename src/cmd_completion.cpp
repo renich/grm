@@ -12,13 +12,13 @@ CommandSpec get_completion_spec() {
   return CommandSpec{
       "completion",
       "Generate shell autocompletion script for bash, zsh, or fish",
-      {
-          SubcommandSpec{"bash", "", "Output context-aware Bash autocompletion script", {}},
-          SubcommandSpec{"zsh", "", "Output Zsh autocompletion function script", {}},
-          SubcommandSpec{"fish", "", "Output Fish autocompletion definitions", {}}
-      },
-      {}
-  };
+      {SubcommandSpec{
+           "bash", "", "Output context-aware Bash autocompletion script", {}},
+       SubcommandSpec{
+           "zsh", "", "Output Zsh autocompletion function script", {}},
+       SubcommandSpec{
+           "fish", "", "Output Fish autocompletion definitions", {}}},
+      {}};
 }
 
 std::expected<int, std::string>

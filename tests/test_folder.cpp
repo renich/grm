@@ -15,10 +15,14 @@ void test_folder_spec_registration() {
   bool has_delete = false;
 
   for (const auto &sub : spec.subcommands) {
-    if (sub.name == "ls") has_ls = true;
-    if (sub.name == "create") has_create = true;
-    if (sub.name == "edit") has_edit = true;
-    if (sub.name == "delete") has_delete = true;
+    if (sub.name == "ls")
+      has_ls = true;
+    if (sub.name == "create")
+      has_create = true;
+    if (sub.name == "edit")
+      has_edit = true;
+    if (sub.name == "delete")
+      has_delete = true;
   }
 
   assert(has_ls);
@@ -32,7 +36,6 @@ void test_folder_spec_registration() {
   (void)has_delete;
 
   std::cout << "[TEST PASS] test_folder_spec_registration\n";
-
 }
 
 void test_folder_formatter() {
@@ -48,7 +51,8 @@ void test_folder_formatter() {
   folders.push_back(f1);
 
   std::stringstream ss;
-  grm::fmt::Formatter::print_folders(folders, grm::fmt::OutputFormat::Human, grm::fmt::ColorMode::Never, ss, true);
+  grm::fmt::Formatter::print_folders(folders, grm::fmt::OutputFormat::Human,
+                                     grm::fmt::ColorMode::Never, ss, true);
   std::string output = ss.str();
 
   assert(output.find("Work") != std::string::npos);

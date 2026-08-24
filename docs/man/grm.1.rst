@@ -279,6 +279,75 @@ grm file get [-A] [-o *OUTPUT*] [-t *TOPIC_ID*] [-n *LIMIT*] [--type photo|video
    --type *TYPE*
       Filter media type: ``photo``, ``video``, ``doc``, ``audio``, or ``all``.
 
+story
+-----
+
+grm story post [--photo *PATH* | --video *PATH*] [-c *CAPTION*] [--privacy everyone|contacts|close_friends] [--period *TIME*] [--pinned] [--protect] [-C *CHAT_ID*]
+   Publish a photo or video story.
+
+   -p, --photo *PATH*
+      Path to image file to publish as story.
+
+   -v, --video *PATH*
+      Path to video file to publish as story.
+
+   -c, --caption "*CAPTION*"
+      Caption text for the story (supports Markdown formatting).
+
+   --privacy *SETTING*
+      Story privacy scope (``everyone``, ``contacts``, ``close_friends``; default: ``everyone``).
+
+   --period *TIME*
+      Active story duration (``6h``, ``12h``, ``24h``, ``48h``; default: ``24h``).
+
+   --pinned
+      Post story to profile/chat page after expiration.
+
+   --protect
+      Prevent story forwarding and saving.
+
+   -C, --chat *CHAT_ID*
+      Target chat or channel ID (default: personal account).
+
+grm story ls [-C *CHAT_ID*] [-n *LIMIT*]
+   List active stories for personal account or target channel.
+
+   -C, --chat *CHAT_ID*
+      Target chat or channel ID.
+
+   -n, --limit *LIMIT*
+      Maximum stories to display (default: 20).
+
+grm story delete -s *STORY_ID* [-C *CHAT_ID*]
+   Delete a published story.
+
+   -s, --story-id *ID*
+      Story identifier to delete.
+
+   -C, --chat *CHAT_ID*
+      Target chat or channel ID.
+
+status
+------
+
+grm status set -e *EMOJI_ID* [-d *DURATION*] [-C *CHAT_ID*]
+   Set custom Telegram emoji status badge.
+
+   -e, --emoji *ID*
+      Custom Telegram emoji identifier.
+
+   -d, --duration *DURATION*
+      Active status duration (e.g. ``30m``, ``1h``, ``2d``, or seconds; default: indefinite).
+
+   -C, --chat *CHAT_ID*
+      Target supergroup or channel ID (for boosted chat status).
+
+grm status clear [-C *CHAT_ID*]
+   Clear custom Telegram emoji status badge.
+
+   -C, --chat *CHAT_ID*
+      Target supergroup or channel ID.
+
 EXIT STATUS
 ===========
 
@@ -298,6 +367,7 @@ The following feature modules represent the planned functional roadmap for **grm
 
 1. Chat Folder Management (grm folder)
 --------------------------------------
+
 * ``grm folder ls``: List defined chat folders, included chat types, and pinned chats (TDLib ``getChatFolder``).
 * ``grm folder create <title> [--include-groups] [--include-channels] [--include-chats <ids...>]``: Create custom chat folder (TDLib ``createChatFolder``).
 * ``grm folder edit <folder_id> [--title <title>] [--add-chat <id>] [--remove-chat <id>]``: Edit folder configuration (TDLib ``editChatFolder``).
@@ -305,18 +375,21 @@ The following feature modules represent the planned functional roadmap for **grm
 
 2. Universal Cross-Domain Search (grm search)
 ---------------------------------------------
+
 * ``grm search chats <query>``: Global search across chats, channels, and supergroups (TDLib ``searchChats``, ``searchPublicChats``).
 * ``grm search msgs <query> [-c <chat_id>] [-t <type>]``: Search message contents, senders, and captions (TDLib ``searchMessages``, ``searchChatMessages``).
 * ``grm search users <query|phone|handle>``: Search user profiles and contacts (TDLib ``searchContacts``, ``searchUserByUsername``).
 
 3. Media & File Filtering/CRUD by Type (grm file)
 -------------------------------------------------
+
 * ``grm file ls <chat_id> [--type photo|video|doc|audio|voice|url|all] [-n limit]``: List media attachments filtered by type (TDLib ``SearchMessagesFilter``).
 * ``grm file download <chat_id> <file_id|msg_id> [-o <path>]``: Download specific document or media attachment.
 * ``grm file download-all <chat_id> [--type photo|video|doc|audio|all] [-o <dir>]``: Bulk download matching media attachments.
 
 4. Contact Management (grm contact)
 -----------------------------------
+
 * ``grm contact ls``: List saved contacts and online availability status (TDLib ``getContacts``).
 * ``grm contact info <user_id|phone|handle>``: Inspect user profile details and bio (TDLib ``getUser``, ``getUserFullInfo``).
 * ``grm contact add <phone> <first_name> [last_name] [--share-phone]``: Import or add new contact (TDLib ``addContact``, ``importContacts``).
@@ -324,12 +397,14 @@ The following feature modules represent the planned functional roadmap for **grm
 
 5. Silent & Scheduled Messages (grm msg)
 ----------------------------------------
+
 * ``grm msg send <chat_id> "<message>" [--silent] [--schedule-at "<datetime|duration>"] [--send-when-online]``: Send silent notifications (TDLib ``disable_notification``), schedule delivery at date/time (TDLib ``messageSchedulingStateSendAtDate``), or deliver when online (TDLib ``messageSchedulingStateSendWhenOnline``).
 * ``grm msg scheduled ls <chat_id>``: View pending scheduled messages.
 * ``grm msg scheduled delete <chat_id> <message_id>``: Cancel pending scheduled message.
 
 6. Audio CRUD & Media Processing Engine (grm audio)
 ---------------------------------------------------
+
 * ``grm audio send <chat_id> <file_path> [--title "<title>"] [--performer "<performer>"] [--silent]``: Send audio files with metadata (TDLib ``inputMessageAudio``).
 * ``grm audio voice <chat_id> <voice_ogg_path> [--convert] [--silent]``: Send OGG/Opus voice notes (TDLib ``inputMessageVoiceNote``).
 * **SoX / libsox Engine Integration**: Native integration with **libsox** to probe audio metadata, convert audio formats to OGG/Opus voice notes, and calculate exact amplitude waveforms.
@@ -337,6 +412,7 @@ The following feature modules represent the planned functional roadmap for **grm
 
 7. Attachment Transmission: Inline Media vs. Raw Document
 ---------------------------------------------------------
+
 * **Inline Media (``--photo``, ``--video``, ``--animation``)**: Sent as compressed visual media (TDLib ``inputMessagePhoto``, ``inputMessageVideo``) featuring inline previews and streaming optimization.
 * **Uncompressed Document (``--file`` / ``--doc``)**: Sent as raw binary document attachments (TDLib ``inputMessageDocument``) preserving byte-for-byte fidelity without compression.
 

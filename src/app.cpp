@@ -1,5 +1,6 @@
 #include "grm/app.hpp"
 #include "grm/command_registry.hpp"
+#include "grm/version.hpp"
 #include <algorithm>
 #include <chrono>
 #include <format>
@@ -11,7 +12,14 @@ namespace grm {
 App::App(Config config, CliOptions options)
     : config_(std::move(config)), options_(std::move(options)) {}
 
-void App::print_version() { std::cout << "grm 0.7.1\n"; }
+App::~App() {
+  if (client_) {
+    client_->stop();
+    client_.reset();
+  }
+}
+
+void App::print_version() { std::cout << "grm " << VERSION << "\n"; }
 
 void App::print_usage(fmt::OutputFormat format) {
   if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
@@ -29,7 +37,8 @@ bool App::is_help_requested(const std::vector<std::string> &args) {
 
 void App::print_login_help(fmt::OutputFormat format) {
   if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
-    std::cout << CommandRegistry::get_instance().render_command_help_json("login");
+    std::cout << CommandRegistry::get_instance().render_command_help_json(
+        "login");
   } else {
     std::cout << CommandRegistry::get_instance().render_command_help("login");
   }
@@ -37,7 +46,8 @@ void App::print_login_help(fmt::OutputFormat format) {
 
 void App::print_logout_help(fmt::OutputFormat format) {
   if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
-    std::cout << CommandRegistry::get_instance().render_command_help_json("logout");
+    std::cout << CommandRegistry::get_instance().render_command_help_json(
+        "logout");
   } else {
     std::cout << CommandRegistry::get_instance().render_command_help("logout");
   }
@@ -45,7 +55,8 @@ void App::print_logout_help(fmt::OutputFormat format) {
 
 void App::print_chat_help(fmt::OutputFormat format) {
   if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
-    std::cout << CommandRegistry::get_instance().render_command_help_json("chat");
+    std::cout << CommandRegistry::get_instance().render_command_help_json(
+        "chat");
   } else {
     std::cout << CommandRegistry::get_instance().render_command_help("chat");
   }
@@ -53,7 +64,8 @@ void App::print_chat_help(fmt::OutputFormat format) {
 
 void App::print_msg_help(fmt::OutputFormat format) {
   if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
-    std::cout << CommandRegistry::get_instance().render_command_help_json("msg");
+    std::cout << CommandRegistry::get_instance().render_command_help_json(
+        "msg");
   } else {
     std::cout << CommandRegistry::get_instance().render_command_help("msg");
   }
@@ -61,7 +73,8 @@ void App::print_msg_help(fmt::OutputFormat format) {
 
 void App::print_topic_help(fmt::OutputFormat format) {
   if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
-    std::cout << CommandRegistry::get_instance().render_command_help_json("topic");
+    std::cout << CommandRegistry::get_instance().render_command_help_json(
+        "topic");
   } else {
     std::cout << CommandRegistry::get_instance().render_command_help("topic");
   }
@@ -69,7 +82,8 @@ void App::print_topic_help(fmt::OutputFormat format) {
 
 void App::print_file_help(fmt::OutputFormat format) {
   if (format == fmt::OutputFormat::Json || format == fmt::OutputFormat::JsonL) {
-    std::cout << CommandRegistry::get_instance().render_command_help_json("file");
+    std::cout << CommandRegistry::get_instance().render_command_help_json(
+        "file");
   } else {
     std::cout << CommandRegistry::get_instance().render_command_help("file");
   }
@@ -133,7 +147,8 @@ std::expected<void, std::string> App::init_tdlib() {
                   }
                 }
               }
-            } else if (*sttype == "authorizationStateWaitOtherDeviceConfirmation") {
+            } else if (*sttype ==
+                       "authorizationStateWaitOtherDeviceConfirmation") {
               if (auto link = state->get_string("link")) {
                 set_qr_link(*link);
               }
@@ -176,30 +191,26 @@ void App::send_tdlib_parameters() {
   const std::string params = std::format(
       R"({{
         "@type": "setTdlibParameters",
-        "parameters": {{
-          "@type": "tdlibParameters",
-          "use_test_dc": {},
-          "database_directory": "{}",
-          "files_directory": "{}/files",
-          "database_encryption_key": "",
-          "use_file_database": true,
-          "use_chat_info_database": true,
-          "use_message_database": true,
-          "use_secret_chats": true,
-          "api_id": {},
-          "api_hash": "{}",
-          "system_language_code": "en",
-          "device_model": "grm",
-          "system_version": "Linux x86_64",
-          "application_version": "0.7.1",
-          "enable_storage_optimizer": true,
-          "ignore_file_names": false
-        }}
+        "use_test_dc": {},
+        "database_directory": "{}",
+        "files_directory": "{}/files",
+        "database_encryption_key": "",
+        "use_file_database": true,
+        "use_chat_info_database": true,
+        "use_message_database": true,
+        "use_secret_chats": true,
+        "api_id": {},
+        "api_hash": "{}",
+        "system_language_code": "en",
+        "device_model": "Desktop",
+        "system_version": "Linux x86_64",
+        "application_version": "5.12.0",
+        "enable_storage_optimizer": true,
+        "ignore_file_names": false
       }})",
       options_.use_test_dc ? "true" : "false",
       escape_json_string(db_path.string()),
-      escape_json_string(db_path.string()),
-      config_.api_id,
+      escape_json_string(db_path.string()), config_.api_id,
       escape_json_string(config_.api_hash));
 
   client_->send_async("setTdlibParameters", params);
@@ -210,7 +221,8 @@ std::expected<void, std::string> App::ensure_authenticated() {
     return std::unexpected(res.error());
   }
 
-  // Block and wait up to 10 seconds for TDLib session database to load and reach a settled state
+  // Block and wait up to 10 seconds for TDLib session database to load and
+  // reach a settled state
   {
     std::unique_lock<std::mutex> lock(auth_mutex_);
     auth_cv_.wait_for(lock, std::chrono::seconds(10), [this] {
@@ -218,8 +230,7 @@ std::expected<void, std::string> App::ensure_authenticated() {
              auth_state_ == "authorizationStateWaitPhoneNumber" ||
              auth_state_ == "authorizationStateWaitOtherDeviceConfirmation" ||
              auth_state_ == "authorizationStateWaitCode" ||
-             auth_state_ == "authorizationStateWaitPassword" ||
-             is_closed_;
+             auth_state_ == "authorizationStateWaitPassword" || is_closed_;
     });
   }
 
@@ -247,12 +258,12 @@ void App::ensure_chat_loaded(int64_t chat_id) {
       chat_res = client_->send_request("createSupergroupChat", sg_req, 3.0);
     } else if (chat_id < 0) {
       int64_t group_id = -chat_id;
-      const std::string bg_req = std::format(
-          R"({{"basic_group_id": {}, "force": false}})", group_id);
+      const std::string bg_req =
+          std::format(R"({{"basic_group_id": {}, "force": false}})", group_id);
       chat_res = client_->send_request("createBasicGroupChat", bg_req, 3.0);
     } else if (chat_id > 0) {
-      const std::string pvt_req = std::format(
-          R"({{"user_id": {}, "force": false}})", chat_id);
+      const std::string pvt_req =
+          std::format(R"({{"user_id": {}, "force": false}})", chat_id);
       chat_res = client_->send_request("createPrivateChat", pvt_req, 3.0);
     }
 
@@ -270,8 +281,10 @@ void App::ensure_chat_loaded(int64_t chat_id) {
       }
     }
   }
-  if (auto open_res = client_->send_request("openChat", chat_req, 2.0); !open_res) {
-    grm::log::debug("openChat failed for chat " + std::to_string(chat_id) + ": " + open_res.error());
+  if (auto open_res = client_->send_request("openChat", chat_req, 2.0);
+      !open_res) {
+    grm::log::debug("openChat failed for chat " + std::to_string(chat_id) +
+                    ": " + open_res.error());
   }
 }
 
@@ -310,7 +323,8 @@ App::send_message_and_wait(const std::string &payload, double timeout_seconds) {
       if (new_id != 0) {
         state->succeeded_ids[new_id] = new_id;
       }
-      if (state->pending_id != 0 && (old_id == state->pending_id || new_id == state->pending_id)) {
+      if (state->pending_id != 0 &&
+          (old_id == state->pending_id || new_id == state->pending_id)) {
         state->finished = true;
         state->success = true;
         state->final_id = (new_id != 0) ? new_id : old_id;
@@ -319,12 +333,14 @@ App::send_message_and_wait(const std::string &payload, double timeout_seconds) {
     } else if (type == "updateMessageSendFailed") {
       int64_t old_id = val.get_int("old_message_id").value_or(0);
       int64_t new_id = 0;
-      std::string err_msg = val.get_string("error_message").value_or("Send failed");
+      std::string err_msg =
+          val.get_string("error_message").value_or("Send failed");
       int64_t code = val.get_int("error_code").value_or(0);
       if (auto msg_obj = val.get_object("message")) {
         new_id = msg_obj->get_int("id").value_or(0);
       }
-      std::string err_formatted = std::format("TDLib Error [{}]: {}", code, err_msg);
+      std::string err_formatted =
+          std::format("TDLib Error [{}]: {}", code, err_msg);
       std::lock_guard<std::mutex> lock(state->mutex);
       if (old_id != 0) {
         state->failed_ids[old_id] = err_formatted;
@@ -332,7 +348,8 @@ App::send_message_and_wait(const std::string &payload, double timeout_seconds) {
       if (new_id != 0) {
         state->failed_ids[new_id] = err_formatted;
       }
-      if (state->pending_id != 0 && (old_id == state->pending_id || new_id == state->pending_id)) {
+      if (state->pending_id != 0 &&
+          (old_id == state->pending_id || new_id == state->pending_id)) {
         state->finished = true;
         state->success = false;
         state->error = err_formatted;
@@ -376,12 +393,13 @@ App::send_message_and_wait(const std::string &payload, double timeout_seconds) {
   }
 
   std::unique_lock<std::mutex> lock(state->mutex);
-  bool signaled = state->cv.wait_for(
-      lock, std::chrono::duration<double>(timeout_seconds),
-      [&] { return state->finished; });
+  bool signaled =
+      state->cv.wait_for(lock, std::chrono::duration<double>(timeout_seconds),
+                         [&] { return state->finished; });
 
   if (!signaled) {
-    grm::log::warn("Timeout waiting for updateMessageSendSucceeded, proceeding with local ID: " +
+    grm::log::warn("Timeout waiting for updateMessageSendSucceeded, proceeding "
+                   "with local ID: " +
                    std::to_string(returned_id));
     return returned_id;
   }
@@ -404,11 +422,14 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     return 0;
   }
 
-  if (std::ranges::any_of(args, [](const std::string &arg) {
-        return arg == "--help=all" || arg == "-H";
-      }) ||
-      (args.size() >= 2 && (args[0] == "--help" || args[0] == "help") && args[1] == "all")) {
-    if (options_.format == fmt::OutputFormat::Json || options_.format == fmt::OutputFormat::JsonL) {
+  if (std::ranges::any_of(args,
+                          [](const std::string &arg) {
+                            return arg == "--help=all" || arg == "-H";
+                          }) ||
+      (args.size() >= 2 && (args[0] == "--help" || args[0] == "help") &&
+       args[1] == "all")) {
+    if (options_.format == fmt::OutputFormat::Json ||
+        options_.format == fmt::OutputFormat::JsonL) {
       std::cout << CommandRegistry::get_instance().render_all_help_json();
     } else {
       std::cout << CommandRegistry::get_instance().render_all_help();
@@ -571,6 +592,22 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
     return cmd_search(sub_args);
   }
 
+  if (cmd == "story") {
+    if (is_help_requested(sub_args)) {
+      print_story_help(options_.format);
+      return 0;
+    }
+    return cmd_story(sub_args);
+  }
+
+  if (cmd == "status") {
+    if (is_help_requested(sub_args)) {
+      print_status_help(options_.format);
+      return 0;
+    }
+    return cmd_status(sub_args);
+  }
+
   if (cmd == "completion") {
     return cmd_completion(sub_args);
   }
@@ -579,8 +616,7 @@ std::expected<int, std::string> App::run(const std::vector<std::string> &args) {
   return std::unexpected("Unknown command: " + cmd);
 }
 
-std::expected<JsonValue, std::string>
-App::parse_formatted_text(
+std::expected<JsonValue, std::string> App::parse_formatted_text(
     const std::string &text,
     const std::string &mode) { // NOLINT(bugprone-easily-swappable-parameters)
   if (text.empty()) {

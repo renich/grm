@@ -14,41 +14,71 @@ CommandSpec get_topic_spec() {
   return CommandSpec{
       "topic",
       "Manage supergroup forum topics",
-      {
-          SubcommandSpec{"ls", "[-n|--limit <N>] <supergroup_id>", "List forum topics in supergroup", {
-              OptionSpec{"-n", "--limit", "<N>", "Maximum topics to display (default: 100)", {}},
-              OptionSpec{"-h", "--help", "", "Show topic list help message", {}}
-          }},
-          SubcommandSpec{"create", "[-e|--emoji <id>] <supergroup_id> \"<name>\"", "Create a new forum topic in supergroup", {
-              OptionSpec{"-e", "--emoji", "<id>", "Custom Telegram emoji icon ID", {}},
-              OptionSpec{"", "--icon-color", "<color>", "RGB icon color (e.g. 0x6FB9F0)", {}},
-              OptionSpec{"-h", "--help", "", "Show create topic help message", {}}
-          }},
-          SubcommandSpec{"info", "<supergroup_id> <topic_id>", "View topic metadata and settings", {
-              OptionSpec{"-h", "--help", "", "Show topic info help message", {}}
-          }},
-          SubcommandSpec{"edit", "[-e|--emoji <id>] <supergroup_id> <topic_id> [\"<name>\"]", "Edit topic title or icon", {
-              OptionSpec{"-e", "--emoji", "<id>", "Custom Telegram emoji icon ID", {}},
-              OptionSpec{"-h", "--help", "", "Show edit topic help message", {}}
-          }},
-          SubcommandSpec{"close", "<supergroup_id> <topic_id>", "Close forum topic thread", {
-              OptionSpec{"-h", "--help", "", "Show close help message", {}}
-          }},
-          SubcommandSpec{"reopen", "<supergroup_id> <topic_id>", "Reopen closed forum topic thread", {
-              OptionSpec{"-h", "--help", "", "Show reopen help message", {}}
-          }},
-          SubcommandSpec{"pin", "<supergroup_id> <topic_id>", "Pin topic to top of topic list", {
-              OptionSpec{"-h", "--help", "", "Show pin help message", {}}
-          }},
-          SubcommandSpec{"unpin", "<supergroup_id> <topic_id>", "Unpin topic from topic list", {
-              OptionSpec{"-h", "--help", "", "Show unpin help message", {}}
-          }},
-          SubcommandSpec{"delete", "<supergroup_id> <topic_id>", "Delete topic and message thread history", {
-              OptionSpec{"-h", "--help", "", "Show delete topic help message", {}}
-          }}
-      },
-      {}
-  };
+      {SubcommandSpec{
+           "ls",
+           "[-n|--limit <N>] <supergroup_id>",
+           "List forum topics in supergroup",
+           {OptionSpec{"-n",
+                       "--limit",
+                       "<N>",
+                       "Maximum topics to display (default: 100)",
+                       {}},
+            OptionSpec{
+                "-h", "--help", "", "Show topic list help message", {}}}},
+       SubcommandSpec{
+           "create",
+           "[-e|--emoji <id>] <supergroup_id> \"<name>\"",
+           "Create a new forum topic in supergroup",
+           {OptionSpec{
+                "-e", "--emoji", "<id>", "Custom Telegram emoji icon ID", {}},
+            OptionSpec{"",
+                       "--icon-color",
+                       "<color>",
+                       "RGB icon color (e.g. 0x6FB9F0)",
+                       {}},
+            OptionSpec{
+                "-h", "--help", "", "Show create topic help message", {}}}},
+       SubcommandSpec{
+           "info",
+           "<supergroup_id> <topic_id>",
+           "View topic metadata and settings",
+           {OptionSpec{
+               "-h", "--help", "", "Show topic info help message", {}}}},
+       SubcommandSpec{
+           "edit",
+           "[-e|--emoji <id>] <supergroup_id> <topic_id> [\"<name>\"]",
+           "Edit topic title or icon",
+           {OptionSpec{
+                "-e", "--emoji", "<id>", "Custom Telegram emoji icon ID", {}},
+            OptionSpec{
+                "-h", "--help", "", "Show edit topic help message", {}}}},
+       SubcommandSpec{
+           "close",
+           "<supergroup_id> <topic_id>",
+           "Close forum topic thread",
+           {OptionSpec{"-h", "--help", "", "Show close help message", {}}}},
+       SubcommandSpec{
+           "reopen",
+           "<supergroup_id> <topic_id>",
+           "Reopen closed forum topic thread",
+           {OptionSpec{"-h", "--help", "", "Show reopen help message", {}}}},
+       SubcommandSpec{
+           "pin",
+           "<supergroup_id> <topic_id>",
+           "Pin topic to top of topic list",
+           {OptionSpec{"-h", "--help", "", "Show pin help message", {}}}},
+       SubcommandSpec{
+           "unpin",
+           "<supergroup_id> <topic_id>",
+           "Unpin topic from topic list",
+           {OptionSpec{"-h", "--help", "", "Show unpin help message", {}}}},
+       SubcommandSpec{
+           "delete",
+           "<supergroup_id> <topic_id>",
+           "Delete topic and message thread history",
+           {OptionSpec{
+               "-h", "--help", "", "Show delete topic help message", {}}}}},
+      {}};
 }
 
 static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
@@ -181,9 +211,9 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
     std::reverse(items.begin(), items.end());
   }
 
-  fmt::Formatter::render(
-      items, "topic.ls", options_.format, options_.color_mode, std::cout,
-      (options_.verbosity >= log::VerbosityLevel::Verbose));
+  fmt::Formatter::render(items, "topic.ls", options_.format,
+                         options_.color_mode, std::cout,
+                         (options_.verbosity >= log::VerbosityLevel::Verbose));
   return 0;
 }
 

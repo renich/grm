@@ -95,7 +95,8 @@ int main() {
 
   auto res11c = app.run({"completion", "invalid_shell"});
   assert(!res11c.has_value());
-  assert(res11c.error().find("Unsupported shell: invalid_shell") != std::string::npos);
+  assert(res11c.error().find("Unsupported shell: invalid_shell") !=
+         std::string::npos);
 
   // Test 12: Logout command with --help returns 0
   auto res12a = app.run({"logout", "--help"});
