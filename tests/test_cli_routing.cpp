@@ -166,9 +166,17 @@ int main() {
   }
 
   const std::vector<std::string> search_subcmds = {
-      "chats", "supergroups", "channels", "msgs", "users", "files"};
+      "chats",      "supergroups", "channels", "msgs",     "users",   "files",
+      "supergroup", "groups",      "channel",  "messages", "contacts"};
   for (const auto &sub : search_subcmds) {
     auto res_help = app.run({"search", sub, "--help"});
+    assert(res_help.has_value());
+    assert(*res_help == 0);
+  }
+
+  const std::vector<std::string> completion_subcmds = {"bash", "zsh", "fish"};
+  for (const auto &sub : completion_subcmds) {
+    auto res_help = app.run({"completion", sub, "--help"});
     assert(res_help.has_value());
     assert(*res_help == 0);
   }

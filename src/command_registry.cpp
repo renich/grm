@@ -153,7 +153,12 @@ CommandRegistry::render_subcommand_help(const std::string &cmd_name,
             (s.name == "delete" && subcmd_name == "rm") ||
             (s.name == "viewers" && subcmd_name == "interactions") ||
             (s.name == "edit" && subcmd_name == "update") ||
-            (s.name == "get" && subcmd_name == "download-all")) {
+            (s.name == "get" && subcmd_name == "download-all") ||
+            (s.name == "supergroups" &&
+             (subcmd_name == "supergroup" || subcmd_name == "groups")) ||
+            (s.name == "channels" && subcmd_name == "channel") ||
+            (s.name == "msgs" && subcmd_name == "messages") ||
+            (s.name == "users" && subcmd_name == "contacts")) {
           return true;
         }
         return false;
@@ -424,7 +429,12 @@ CommandRegistry::render_subcommand_help_json(const std::string &cmd_name,
             (s.name == "delete" && subcmd_name == "rm") ||
             (s.name == "viewers" && subcmd_name == "interactions") ||
             (s.name == "edit" && subcmd_name == "update") ||
-            (s.name == "get" && subcmd_name == "download-all")) {
+            (s.name == "get" && subcmd_name == "download-all") ||
+            (s.name == "supergroups" &&
+             (subcmd_name == "supergroup" || subcmd_name == "groups")) ||
+            (s.name == "channels" && subcmd_name == "channel") ||
+            (s.name == "msgs" && subcmd_name == "messages") ||
+            (s.name == "users" && subcmd_name == "contacts")) {
           return true;
         }
         return false;
