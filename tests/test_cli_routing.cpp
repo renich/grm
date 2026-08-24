@@ -131,6 +131,61 @@ int main() {
       res13c.error().find("Unknown story subcommand: invalid_story_subcmd") !=
       std::string::npos);
 
+  // Test 14: Status commands routing and help
+  auto res14a = app.run({"status"});
+  assert(res14a.has_value());
+  assert(*res14a == 0);
+
+  auto res14b = app.run({"status", "--help"});
+  assert(res14b.has_value());
+  assert(*res14b == 0);
+
+  const std::vector<std::string> status_subcmds = {"ls", "set", "clear"};
+  for (const auto &sub : status_subcmds) {
+    auto res_help = app.run({"status", sub, "--help"});
+    assert(res_help.has_value());
+    assert(*res_help == 0);
+  }
+
+  // Test 15: Chat, Folder, Search subcommand help checks
+  const std::vector<std::string> chat_subcmds = {
+      "ls",       "create", "info",  "set-title",
+      "set-desc", "pin",    "unpin", "delete"};
+  for (const auto &sub : chat_subcmds) {
+    auto res_help = app.run({"chat", sub, "--help"});
+    assert(res_help.has_value());
+    assert(*res_help == 0);
+  }
+
+  const std::vector<std::string> folder_subcmds = {"ls", "create", "edit",
+                                                   "delete"};
+  for (const auto &sub : folder_subcmds) {
+    auto res_help = app.run({"folder", sub, "--help"});
+    assert(res_help.has_value());
+    assert(*res_help == 0);
+  }
+
+  const std::vector<std::string> search_subcmds = {
+      "chats", "supergroups", "channels", "msgs", "users", "files"};
+  for (const auto &sub : search_subcmds) {
+    auto res_help = app.run({"search", sub, "--help"});
+    assert(res_help.has_value());
+    assert(*res_help == 0);
+  }
+
+  // Test 16: Stdout content verification for subcommand help isolation
+  {
+    std::stringstream buffer;
+    std::streambuf *old = std::cout.rdbuf(buffer.rdbuf());
+    auto res_story_ls = app.run({"story", "ls", "--help"});
+    std::cout.rdbuf(old);
+    assert(res_story_ls.has_value() && *res_story_ls == 0);
+    std::string out = buffer.str();
+    assert(out.find("Usage: grm story ls") != std::string::npos);
+    assert(out.find("--pinned") != std::string::npos);
+    assert(out.find("grm story post") == std::string::npos);
+  }
+
   std::cout << "test_cli_routing passed successfully!\n";
   return 0;
 }

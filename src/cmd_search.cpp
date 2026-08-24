@@ -205,7 +205,7 @@ static SearchArgs parse_search_args(const std::vector<std::string> &args,
 
 std::expected<int, std::string>
 App::cmd_search(const std::vector<std::string> &args) {
-  if (args.empty() || is_help_requested(args)) {
+  if (args.empty() || args[0] == "-h" || args[0] == "--help") {
     print_search_help(options_.format);
     return 0;
   }
@@ -705,8 +705,8 @@ resolve_chat_candidates(TdClient *client, const std::string &query, int limit,
 
 std::expected<int, std::string>
 App::cmd_search_chats(const std::vector<std::string> &args) {
-  if (args.empty() || is_help_requested(args)) {
-    print_search_help(options_.format);
+  if (is_help_requested(args)) {
+    print_subcommand_help("search", "chats");
     return 0;
   }
 
@@ -716,7 +716,7 @@ App::cmd_search_chats(const std::vector<std::string> &args) {
 
   SearchArgs sargs = parse_search_args(args, 20);
   if (sargs.query.empty()) {
-    print_search_help(options_.format);
+    print_subcommand_help("search", "chats");
     return 0;
   }
 
@@ -750,8 +750,8 @@ App::cmd_search_chats(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_search_supergroups(const std::vector<std::string> &args) {
-  if (args.empty() || is_help_requested(args)) {
-    print_search_help(options_.format);
+  if (is_help_requested(args)) {
+    print_subcommand_help("search", "supergroups");
     return 0;
   }
 
@@ -761,7 +761,7 @@ App::cmd_search_supergroups(const std::vector<std::string> &args) {
 
   SearchArgs sargs = parse_search_args(args, 20);
   if (sargs.query.empty()) {
-    print_search_help(options_.format);
+    print_subcommand_help("search", "supergroups");
     return 0;
   }
 
@@ -793,8 +793,8 @@ App::cmd_search_supergroups(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_search_msgs(const std::vector<std::string> &args) {
-  if (args.empty() || is_help_requested(args)) {
-    print_search_help(options_.format);
+  if (is_help_requested(args)) {
+    print_subcommand_help("search", "msgs");
     return 0;
   }
 
@@ -804,7 +804,7 @@ App::cmd_search_msgs(const std::vector<std::string> &args) {
 
   SearchArgs sargs = parse_search_args(args, 20);
   if (sargs.query.empty()) {
-    print_search_help(options_.format);
+    print_subcommand_help("search", "msgs");
     return 0;
   }
 
@@ -882,8 +882,8 @@ App::cmd_search_msgs(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_search_users(const std::vector<std::string> &args) {
-  if (args.empty() || is_help_requested(args)) {
-    print_search_help(options_.format);
+  if (is_help_requested(args)) {
+    print_subcommand_help("search", "users");
     return 0;
   }
 
@@ -893,7 +893,7 @@ App::cmd_search_users(const std::vector<std::string> &args) {
 
   SearchArgs sargs = parse_search_args(args, 20);
   if (sargs.query.empty()) {
-    print_search_help(options_.format);
+    print_subcommand_help("search", "users");
     return 0;
   }
 
@@ -1103,8 +1103,8 @@ App::cmd_search_users(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_search_channels(const std::vector<std::string> &args) {
-  if (args.empty() || is_help_requested(args)) {
-    print_search_help(options_.format);
+  if (is_help_requested(args)) {
+    print_subcommand_help("search", "channels");
     return 0;
   }
 
@@ -1114,7 +1114,7 @@ App::cmd_search_channels(const std::vector<std::string> &args) {
 
   SearchArgs sargs = parse_search_args(args, 20);
   if (sargs.query.empty()) {
-    print_search_help(options_.format);
+    print_subcommand_help("search", "channels");
     return 0;
   }
 
@@ -1142,8 +1142,8 @@ App::cmd_search_channels(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_search_files(const std::vector<std::string> &args) {
-  if (args.empty() || is_help_requested(args)) {
-    print_search_help(options_.format);
+  if (is_help_requested(args)) {
+    print_subcommand_help("search", "files");
     return 0;
   }
 
@@ -1153,7 +1153,7 @@ App::cmd_search_files(const std::vector<std::string> &args) {
 
   SearchArgs sargs = parse_search_args(args, 20);
   if (sargs.query.empty()) {
-    print_search_help(options_.format);
+    print_subcommand_help("search", "files");
     return 0;
   }
 

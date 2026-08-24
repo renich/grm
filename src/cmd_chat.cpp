@@ -103,9 +103,15 @@ static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
 
 std::expected<int, std::string>
 App::cmd_chat_ls(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("chat", "ls");
+    return 0;
+  }
+
   std::vector<std::string> positionals;
   auto opts_res = ListOptions::parse(args, positionals);
   if (!opts_res) {
+    print_subcommand_help("chat", "ls");
     return std::unexpected(opts_res.error());
   }
   const auto &opts = *opts_res;
@@ -233,7 +239,13 @@ App::cmd_chat_ls(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_chat_create(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("chat", "create");
+    return 0;
+  }
+
   if (args.size() < 2) {
+    print_subcommand_help("chat", "create");
     return std::unexpected("Usage: grm chat create <group|channel> "
                            "[--private|--public] \"<title>\"");
   }
@@ -277,7 +289,13 @@ App::cmd_chat_create(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_chat_info(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("chat", "info");
+    return 0;
+  }
+
   if (args.empty()) {
+    print_subcommand_help("chat", "info");
     return std::unexpected("Usage: grm chat info <chat_id>");
   }
 
@@ -302,7 +320,13 @@ App::cmd_chat_info(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_chat_set_title(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("chat", "set-title");
+    return 0;
+  }
+
   if (args.size() < 2) {
+    print_subcommand_help("chat", "set-title");
     return std::unexpected(
         "Usage: grm chat set-title <chat_id> \"<new_title>\"");
   }
@@ -335,7 +359,13 @@ App::cmd_chat_set_title(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_chat_set_desc(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("chat", "set-desc");
+    return 0;
+  }
+
   if (args.size() < 2) {
+    print_subcommand_help("chat", "set-desc");
     return std::unexpected(
         "Usage: grm chat set-desc <chat_id> \"<description>\"");
   }
@@ -368,7 +398,13 @@ App::cmd_chat_set_desc(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_chat_delete(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("chat", "delete");
+    return 0;
+  }
+
   if (args.empty()) {
+    print_subcommand_help("chat", "delete");
     return std::unexpected("Usage: grm chat delete <chat_id>");
   }
 
@@ -398,7 +434,13 @@ App::cmd_chat_delete(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_chat_pin(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("chat", "pin");
+    return 0;
+  }
+
   if (args.empty()) {
+    print_subcommand_help("chat", "pin");
     return std::unexpected("Usage: grm chat pin <chat_id>");
   }
 
@@ -428,7 +470,13 @@ App::cmd_chat_pin(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_chat_unpin(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("chat", "unpin");
+    return 0;
+  }
+
   if (args.empty()) {
+    print_subcommand_help("chat", "unpin");
     return std::unexpected("Usage: grm chat unpin <chat_id>");
   }
 

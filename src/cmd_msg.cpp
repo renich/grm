@@ -459,14 +459,21 @@ App::parse_since_timestamp(std::string_view raw_str) {
 
 std::expected<int, std::string>
 App::cmd_msg_ls(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("msg", "ls");
+    return 0;
+  }
+
   std::vector<std::string> positionals;
   auto opts_res = ListOptions::parse(args, positionals);
   if (!opts_res) {
+    print_subcommand_help("msg", "ls");
     return std::unexpected(opts_res.error());
   }
   const auto &opts = *opts_res;
 
   if (positionals.empty()) {
+    print_subcommand_help("msg", "ls");
     return std::unexpected(
         "Usage: grm msg ls [-t|--topic <id>] [-n|--limit <N>] [--since "
         "<duration|date>] [-f|--filter <pattern>]... [-r|--reverse] <chat_id>");
@@ -702,6 +709,11 @@ App::cmd_msg_ls(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_export(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("msg", "export");
+    return 0;
+  }
+
   int64_t chat_id = 0;
   bool chat_id_set = false;
 
@@ -738,6 +750,7 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
   }
 
   if (!chat_id_set) {
+    print_subcommand_help("msg", "export");
     return std::unexpected("Usage: grm msg export [-f json|markdown] [-o file] "
                            "[-n limit] <chat_id>");
   }
@@ -830,6 +843,11 @@ App::cmd_msg_export(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_search(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("msg", "search");
+    return 0;
+  }
+
   int64_t chat_id = 0;
   bool chat_id_set = false;
 
@@ -881,6 +899,7 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
   }
 
   if (!chat_id_set || query.empty()) {
+    print_subcommand_help("msg", "search");
     return std::unexpected(
         "Usage: grm msg search <chat_id> [-q|--query \"<query>\"] [-n|--limit "
         "<N>] [--since <duration|date>] [-f|--filter <pattern>]...");
@@ -1000,6 +1019,11 @@ App::cmd_msg_search(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_send(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("msg", "send");
+    return 0;
+  }
+
   int64_t chat_id = 0;
   bool chat_id_set = false;
   std::string message_text;
@@ -1050,6 +1074,7 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
   }
 
   if (!chat_id_set) {
+    print_subcommand_help("msg", "send");
     return std::unexpected(
         "Usage: grm msg send [-a|--attach <file>] [-m|--media] [-C|--caption "
         "\"<text>\"] [-t|--topic <id>] [-r|--reply-to <id>] <chat_id> "
@@ -1199,6 +1224,11 @@ App::cmd_msg_send(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_info(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("msg", "info");
+    return 0;
+  }
+
   int64_t chat_id = 0;
   int64_t message_id = 0;
   [[maybe_unused]] int64_t message_thread_id = 0;
@@ -1225,6 +1255,7 @@ App::cmd_msg_info(const std::vector<std::string> &args) {
   }
 
   if (!chat_set || !msg_set) {
+    print_subcommand_help("msg", "info");
     return std::unexpected(
         "Usage: grm msg info [-t|--topic <id>] <chat_id> <message_id>");
   }
@@ -1251,6 +1282,11 @@ App::cmd_msg_info(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_edit(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("msg", "edit");
+    return 0;
+  }
+
   int64_t chat_id = 0;
   int64_t message_id = 0;
   [[maybe_unused]] int64_t message_thread_id = 0;
@@ -1281,6 +1317,7 @@ App::cmd_msg_edit(const std::vector<std::string> &args) {
   }
 
   if (!chat_set || !msg_set || new_text.empty()) {
+    print_subcommand_help("msg", "edit");
     return std::unexpected("Usage: grm msg edit [-t|--topic <id>] <chat_id> "
                            "<message_id> \"<new_text>\"");
   }
@@ -1318,7 +1355,13 @@ App::cmd_msg_edit(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_delete(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("msg", "delete");
+    return 0;
+  }
+
   if (args.empty()) {
+    print_subcommand_help("msg", "delete");
     return std::unexpected(
         "Usage: grm msg delete [--for-everyone] <chat_id> <message_ids...>");
   }
@@ -1350,6 +1393,7 @@ App::cmd_msg_delete(const std::vector<std::string> &args) {
   }
 
   if (!chat_set || message_ids.empty()) {
+    print_subcommand_help("msg", "delete");
     return std::unexpected(
         "Usage: grm msg delete [--for-everyone] <chat_id> <message_ids...>");
   }
@@ -1386,6 +1430,11 @@ App::cmd_msg_delete(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_pin(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("msg", "pin");
+    return 0;
+  }
+
   int64_t chat_id = 0;
   int64_t message_id = 0;
   [[maybe_unused]] int64_t message_thread_id = 0;
@@ -1412,6 +1461,7 @@ App::cmd_msg_pin(const std::vector<std::string> &args) {
   }
 
   if (!chat_set || !msg_set) {
+    print_subcommand_help("msg", "pin");
     return std::unexpected(
         "Usage: grm msg pin [-t|--topic <id>] <chat_id> <message_id>");
   }
@@ -1442,7 +1492,13 @@ App::cmd_msg_pin(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_msg_unpin(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("msg", "unpin");
+    return 0;
+  }
+
   if (args.empty()) {
+    print_subcommand_help("msg", "unpin");
     return std::unexpected("Usage: grm msg unpin [-a|--all] [-t|--topic <id>] "
                            "<chat_id> [<message_id>]");
   }
@@ -1476,6 +1532,7 @@ App::cmd_msg_unpin(const std::vector<std::string> &args) {
   }
 
   if (!chat_set) {
+    print_subcommand_help("msg", "unpin");
     return std::unexpected("Usage: grm msg unpin [-a|--all] [-t|--topic <id>] "
                            "<chat_id> [<message_id>]");
   }

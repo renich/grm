@@ -47,6 +47,16 @@ public:
 
   static void print_usage(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void print_version();
+  static void print_command_help(const std::string &cmd,
+                                 fmt::OutputFormat format, bool pretty = false);
+  static void print_subcommand_help(const std::string &cmd,
+                                    const std::string &subcmd,
+                                    fmt::OutputFormat format,
+                                    bool pretty = false);
+
+  void print_command_help(const std::string &cmd) const;
+  void print_subcommand_help(const std::string &cmd,
+                             const std::string &subcmd) const;
   static void
   print_login_help(fmt::OutputFormat format = fmt::OutputFormat::Auto);
   static void

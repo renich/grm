@@ -92,14 +92,21 @@ static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
 
 std::expected<int, std::string>
 App::cmd_topic_ls(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("topic", "ls");
+    return 0;
+  }
+
   std::vector<std::string> positionals;
   auto opts_res = ListOptions::parse(args, positionals);
   if (!opts_res) {
+    print_subcommand_help("topic", "ls");
     return std::unexpected(opts_res.error());
   }
   const auto &opts = *opts_res;
 
   if (positionals.empty()) {
+    print_subcommand_help("topic", "ls");
     return std::unexpected(
         "Usage: grm topic ls <supergroup_id> [-n|--limit <N>] [--since "
         "<duration|date>] [-f|--filter <pattern>]...");
@@ -219,6 +226,11 @@ App::cmd_topic_ls(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_topic_create(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("topic", "create");
+    return 0;
+  }
+
   std::string icon_emoji_id = "0";
   std::vector<std::string> positional;
   for (size_t i = 0; i < args.size(); ++i) {
@@ -231,6 +243,7 @@ App::cmd_topic_create(const std::vector<std::string> &args) {
   }
 
   if (positional.size() < 2) {
+    print_subcommand_help("topic", "create");
     return std::unexpected(
         "Usage: grm topic create [-e|--emoji <custom_emoji_id>] "
         "<supergroup_id> \"<topic_name>\"");
@@ -264,7 +277,13 @@ App::cmd_topic_create(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_topic_info(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("topic", "info");
+    return 0;
+  }
+
   if (args.size() < 2) {
+    print_subcommand_help("topic", "info");
     return std::unexpected("Usage: grm topic info <supergroup_id> <topic_id>");
   }
 
@@ -296,6 +315,11 @@ App::cmd_topic_info(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_topic_edit(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("topic", "edit");
+    return 0;
+  }
+
   std::string icon_emoji_id = "0";
   bool has_icon = false;
   std::vector<std::string> positional;
@@ -310,6 +334,7 @@ App::cmd_topic_edit(const std::vector<std::string> &args) {
   }
 
   if (positional.size() < 2) {
+    print_subcommand_help("topic", "edit");
     return std::unexpected(
         "Usage: grm topic edit [-e|--emoji <custom_emoji_id>] <supergroup_id> "
         "<topic_id> [\"<new_name>\"]");
@@ -347,7 +372,13 @@ App::cmd_topic_edit(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_topic_toggle_close(const std::vector<std::string> &args, bool close) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("topic", close ? "close" : "reopen");
+    return 0;
+  }
+
   if (args.size() < 2) {
+    print_subcommand_help("topic", close ? "close" : "reopen");
     return std::unexpected(
         "Usage: grm topic <close|reopen> <supergroup_id> <topic_id>");
   }
@@ -381,7 +412,13 @@ App::cmd_topic_toggle_close(const std::vector<std::string> &args, bool close) {
 
 std::expected<int, std::string>
 App::cmd_topic_toggle_pin(const std::vector<std::string> &args, bool pin) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("topic", pin ? "pin" : "unpin");
+    return 0;
+  }
+
   if (args.size() < 2) {
+    print_subcommand_help("topic", pin ? "pin" : "unpin");
     return std::unexpected(
         "Usage: grm topic <pin|unpin> <supergroup_id> <topic_id>");
   }
@@ -415,7 +452,13 @@ App::cmd_topic_toggle_pin(const std::vector<std::string> &args, bool pin) {
 
 std::expected<int, std::string>
 App::cmd_topic_delete(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("topic", "delete");
+    return 0;
+  }
+
   if (args.size() < 2) {
+    print_subcommand_help("topic", "delete");
     return std::unexpected(
         "Usage: grm topic delete <supergroup_id> <topic_id>");
   }

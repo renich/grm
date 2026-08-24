@@ -352,7 +352,7 @@ void App::print_status_help(fmt::OutputFormat format) {
 
 std::expected<int, std::string>
 App::cmd_status(const std::vector<std::string> &args) {
-  if (args.empty() || is_help_requested(args)) {
+  if (args.empty() || args[0] == "-h" || args[0] == "--help") {
     print_status_help(options_.format);
     return 0;
   }
@@ -389,14 +389,14 @@ static std::string get_sticker_custom_emoji_id(const JsonValue &st) {
 std::expected<int, std::string>
 App::cmd_status_ls(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_status_help(options_.format);
+    print_subcommand_help("status", "ls");
     return 0;
   }
 
   StatusListOptions opts;
   std::string err;
   if (!parse_status_ls_args(args, opts, err)) {
-    print_status_help(options_.format);
+    print_subcommand_help("status", "ls");
     return std::unexpected(err.empty() ? "Invalid arguments for status ls"
                                        : err);
   }
@@ -633,14 +633,14 @@ App::cmd_status_ls(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_status_set(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_status_help(options_.format);
+    print_subcommand_help("status", "set");
     return 0;
   }
 
   StatusSetOptions opts;
   std::string err;
   if (!parse_status_set_args(args, opts, err)) {
-    print_status_help(options_.format);
+    print_subcommand_help("status", "set");
     return std::unexpected(err.empty() ? "Invalid arguments for status set"
                                        : err);
   }
@@ -685,14 +685,14 @@ App::cmd_status_set(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_status_clear(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_status_help(options_.format);
+    print_subcommand_help("status", "clear");
     return 0;
   }
 
   StatusClearOptions opts;
   std::string err;
   if (!parse_status_clear_args(args, opts, err)) {
-    print_status_help(options_.format);
+    print_subcommand_help("status", "clear");
     return std::unexpected(err.empty() ? "Invalid arguments for status clear"
                                        : err);
   }

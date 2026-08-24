@@ -22,13 +22,36 @@ int main() {
   assert(login_help.find("--phone") != std::string::npos);
   assert(login_help.find("--qr") != std::string::npos);
 
-  // Test 3: Subcommand help screen rendering for 'msg'
+  // Test 3: Command overview help screen rendering for 'msg'
   std::string msg_help = registry.render_command_help("msg");
   assert(!msg_help.empty());
   assert(msg_help.find("grm msg unpin") != std::string::npos);
-  assert(msg_help.find("--all") != std::string::npos);
+  assert(msg_help.find("Run 'grm msg <subcommand> --help'") !=
+         std::string::npos);
 
-  // Test 3b: Subcommand help screen rendering for 'logout'
+  // Test 3a: Dedicated subcommand help screen rendering for 'msg unpin'
+  std::string msg_unpin_help = registry.render_subcommand_help("msg", "unpin");
+  assert(!msg_unpin_help.empty());
+  assert(msg_unpin_help.find("Usage: grm msg unpin") != std::string::npos);
+  assert(msg_unpin_help.find("--all") != std::string::npos);
+
+  // Test 3b: Dedicated subcommand help screen rendering for 'story ls'
+  std::string story_ls_help = registry.render_subcommand_help("story", "ls");
+  assert(!story_ls_help.empty());
+  assert(story_ls_help.find("Usage: grm story ls") != std::string::npos);
+  assert(story_ls_help.find("--pinned") != std::string::npos);
+  assert(story_ls_help.find("--all") != std::string::npos);
+  assert(story_ls_help.find("--chat") != std::string::npos);
+
+  // Test 3c: Dedicated subcommand help screen rendering for 'status set'
+  std::string status_set_help =
+      registry.render_subcommand_help("status", "set");
+  assert(!status_set_help.empty());
+  assert(status_set_help.find("Usage: grm status set") != std::string::npos);
+  assert(status_set_help.find("--emoji") != std::string::npos);
+  assert(status_set_help.find("--duration") != std::string::npos);
+
+  // Test 3d: Subcommand help screen rendering for 'logout'
   std::string logout_help = registry.render_command_help("logout");
   assert(!logout_help.empty());
   assert(logout_help.find("grm logout") != std::string::npos);
@@ -63,6 +86,14 @@ int main() {
   assert(!chat_json.empty());
   assert(chat_json.find("\"command\":\"chat\"") != std::string::npos);
   assert(chat_json.find("\"subcommands\"") != std::string::npos);
+
+  // Test 8b: JSON subcommand help rendering for 'story post'
+  std::string story_post_json =
+      registry.render_subcommand_help_json("story", "post", false);
+  assert(!story_post_json.empty());
+  assert(story_post_json.find("\"command\":\"story\"") != std::string::npos);
+  assert(story_post_json.find("\"subcommand\":\"post\"") != std::string::npos);
+  assert(story_post_json.find("\"privacy\"") != std::string::npos);
 
   // Test 9: JSON all master help rendering (-H / --help=all)
   std::string all_json_compact = registry.render_all_help_json(false);

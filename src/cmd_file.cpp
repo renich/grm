@@ -66,7 +66,13 @@ static std::expected<int64_t, std::string> parse_int64(std::string_view str) {
 
 std::expected<int, std::string>
 App::cmd_file_get(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("file", "get");
+    return 0;
+  }
+
   if (args.empty()) {
+    print_subcommand_help("file", "get");
     return std::unexpected(
         "Usage: grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic "
         "<id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> "
@@ -84,18 +90,28 @@ App::cmd_file_get(const std::vector<std::string> &args) {
 
   for (size_t i = 0; i < args.size(); ++i) {
     std::string_view arg(args[i]);
-    if (arg == "-A" || arg == "--all") {
+    if (arg == "-a" || arg == "--all" || arg == "-A") {
       download_all = true;
     } else if ((arg == "-o" || arg == "--output") && i + 1 < args.size()) {
       out_dir = args[++i];
+    } else if (arg.starts_with("--output=")) {
+      out_dir = arg.substr(9);
     } else if ((arg == "-t" || arg == "--topic") && i + 1 < args.size()) {
       if (auto tid = parse_int64(args[++i]))
+        topic_id = *tid;
+    } else if (arg.starts_with("--topic=")) {
+      if (auto tid = parse_int64(arg.substr(8)))
         topic_id = *tid;
     } else if ((arg == "-n" || arg == "--limit") && i + 1 < args.size()) {
       if (auto lim = parse_int64(args[++i]))
         limit = static_cast<int>(*lim);
+    } else if (arg.starts_with("--limit=")) {
+      if (auto lim = parse_int64(arg.substr(8)))
+        limit = static_cast<int>(*lim);
     } else if (arg == "--type" && i + 1 < args.size()) {
       requested_type = args[++i];
+    } else if (arg.starts_with("--type=")) {
+      requested_type = arg.substr(7);
     } else if (!chat_set && parse_int64(arg).has_value()) {
       chat_id = *parse_int64(arg);
       chat_set = true;
@@ -105,6 +121,7 @@ App::cmd_file_get(const std::vector<std::string> &args) {
   }
 
   if (!chat_set) {
+    print_subcommand_help("file", "get");
     return std::unexpected(
         "Usage: grm file get [-A|--all] [-o|--output <dir|file>] [-t|--topic "
         "<id>] [-n|--limit <N>] [--type photo|video|doc|audio|all] <chat_id> "

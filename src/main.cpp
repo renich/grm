@@ -22,7 +22,6 @@ int main(int argc, char *argv[]) {
       command_args.emplace_back("--help=all");
     } else if (arg == "-p" || arg == "-P" || arg == "--pretty") {
       options.pretty = true;
-      command_args.emplace_back(arg);
     } else if (arg == "-V" || arg == "--version") {
       options.version = true;
     } else if (arg == "-v" || arg == "--verbose") {
@@ -35,6 +34,8 @@ int main(int argc, char *argv[]) {
       options.use_test_dc = true;
     } else if ((arg == "-c" || arg == "--config") && i + 1 < argc) {
       options.custom_config_path = argv[++i];
+    } else if (arg.starts_with("--config=")) {
+      options.custom_config_path = std::string(arg.substr(9));
     } else if ((arg == "-F" || arg == "--format") && i + 1 < argc) {
       std::string_view fmt_val(argv[++i]);
       if (fmt_val == "human") {
@@ -48,8 +49,30 @@ int main(int argc, char *argv[]) {
       } else if (fmt_val == "plain") {
         options.format = grm::fmt::OutputFormat::Plain;
       }
+    } else if (arg.starts_with("--format=")) {
+      std::string_view fmt_val = arg.substr(9);
+      if (fmt_val == "human") {
+        options.format = grm::fmt::OutputFormat::Human;
+      } else if (fmt_val == "markdown") {
+        options.format = grm::fmt::OutputFormat::Markdown;
+      } else if (fmt_val == "json") {
+        options.format = grm::fmt::OutputFormat::Json;
+      } else if (fmt_val == "jsonl" || fmt_val == "ndjson") {
+        options.format = grm::fmt::OutputFormat::JsonL;
+      } else if (fmt_val == "plain") {
+        options.format = grm::fmt::OutputFormat::Plain;
+      }
     } else if (arg == "--color" && i + 1 < argc) {
       std::string_view color_val(argv[++i]);
+      if (color_val == "always") {
+        options.color_mode = grm::fmt::ColorMode::Always;
+      } else if (color_val == "never") {
+        options.color_mode = grm::fmt::ColorMode::Never;
+      } else if (color_val == "auto") {
+        options.color_mode = grm::fmt::ColorMode::Auto;
+      }
+    } else if (arg.starts_with("--color=")) {
+      std::string_view color_val = arg.substr(8);
       if (color_val == "always") {
         options.color_mode = grm::fmt::ColorMode::Always;
       } else if (color_val == "never") {

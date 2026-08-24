@@ -122,8 +122,9 @@ void App::print_folder_help(fmt::OutputFormat format) {
 
 std::expected<int, std::string>
 App::cmd_folder(const std::vector<std::string> &args) {
-  if (args.empty()) {
-    return cmd_folder_ls({});
+  if (args.empty() || args[0] == "-h" || args[0] == "--help") {
+    print_folder_help(options_.format);
+    return 0;
   }
 
   std::string sub = args[0];
@@ -137,11 +138,9 @@ App::cmd_folder(const std::vector<std::string> &args) {
     return cmd_folder_edit(sub_args);
   } else if (sub == "delete" || sub == "rm") {
     return cmd_folder_delete(sub_args);
-  } else if (sub == "-h" || sub == "--help") {
-    print_folder_help(options_.format);
-    return 0;
   }
 
+  print_folder_help(options_.format);
   return std::unexpected("Unknown folder subcommand: " + sub);
 }
 
@@ -158,14 +157,16 @@ static std::string extract_folder_title(const JsonValue &item) {
 
 std::expected<int, std::string>
 App::cmd_folder_ls(const std::vector<std::string> &args) {
+  if (is_help_requested(args)) {
+    print_subcommand_help("folder", "ls");
+    return 0;
+  }
+
   bool verbose = (options_.verbosity == log::VerbosityLevel::Verbose ||
                   options_.verbosity == log::VerbosityLevel::Debug);
   for (const auto &arg : args) {
     if (arg == "-v" || arg == "--verbose") {
       verbose = true;
-    } else if (arg == "-h" || arg == "--help") {
-      print_folder_help(options_.format);
-      return 0;
     }
   }
 
@@ -299,13 +300,14 @@ App::cmd_folder_ls(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_folder_create(const std::vector<std::string> &args) {
-  if (args.empty()) {
-    return std::unexpected("Usage: grm folder create <title> [options...]");
+  if (is_help_requested(args)) {
+    print_subcommand_help("folder", "create");
+    return 0;
   }
 
-  if (args[0] == "-h" || args[0] == "--help") {
-    print_folder_help(options_.format);
-    return 0;
+  if (args.empty()) {
+    print_subcommand_help("folder", "create");
+    return std::unexpected("Usage: grm folder create <title> [options...]");
   }
 
   std::string title = args[0];
@@ -419,13 +421,14 @@ App::cmd_folder_create(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_folder_edit(const std::vector<std::string> &args) {
-  if (args.empty()) {
-    return std::unexpected("Usage: grm folder edit <folder_id> [options...]");
+  if (is_help_requested(args)) {
+    print_subcommand_help("folder", "edit");
+    return 0;
   }
 
-  if (args[0] == "-h" || args[0] == "--help") {
-    print_folder_help(options_.format);
-    return 0;
+  if (args.empty()) {
+    print_subcommand_help("folder", "edit");
+    return std::unexpected("Usage: grm folder edit <folder_id> [options...]");
   }
 
   auto fid_res = parse_int32(args[0]);
@@ -556,13 +559,14 @@ App::cmd_folder_edit(const std::vector<std::string> &args) {
 
 std::expected<int, std::string>
 App::cmd_folder_delete(const std::vector<std::string> &args) {
-  if (args.empty()) {
-    return std::unexpected("Usage: grm folder delete <folder_id>");
+  if (is_help_requested(args)) {
+    print_subcommand_help("folder", "delete");
+    return 0;
   }
 
-  if (args[0] == "-h" || args[0] == "--help") {
-    print_folder_help(options_.format);
-    return 0;
+  if (args.empty()) {
+    print_subcommand_help("folder", "delete");
+    return std::unexpected("Usage: grm folder delete <folder_id>");
   }
 
   auto fid_res = parse_int32(args[0]);

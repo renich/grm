@@ -105,9 +105,9 @@ CommandRegistry::render_command_help(const std::string &cmd_name) const {
     ss << std::format("  {:<64} {}\n", line, sub.description);
   }
 
-  ss << "\nOptions:\n";
-  for (const auto &sub : it->subcommands) {
-    for (const auto &opt : sub.options) {
+  if (!it->global_options.empty()) {
+    ss << "\nOptions:\n";
+    for (const auto &opt : it->global_options) {
       std::string flags;
       if (!opt.short_flag.empty() && !opt.long_flag.empty()) {
         flags = std::format("{}, {}", opt.short_flag, opt.long_flag);
@@ -123,6 +123,77 @@ CommandRegistry::render_command_help(const std::string &cmd_name) const {
 
       ss << std::format("  {:<31} {}\n", flags, opt.description);
     }
+  }
+
+  ss << std::format("\nRun 'grm {} <subcommand> --help' for details on a "
+                    "specific subcommand.\n",
+                    it->name);
+  return ss.str();
+}
+
+std::string
+CommandRegistry::render_subcommand_help(const std::string &cmd_name,
+                                        const std::string &subcmd_name) const {
+  auto it = std::ranges::find_if(
+      commands_, [&](const CommandSpec &c) { return c.name == cmd_name; });
+
+  if (it == commands_.end()) {
+    return render_global_help();
+  }
+
+  if (it->subcommands.size() == 1 && it->subcommands[0].name == it->name) {
+    return render_command_help(cmd_name);
+  }
+
+  auto sub_it =
+      std::ranges::find_if(it->subcommands, [&](const SubcommandSpec &s) {
+        if (s.name == subcmd_name)
+          return true;
+        if ((s.name == "ls" && subcmd_name == "list") ||
+            (s.name == "delete" && subcmd_name == "rm") ||
+            (s.name == "viewers" && subcmd_name == "interactions") ||
+            (s.name == "edit" && subcmd_name == "update") ||
+            (s.name == "get" && subcmd_name == "download-all")) {
+          return true;
+        }
+        return false;
+      });
+
+  if (sub_it == it->subcommands.end()) {
+    return render_command_help(cmd_name);
+  }
+
+  std::stringstream ss;
+  std::string syn = sub_it->synopsis.empty() ? "[options]" : sub_it->synopsis;
+  ss << std::format("Usage: grm {} {} {}\n\n{}\n\nOptions:\n", it->name,
+                    sub_it->name, syn, sub_it->description);
+
+  for (const auto &opt : sub_it->options) {
+    std::string flags;
+    if (!opt.short_flag.empty() && !opt.long_flag.empty()) {
+      flags = std::format("{}, {}", opt.short_flag, opt.long_flag);
+    } else if (!opt.short_flag.empty()) {
+      flags = opt.short_flag;
+    } else {
+      flags = opt.long_flag;
+    }
+
+    if (!opt.value_hint.empty()) {
+      flags += " " + opt.value_hint;
+    }
+
+    std::string opt_desc = opt.description;
+    if (!opt.choices.empty()) {
+      std::string choices_str;
+      for (size_t i = 0; i < opt.choices.size(); ++i) {
+        if (i > 0)
+          choices_str += "|";
+        choices_str += opt.choices[i];
+      }
+      opt_desc += " (" + choices_str + ")";
+    }
+
+    ss << std::format("  {:<31} {}\n", flags, opt_desc);
   }
 
   return ss.str();
@@ -326,6 +397,76 @@ CommandRegistry::render_command_help_json(const std::string &cmd_name,
     json_object_array_add(subs_arr, s);
   }
   json_object_object_add(root, "subcommands", subs_arr);
+
+  int flags = pretty ? (JSON_C_TO_STRING_PRETTY | JSON_C_TO_STRING_SPACED)
+                     : JSON_C_TO_STRING_PLAIN;
+  std::string result = json_object_to_json_string_ext(root, flags);
+  json_object_put(root);
+  return result + "\n";
+}
+
+std::string
+CommandRegistry::render_subcommand_help_json(const std::string &cmd_name,
+                                             const std::string &subcmd_name,
+                                             bool pretty) const {
+  auto it = std::ranges::find_if(
+      commands_, [&](const CommandSpec &c) { return c.name == cmd_name; });
+
+  if (it == commands_.end()) {
+    return render_global_help_json(pretty);
+  }
+
+  auto sub_it =
+      std::ranges::find_if(it->subcommands, [&](const SubcommandSpec &s) {
+        if (s.name == subcmd_name)
+          return true;
+        if ((s.name == "ls" && subcmd_name == "list") ||
+            (s.name == "delete" && subcmd_name == "rm") ||
+            (s.name == "viewers" && subcmd_name == "interactions") ||
+            (s.name == "edit" && subcmd_name == "update") ||
+            (s.name == "get" && subcmd_name == "download-all")) {
+          return true;
+        }
+        return false;
+      });
+
+  if (sub_it == it->subcommands.end()) {
+    return render_command_help_json(cmd_name, pretty);
+  }
+
+  json_object *root = json_object_new_object();
+  json_object_object_add(root, "program", json_object_new_string("grm"));
+  json_object_object_add(root, "command",
+                         json_object_new_string(it->name.c_str()));
+  json_object_object_add(root, "subcommand",
+                         json_object_new_string(sub_it->name.c_str()));
+  json_object_object_add(root, "synopsis",
+                         json_object_new_string(sub_it->synopsis.c_str()));
+  json_object_object_add(root, "description",
+                         json_object_new_string(sub_it->description.c_str()));
+
+  json_object *opts_arr = json_object_new_array();
+  for (const auto &opt : sub_it->options) {
+    json_object *o = json_object_new_object();
+    json_object_object_add(o, "short_flag",
+                           json_object_new_string(opt.short_flag.c_str()));
+    json_object_object_add(o, "long_flag",
+                           json_object_new_string(opt.long_flag.c_str()));
+    json_object_object_add(o, "value_hint",
+                           json_object_new_string(opt.value_hint.c_str()));
+    json_object_object_add(o, "description",
+                           json_object_new_string(opt.description.c_str()));
+
+    json_object *choices_arr = json_object_new_array();
+    for (const auto &choice : opt.choices) {
+      json_object_array_add(choices_arr,
+                            json_object_new_string(choice.c_str()));
+    }
+    json_object_object_add(o, "choices", choices_arr);
+
+    json_object_array_add(opts_arr, o);
+  }
+  json_object_object_add(root, "options", opts_arr);
 
   int flags = pretty ? (JSON_C_TO_STRING_PRETTY | JSON_C_TO_STRING_SPACED)
                      : JSON_C_TO_STRING_PLAIN;

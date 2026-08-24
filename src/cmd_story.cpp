@@ -1247,7 +1247,7 @@ void App::print_story_help(fmt::OutputFormat format) {
 
 std::expected<int, std::string>
 App::cmd_story(const std::vector<std::string> &args) {
-  if (args.empty() || is_help_requested(args)) {
+  if (args.empty() || args[0] == "-h" || args[0] == "--help") {
     print_story_help(options_.format);
     return 0;
   }
@@ -1296,14 +1296,14 @@ App::cmd_story(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_story_post(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "post");
     return 0;
   }
 
   StoryPostOptions opts;
   std::string err;
   if (!parse_story_post_args(args, opts, err)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "post");
     return std::unexpected(err.empty() ? "Invalid arguments for story post"
                                        : err);
   }
@@ -1377,14 +1377,14 @@ App::cmd_story_post(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_story_edit(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "edit");
     return 0;
   }
 
   StoryEditOptions opts;
   std::string err;
   if (!parse_story_edit_args(args, opts, err)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "edit");
     return std::unexpected(err.empty() ? "Invalid arguments for story edit"
                                        : err);
   }
@@ -1460,14 +1460,14 @@ App::cmd_story_edit(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_story_ls(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "ls");
     return 0;
   }
 
   StoryListOptions opts;
   std::string err;
   if (!parse_story_ls_args(args, opts, err)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "ls");
     return std::unexpected(err.empty() ? "Invalid arguments for story ls"
                                        : err);
   }
@@ -1690,14 +1690,14 @@ App::cmd_story_ls(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_story_delete(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "delete");
     return 0;
   }
 
   StoryDeleteOptions opts;
   std::string err;
   if (!parse_story_delete_args(args, opts, err)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "delete");
     return std::unexpected(err.empty() ? "Invalid arguments for story delete"
                                        : err);
   }
@@ -1743,14 +1743,14 @@ App::cmd_story_delete(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_story_info(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "info");
     return 0;
   }
 
   StoryInfoOptions opts;
   std::string err;
   if (!parse_story_info_args(args, opts, err)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "info");
     return std::unexpected(err.empty() ? "Invalid arguments for story info"
                                        : err);
   }
@@ -1906,14 +1906,14 @@ App::cmd_story_info(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_story_viewers(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "viewers");
     return 0;
   }
 
   StoryViewersOptions opts;
   std::string err;
   if (!parse_story_viewers_args(args, opts, err)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "viewers");
     return std::unexpected(err.empty() ? "Invalid arguments for story viewers"
                                        : err);
   }
@@ -2011,14 +2011,14 @@ App::cmd_story_viewers(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_story_pin(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "pin");
     return 0;
   }
 
   StoryPinOptions opts;
   std::string err;
   if (!parse_story_pin_args(args, opts, err, true)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "pin");
     return std::unexpected(err.empty() ? "Invalid arguments for story pin"
                                        : err);
   }
@@ -2070,14 +2070,14 @@ App::cmd_story_pin(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_story_unpin(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "unpin");
     return 0;
   }
 
   StoryPinOptions opts;
   std::string err;
   if (!parse_story_pin_args(args, opts, err, false)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "unpin");
     return std::unexpected(err.empty() ? "Invalid arguments for story unpin"
                                        : err);
   }
@@ -2129,14 +2129,14 @@ App::cmd_story_unpin(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_story_react(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "react");
     return 0;
   }
 
   StoryReactOptions opts;
   std::string err;
   if (!parse_story_react_args(args, opts, err)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "react");
     return std::unexpected(err.empty() ? "Invalid arguments for story react"
                                        : err);
   }
@@ -2193,14 +2193,14 @@ App::cmd_story_react(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_story_privacy(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "privacy");
     return 0;
   }
 
   StoryPrivacyOptions opts;
   std::string err;
   if (!parse_story_privacy_args(args, opts, err)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "privacy");
     return std::unexpected(err.empty() ? "Invalid arguments for story privacy"
                                        : err);
   }
@@ -2252,7 +2252,7 @@ App::cmd_story_privacy(const std::vector<std::string> &args) {
 std::expected<int, std::string>
 App::cmd_story_stealth(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
-    print_story_help(options_.format);
+    print_subcommand_help("story", "stealth");
     return 0;
   }
 
