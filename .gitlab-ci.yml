@@ -107,12 +107,16 @@ test-suite:
 test-asan:
   stage: test
   needs: []
+  before_script:
+    - (command -v microdnf >/dev/null 2>&1 && microdnf install -y --setopt=install_weak_deps=0 libasan libubsan || true)
   script:
     - make asan
 
 test-tsan:
   stage: test
   needs: []
+  before_script:
+    - (command -v microdnf >/dev/null 2>&1 && microdnf install -y --setopt=install_weak_deps=0 libtsan || true)
   script:
     - make tsan
 

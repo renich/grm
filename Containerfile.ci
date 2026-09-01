@@ -1,58 +1,57 @@
-# Containerfile.ci - Minimal Fedora 44 CI Image for grm (C++23 + TDLib 1.8.66)
-# Multi-stage build for optimal image size and caching
+# Stage 1: Build Telegram TDLib from source on Fedora Minimal
+FROM registry.fedoraproject.org/fedora-minimal:latest AS builder
 
-# ------------------------------------------------------------------------------
-# Stage 1: Build TDLib 1.8.66 from source
-# ------------------------------------------------------------------------------
-FROM registry.fedoraproject.org/fedora-minimal:44 AS builder
+ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:${PKG_CONFIG_PATH}
+ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH}
 
+# Install build dependencies for TDLib
 RUN microdnf -y --setopt=install_weak_deps=0 install \
     gcc-c++ \
     cmake \
     ninja-build \
+    make \
+    binutils \
     git \
-    gperf \
     openssl-devel \
     zlib-ng-compat-devel \
-    binutils \
+    gperf \
+    php-cli \
     && microdnf clean all
 
-WORKDIR /tmp/tdlib-build
-RUN git clone --depth 1 https://github.com/tdlib/td.git . \
-    && cmake -B build -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-        -DCMAKE_INSTALL_PREFIX=/usr/local \
-        -DTD_ENABLE_JNI=OFF \
-        -DTD_ENABLE_DOTNET=OFF \
-        -DTD_ENABLE_LTO=ON \
-    && cmake --build build --target install \
-    && (strip --strip-unneeded /usr/local/lib/libtdjson.so* 2>/dev/null || true) \
-    && (strip --strip-unneeded /usr/local/lib64/libtdjson.so* 2>/dev/null || true) \
-    && rm -rf /tmp/tdlib-build
+# Clone and build TDLib release v1.8.66
+WORKDIR /tmp/tdlib
+RUN git clone --depth 1 --branch v1.8.66 https://github.com/tdlib/td.git . \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DTD_ENABLE_LTO=OFF -G Ninja .. \
+    && cmake --build . --target install \
+    && cd / \
+    && rm -rf /tmp/tdlib
 
-# ------------------------------------------------------------------------------
 # Stage 2: Final Minimal CI Runner Image
-# ------------------------------------------------------------------------------
-FROM registry.fedoraproject.org/fedora-minimal:44
+FROM registry.fedoraproject.org/fedora-minimal:latest
 
-# Environment paths for pkg-config and dynamic linker
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:${PKG_CONFIG_PATH}
 ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH}
 
 # Install minimal CI build, test, lint, and packaging dependencies
 RUN microdnf -y --setopt=install_weak_deps=0 install \
     gcc-c++ \
+    clang \
     clang-tools-extra \
     cmake \
     ninja-build \
     make \
     binutils \
+    libasan \
+    libubsan \
+    libtsan \
     json-c-devel \
     openssl-devel \
     zlib-ng-compat-devel \
     python3-docutils \
     python3-sphinx \
+    python3-sphinx_rtd_theme \
     rstcheck \
     git \
     && microdnf clean all
