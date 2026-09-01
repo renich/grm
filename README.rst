@@ -1,7 +1,31 @@
-.. image:: assets/logo.svg
-   :alt: grm — Group & Telegram Manager CLI
+.. image:: assets/banner.svg
+   :alt: grm — Fast Native Telegram CLI Client
    :align: center
-   :width: 360px
+   :width: 100%
+
+|
+
+.. image:: https://gitlab.com/renich/grm/badges/master/pipeline.svg
+   :target: https://gitlab.com/renich/grm/-/pipelines
+   :alt: Pipeline Status
+.. image:: https://img.shields.io/gitlab/v/release/renich/grm?logo=gitlab&label=release
+   :target: https://gitlab.com/renich/grm/-/releases
+   :alt: GitLab Release
+.. image:: https://img.shields.io/badge/C%2B%2B-23-00599C?style=flat&logo=c%2B%2B&logoColor=white
+   :target: https://en.cppreference.com/w/cpp/23
+   :alt: C++23 Native
+.. image:: https://img.shields.io/badge/TDLib-1.8.66-2CA5E0?style=flat&logo=telegram&logoColor=white
+   :target: https://core.telegram.org/tdlib
+   :alt: TDLib Engine
+.. image:: https://img.shields.io/badge/Podman-Quadlet-892CA0?style=flat&logo=podman&logoColor=white
+   :target: containers/grm.container
+   :alt: Rootless Podman Quadlet
+.. image:: https://img.shields.io/badge/License-GPLv3%20%2F%20GFDL-blue.svg?logo=gnu
+   :target: LICENSE
+   :alt: License
+.. image:: https://img.shields.io/badge/Donate-Liberapay-f6c915.svg?logo=liberapay&logoColor=black
+   :target: https://liberapay.com/renich
+   :alt: Donate using Liberapay
 
 ==================================
 grm — Group & Telegram Manager CLI
@@ -248,4 +272,14 @@ For full manual pages, architecture specifications, and roadmaps:
 License
 -------
 
-Distributed under the terms of the `GNU General Public License v3.0 or later (GPL-3.0-or-later) <LICENSE>`_.
+* **Software**: Distributed under the terms of the `GNU General Public License v3.0 or later (GPL-3.0-or-later) <LICENSE>`_.
+* **Documentation**: Distributed under the terms of the `GNU Free Documentation License v1.3 or later (GFDL-1.3-or-later) <LICENSE-DOCS>`_.
+
+Support & Donations
+-------------------
+
+If you find this project useful and wish to support its ongoing development, please consider donating:
+
+.. image:: https://liberapay.com/assets/widgets/donate.svg
+   :target: https://liberapay.com/renich
+   :alt: Donate using Liberapay
