@@ -93,7 +93,7 @@ int main() {
   assert(!story_post_json.empty());
   assert(story_post_json.find("\"command\":\"story\"") != std::string::npos);
   assert(story_post_json.find("\"subcommand\":\"post\"") != std::string::npos);
-  assert(story_post_json.find("\"privacy\"") != std::string::npos);
+  assert(story_post_json.find("\"--privacy\"") != std::string::npos);
 
   // Test 9: JSON all master help rendering (-H / --help=all)
   std::string all_json_compact = registry.render_all_help_json(false);

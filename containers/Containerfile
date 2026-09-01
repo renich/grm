@@ -1,0 +1,45 @@
+# Stage 1: Build grm binary using Fedora
+FROM registry.fedoraproject.org/fedora-minimal:latest AS builder
+
+RUN microdnf -y --setopt=install_weak_deps=0 install \
+    clang \
+    cmake \
+    ninja-build \
+    make \
+    binutils \
+    json-c-devel \
+    openssl-devel \
+    zlib-ng-compat-devel \
+    git \
+    && microdnf clean all
+
+WORKDIR /build
+COPY . .
+RUN cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++ && \
+    cmake --build build --target grm && \
+    strip --strip-unneeded build/grm
+
+# Stage 2: Minimal rootless runtime image
+FROM registry.fedoraproject.org/fedora-minimal:latest
+
+RUN microdnf -y --setopt=install_weak_deps=0 install \
+    json-c \
+    openssl \
+    zlib-ng-compat \
+    shadow-utils \
+    && microdnf clean all
+
+# Create unprivileged user and group
+RUN groupadd -g 10001 grmuser && \
+    useradd -u 10001 -g grmuser -m -d /home/grmuser -s /sbin/nologin grmuser
+
+WORKDIR /home/grmuser
+
+COPY --from=builder --chown=10001:10001 /build/build/grm /usr/local/bin/grm
+
+USER 10001:10001
+
+VOLUME ["/home/grmuser/.config/grm", "/home/grmuser/.local/share/grm"]
+
+ENTRYPOINT ["/usr/local/bin/grm"]
+CMD ["--help"]

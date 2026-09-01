@@ -143,4 +143,9 @@ build_set_story_reaction_json(int64_t chat_id, int32_t story_id,
 build_set_story_privacy_settings_json(int32_t story_id,
                                       const std::string &privacy);
 
+[[nodiscard]] std::string sanitize_single_line_caption(std::string_view text);
+
+[[nodiscard]] std::string truncate_utf8(std::string_view text,
+                                        size_t max_chars);
+
 } // namespace grm

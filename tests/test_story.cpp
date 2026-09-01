@@ -516,6 +516,52 @@ void test_story_equals_flag_parsing() {
   std::cout << "[PASS] test_story_equals_flag_parsing\n";
 }
 
+void test_caption_sanitization_and_truncation() {
+  // Test sanitization of newlines and extra whitespace
+  {
+    std::string raw = "¡¡Desayuno de campeones!!\n\n¿P...";
+    std::string sanitized = grm::sanitize_single_line_caption(raw);
+    TEST_ASSERT(sanitized == "¡¡Desayuno de campeones!! ¿P...");
+    TEST_ASSERT(sanitized.find('\n') == std::string::npos);
+  }
+
+  {
+    std::string raw = "1 mes de StarLink gratis: \nhttps://example.com";
+    std::string sanitized = grm::sanitize_single_line_caption(raw);
+    TEST_ASSERT(sanitized == "1 mes de StarLink gratis: https://example.com");
+    TEST_ASSERT(sanitized.find('\n') == std::string::npos);
+  }
+
+  {
+    std::string raw = "\t\n  Leading and trailing   spaces  \r\n";
+    std::string sanitized = grm::sanitize_single_line_caption(raw);
+    TEST_ASSERT(sanitized == "Leading and trailing spaces");
+  }
+
+  // Test UTF-8 safe truncation
+  {
+    std::string short_txt = "Short caption";
+    TEST_ASSERT(grm::truncate_utf8(short_txt, 32) == "Short caption");
+  }
+
+  {
+    std::string utf8_text =
+        "🥑 Cítricos y Frutas: Precios y Ofertas de la Semana";
+    std::string truncated = grm::truncate_utf8(utf8_text, 32);
+    TEST_ASSERT(truncated.ends_with("..."));
+    TEST_ASSERT(!truncated.empty());
+  }
+
+  {
+    std::string accents = "Aquí con el grupo de Astronomía en el observatorio";
+    std::string truncated = grm::truncate_utf8(accents, 32);
+    TEST_ASSERT(truncated.ends_with("..."));
+    TEST_ASSERT(truncated.starts_with("Aquí con el grupo de Astronom"));
+  }
+
+  std::cout << "[PASS] test_caption_sanitization_and_truncation\n";
+}
+
 int main() {
   test_period_parsing();
   test_story_post_arg_parsing();
@@ -525,6 +571,7 @@ int main() {
   test_story_pin_react_privacy_args();
   test_story_stickers_and_actions_json();
   test_story_equals_flag_parsing();
+  test_caption_sanitization_and_truncation();
   std::cout << "All Story unit tests passed successfully!\n";
   return 0;
 }

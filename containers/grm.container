@@ -1,0 +1,19 @@
+[Unit]
+Description=Telegram CLI Manager Service (Rootless Podman Container)
+After=network-online.target
+
+[Container]
+Image=localhost/grm:latest
+ContainerName=grm
+Volume=%h/.config/grm:/home/grmuser/.config/grm:z
+Volume=%h/.local/share/grm:/home/grmuser/.local/share/grm:z
+Environment=LOG_LEVEL=INFO
+AutoUpdate=registry
+Network=host.network
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=60
+
+[Install]
+WantedBy=default.target

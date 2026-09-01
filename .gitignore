@@ -1,7 +1,47 @@
+# C++ build artifacts
 /build*/
+/bin/
 *.o
 *.a
 *.so
 *.so.*
+
+# Local grm database / runtime cache
 .grm/
 /deps/
+/tdlib/
+
+# Scratch working directory for AI agents / scratchpads
+/scratch/
+
+# Documentation build output
+/docs/build/
+/docs/technical/api/
+/public/
+
+# Coverage and testing artifacts
+/coverage/
+
+# Temporary and local runtime state
+/tmp/
+/log/
+/logs/
+/.env
+/.env.local
+
+# Packaging and archives
+/rpmbuild/
+*.tar.gz
+*.tar.xz
+*.rpm
+*.deb
+
+# System and editor metadata
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# DO NOT ignore agent journaling records (.agents/journal)
+!.agents/
+!.agents/**

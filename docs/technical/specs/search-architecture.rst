@@ -11,20 +11,20 @@ TDLib API Endpoints
 ===================
 
 1. Chat Search (`searchChats` & `searchPublicChats`)
----------------------------------------------------
+----------------------------------------------------
 
 * Request: `{"query": "<text>", "limit": <count>}`
 * Returns `chats` object containing `chat_ids` vector.
 
 2. Message Search (`searchMessages` & `searchChatMessages`)
-----------------------------------------------------------
+-----------------------------------------------------------
 
 * Global: `searchMessages` (`{"query": "<text>", "limit": <count>}`)
 * Per-Chat: `searchChatMessages` (`{"chat_id": <id>, "query": "<text>", "limit": <count>}`)
 * Returns `messages` object containing `messages` array.
 
 3. User Search (`searchContacts` & `searchUserByUsername`)
----------------------------------------------------------
+----------------------------------------------------------
 
 * `searchContacts` (`{"query": "<text>", "limit": <count>}`)
 * `searchUserByUsername` (`{"username": "<handle>"}`)
@@ -38,10 +38,10 @@ Executing `grm search "<query>"` triggers parallel or sequential TDLib requests 
 Data Structures
 ===============
 
-```cpp
-struct SearchSummary {
-  std::vector<ChatSummary> chats;
-  std::vector<UserSummary> users;
-  std::vector<MessageSummary> messages;
-};
-```
+.. code-block:: cpp
+
+   struct SearchSummary {
+     std::vector<ChatSummary> chats;
+     std::vector<UserSummary> users;
+     std::vector<MessageSummary> messages;
+   };

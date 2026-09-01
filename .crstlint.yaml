@@ -1,0 +1,7 @@
+exclude_patterns:
+  - "build/**"
+  - "rpmbuild/**"
+  - "docs/build/**"
+  - "docs/technical/api/**"
+  - "public/**"
+  - "scratch/**"

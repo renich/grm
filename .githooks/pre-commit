@@ -1,0 +1,23 @@
+#!/usr/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+echo "==> Running pre-commit validation suite..."
+
+# 1. Format check
+echo "--> Verifying C++ formatting with clang-format..."
+make format
+
+# 2. RST documentation check
+echo "--> Verifying reStructuredText documentation with crstlint..."
+make doc-check
+
+# 3. Test suite
+echo "--> Running test suite..."
+make test
+
+# 4. Build verification (ensures project builds cleanly)
+echo "--> Verifying project build..."
+make build
+
+echo "==> All pre-commit checks passed successfully."

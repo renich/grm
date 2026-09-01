@@ -6,6 +6,11 @@ Thank you for your interest in contributing to **grm** (Group & Telegram Manager
 
 This document outlines the engineering standards, development workflows, testing requirements, and contribution guidelines for the project.
 
+Code of Honor
+=============
+
+All contributors are expected to uphold the principles defined in `CODE_OF_HONOR.rst <CODE_OF_HONOR.rst>`_. We build resilient, well-tested software, demand intellectual honesty, operate transparently, and verify all system properties empirically.
+
 Core Engineering Precepts
 =========================
 

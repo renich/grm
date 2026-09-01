@@ -3,11 +3,15 @@
 #include "grm/formatter.hpp"
 #include "grm/json_utils.hpp"
 #include "grm/logger.hpp"
+#include <algorithm>
 #include <charconv>
+#include <condition_variable>
 #include <filesystem>
 #include <format>
 #include <iostream>
 #include <json-c/json.h>
+#include <memory>
+#include <mutex>
 #include <unordered_set>
 
 namespace grm {
@@ -274,6 +278,65 @@ static std::expected<int32_t, std::string> parse_int32(std::string_view str) {
     return std::unexpected("Invalid integer: " + std::string(str));
   }
   return val;
+}
+
+std::string sanitize_single_line_caption(std::string_view text) {
+  std::string result;
+  result.reserve(text.size());
+  bool in_space = false;
+  for (char c : text) {
+    if (c == '\r' || c == '\n' || c == '\t' || c == ' ') {
+      if (!in_space && !result.empty()) {
+        result.push_back(' ');
+        in_space = true;
+      }
+    } else {
+      result.push_back(c);
+      in_space = false;
+    }
+  }
+  while (!result.empty() && result.back() == ' ') {
+    result.pop_back();
+  }
+  return result;
+}
+
+static size_t utf8_char_count(std::string_view text) {
+  size_t count = 0;
+  for (char ch : text) {
+    auto c = static_cast<unsigned char>(ch);
+    if ((c & 0xC0) != 0x80) {
+      count++;
+    }
+  }
+  return count;
+}
+
+std::string truncate_utf8(std::string_view text, size_t max_chars) {
+  if (utf8_char_count(text) <= max_chars + 3) {
+    return std::string(text);
+  }
+  size_t char_count = 0;
+  size_t byte_idx = 0;
+  while (byte_idx < text.size() && char_count < max_chars) {
+    unsigned char c = static_cast<unsigned char>(text[byte_idx]);
+    size_t char_len = 1;
+    if ((c & 0x80) == 0) {
+      char_len = 1;
+    } else if ((c & 0xE0) == 0xC0) {
+      char_len = 2;
+    } else if ((c & 0xF0) == 0xE0) {
+      char_len = 3;
+    } else if ((c & 0xF8) == 0xF0) {
+      char_len = 4;
+    }
+    if (byte_idx + char_len > text.size()) {
+      break;
+    }
+    byte_idx += char_len;
+    char_count++;
+  }
+  return std::string(text.substr(0, byte_idx)) + "...";
 }
 
 std::expected<int32_t, std::string> parse_period_string(std::string_view str) {
@@ -1344,6 +1407,96 @@ App::cmd_story_post(const std::vector<std::string> &args) {
     formatted_caption_json = parsed_caption->to_string();
   }
 
+  struct StorySendState {
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool completed{false};
+    bool failed{false};
+    int64_t final_story_id{0};
+    int64_t temp_story_id{0};
+    int64_t chat_id{0};
+    std::string error_message;
+    JsonValue final_story_json;
+  };
+
+  auto send_state = std::make_shared<StorySendState>();
+  send_state->chat_id = target_chat_id;
+
+  client_->on_update([send_state](const JsonValue &update) {
+    auto type_opt = update.get_type();
+    if (!type_opt)
+      return;
+    const std::string &type = *type_opt;
+
+    if (type == "updateStorySendSucceeded") {
+      int64_t old_id = update.get_int("old_story_id").value_or(0);
+      int64_t new_id = 0;
+      int64_t sender_chat_id = 0;
+      if (auto story_obj = update.get_object("story")) {
+        new_id = story_obj->get_int("id").value_or(0);
+        sender_chat_id = story_obj->get_int("sender_chat_id").value_or(0);
+      }
+      std::scoped_lock lock(send_state->mutex);
+      if ((send_state->temp_story_id == 0 ||
+           send_state->temp_story_id == old_id ||
+           send_state->temp_story_id == new_id) &&
+          (send_state->chat_id == 0 || send_state->chat_id == sender_chat_id)) {
+        send_state->final_story_id = new_id;
+        if (auto story_obj = update.get_object("story")) {
+          send_state->final_story_json = *story_obj;
+        }
+        send_state->completed = true;
+        send_state->cv.notify_all();
+      }
+    } else if (type == "updateStorySendFailed") {
+      int64_t sid = 0;
+      int64_t sender_chat_id = 0;
+      if (auto story_obj = update.get_object("story")) {
+        sid = story_obj->get_int("id").value_or(0);
+        sender_chat_id = story_obj->get_int("sender_chat_id").value_or(0);
+      }
+      std::scoped_lock lock(send_state->mutex);
+      if ((send_state->temp_story_id == 0 ||
+           send_state->temp_story_id == sid) &&
+          (send_state->chat_id == 0 || send_state->chat_id == sender_chat_id)) {
+        send_state->failed = true;
+        if (auto err_obj = update.get_object("error")) {
+          int64_t code = err_obj->get_int("code").value_or(0);
+          std::string msg =
+              err_obj->get_string("message").value_or("Story upload failed");
+          send_state->error_message =
+              std::format("TDLib Error [{}]: {}", code, msg);
+        } else {
+          send_state->error_message = "Story upload failed";
+        }
+        send_state->cv.notify_all();
+      }
+    } else if (type == "updateStory") {
+      if (auto story_obj = update.get_object("story")) {
+        int64_t sid = story_obj->get_int("id").value_or(0);
+        int64_t sender_chat_id =
+            story_obj->get_int("sender_chat_id").value_or(0);
+        bool is_being_posted =
+            story_obj->get_bool("is_being_posted").value_or(false);
+        bool is_being_edited =
+            story_obj->get_bool("is_being_edited").value_or(false);
+
+        std::scoped_lock lock(send_state->mutex);
+        if ((send_state->temp_story_id == sid ||
+             (send_state->temp_story_id != 0 && sid < 2000000000)) &&
+            (send_state->chat_id == 0 ||
+             send_state->chat_id == sender_chat_id)) {
+          if (!is_being_posted && !is_being_edited) {
+            send_state->final_story_id = sid;
+            send_state->final_story_json = *story_obj;
+            send_state->completed = true;
+            send_state->cv.notify_all();
+          }
+        }
+      }
+    }
+  });
+
   std::string post_req =
       build_post_story_json(opts, target_chat_id, formatted_caption_json);
   grm::log::debug("Dispatching postStory request...");
@@ -1359,15 +1512,54 @@ App::cmd_story_post(const std::vector<std::string> &args) {
     return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
   }
 
-  int64_t story_id = post_res->get_int("id").value_or(0);
+  int64_t initial_story_id = post_res->get_int("id").value_or(0);
+  bool is_being_posted = post_res->get_bool("is_being_posted").value_or(false);
+
+  int64_t final_id = initial_story_id;
+  JsonValue final_json = *post_res;
+
+  if (is_being_posted || initial_story_id >= 2000000000) {
+    {
+      std::scoped_lock lock(send_state->mutex);
+      send_state->temp_story_id = initial_story_id;
+    }
+
+    grm::log::debug(std::format(
+        "Waiting for story upload completion (provisional ID: {})...",
+        initial_story_id));
+
+    std::unique_lock<std::mutex> lock(send_state->mutex);
+    bool ok = send_state->cv.wait_for(lock, std::chrono::seconds(120), [&] {
+      return send_state->completed || send_state->failed;
+    });
+
+    if (!ok) {
+      return std::unexpected(
+          std::format("Story upload timed out (provisional Story ID: {})",
+                      initial_story_id));
+    }
+
+    if (send_state->failed) {
+      return std::unexpected(send_state->error_message.empty()
+                                 ? "Story upload failed"
+                                 : send_state->error_message);
+    }
+
+    if (send_state->final_story_id > 0) {
+      final_id = send_state->final_story_id;
+    }
+    if (!send_state->final_story_json.is_null()) {
+      final_json = send_state->final_story_json;
+    }
+  }
 
   if (options_.format == fmt::OutputFormat::Json ||
       options_.format == fmt::OutputFormat::JsonL) {
-    std::cout << post_res->to_string() << "\n";
+    std::cout << final_json.to_string() << "\n";
   } else {
     std::cout << std::format("✓ Story published successfully (Story ID: {}, "
                              "Chat: {}, Privacy: {}, Active Period: {}s)\n",
-                             story_id, target_chat_id, opts.privacy,
+                             final_id, target_chat_id, opts.privacy,
                              opts.active_period);
   }
 
@@ -1431,6 +1623,71 @@ App::cmd_story_edit(const std::vector<std::string> &args) {
   [[maybe_unused]] auto prefetch_res =
       client_->send_request("getStory", get_story_req, 10.0);
 
+  struct StoryEditState {
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool completed{false};
+    bool failed{false};
+    int64_t story_id{0};
+    int64_t chat_id{0};
+    std::string error_message;
+    JsonValue final_story_json;
+  };
+
+  auto edit_state = std::make_shared<StoryEditState>();
+  edit_state->story_id = opts.story_id;
+  edit_state->chat_id = target_chat_id;
+
+  client_->on_update([edit_state](const JsonValue &update) {
+    auto type_opt = update.get_type();
+    if (!type_opt)
+      return;
+    const std::string &type = *type_opt;
+
+    if (type == "updateStory") {
+      if (auto story_obj = update.get_object("story")) {
+        int64_t sid = story_obj->get_int("id").value_or(0);
+        int64_t sender_chat_id =
+            story_obj->get_int("sender_chat_id").value_or(0);
+        bool is_being_edited =
+            story_obj->get_bool("is_being_edited").value_or(false);
+
+        std::scoped_lock lock(edit_state->mutex);
+        if (edit_state->story_id == sid &&
+            (edit_state->chat_id == 0 ||
+             edit_state->chat_id == sender_chat_id)) {
+          if (!is_being_edited) {
+            edit_state->final_story_json = *story_obj;
+            edit_state->completed = true;
+            edit_state->cv.notify_all();
+          }
+        }
+      }
+    } else if (type == "updateStorySendFailed") {
+      int64_t sid = 0;
+      int64_t sender_chat_id = 0;
+      if (auto story_obj = update.get_object("story")) {
+        sid = story_obj->get_int("id").value_or(0);
+        sender_chat_id = story_obj->get_int("sender_chat_id").value_or(0);
+      }
+      std::scoped_lock lock(edit_state->mutex);
+      if (edit_state->story_id == sid &&
+          (edit_state->chat_id == 0 || edit_state->chat_id == sender_chat_id)) {
+        edit_state->failed = true;
+        if (auto err_obj = update.get_object("error")) {
+          int64_t code = err_obj->get_int("code").value_or(0);
+          std::string msg =
+              err_obj->get_string("message").value_or("Story edit failed");
+          edit_state->error_message =
+              std::format("TDLib Error [{}]: {}", code, msg);
+        } else {
+          edit_state->error_message = "Story edit failed";
+        }
+        edit_state->cv.notify_all();
+      }
+    }
+  });
+
   std::string edit_req = build_edit_story_json(target_chat_id, opts.story_id,
                                                opts, formatted_caption_json);
   grm::log::debug(std::format("Dispatching editStory request: {}", edit_req));
@@ -1446,9 +1703,38 @@ App::cmd_story_edit(const std::vector<std::string> &args) {
     return std::unexpected(std::format("TDLib Error [{}]: {}", code, msg));
   }
 
+  bool is_being_edited = edit_res->get_bool("is_being_edited").value_or(false);
+  JsonValue final_json = *edit_res;
+
+  if (is_being_edited) {
+    grm::log::debug(std::format(
+        "Waiting for story edit upload completion (Story ID: {})...",
+        opts.story_id));
+
+    std::unique_lock<std::mutex> lock(edit_state->mutex);
+    bool ok = edit_state->cv.wait_for(lock, std::chrono::seconds(120), [&] {
+      return edit_state->completed || edit_state->failed;
+    });
+
+    if (!ok) {
+      return std::unexpected(
+          std::format("Story edit timed out (Story ID: {})", opts.story_id));
+    }
+
+    if (edit_state->failed) {
+      return std::unexpected(edit_state->error_message.empty()
+                                 ? "Story edit failed"
+                                 : edit_state->error_message);
+    }
+
+    if (!edit_state->final_story_json.is_null()) {
+      final_json = edit_state->final_story_json;
+    }
+  }
+
   if (options_.format == fmt::OutputFormat::Json ||
       options_.format == fmt::OutputFormat::JsonL) {
-    std::cout << edit_res->to_string() << "\n";
+    std::cout << final_json.to_string() << "\n";
   } else {
     std::cout << std::format("✓ Story {} edited successfully (Chat: {})\n",
                              opts.story_id, target_chat_id);
@@ -1497,7 +1783,7 @@ App::cmd_story_ls(const std::vector<std::string> &args) {
   std::unordered_set<int64_t> seen_ids;
 
   // 1. Fetch active stories
-  if (!opts.pinned && !opts.archived) {
+  if (opts.all || (!opts.pinned && !opts.archived)) {
     std::string req = build_get_chat_active_stories_json(target_chat_id);
     auto res = client_->send_request("getChatActiveStories", req, 15.0);
     if (res && res->get_string("@type").value_or("") != "error") {
@@ -1546,7 +1832,8 @@ App::cmd_story_ls(const std::vector<std::string> &args) {
   }
 
   // 2. Fetch posted to chat page (profile stories/posts)
-  if (opts.pinned || opts.all || collected_stories.empty()) {
+  if (opts.all || opts.pinned ||
+      (!opts.archived && collected_stories.empty())) {
     std::string req =
         std::format(R"({{"chat_id": {}, "from_story_id": 0, "limit": {}}})",
                     target_chat_id, opts.limit);
@@ -1586,7 +1873,7 @@ App::cmd_story_ls(const std::vector<std::string> &args) {
   }
 
   // 3. Fetch archived stories if requested
-  if (opts.archived || opts.all) {
+  if (opts.all || opts.archived) {
     std::string req =
         std::format(R"({{"chat_id": {}, "from_story_id": 0, "limit": {}}})",
                     target_chat_id, opts.limit);
@@ -1624,8 +1911,26 @@ App::cmd_story_ls(const std::vector<std::string> &args) {
     }
   }
 
+  // Sort collected stories in descending chronological order (newest first)
+  std::sort(collected_stories.begin(), collected_stories.end(),
+            [](const StoryItem &a, const StoryItem &b) {
+              if (a.date != b.date) {
+                return a.date > b.date;
+              }
+              return a.id > b.id;
+            });
+
+  if (collected_stories.size() > static_cast<size_t>(opts.limit)) {
+    collected_stories.resize(static_cast<size_t>(opts.limit));
+  }
+
   if (collected_stories.empty()) {
-    std::cout << "No stories found for chat ID " << target_chat_id << ".\n";
+    if (options_.format == fmt::OutputFormat::Json ||
+        options_.format == fmt::OutputFormat::JsonL) {
+      std::cout << "[]\n";
+    } else {
+      std::cout << "No stories found for chat ID " << target_chat_id << ".\n";
+    }
     return 0;
   }
 
@@ -1652,20 +1957,28 @@ App::cmd_story_ls(const std::vector<std::string> &args) {
     return 0;
   }
 
-  size_t count =
-      std::min(collected_stories.size(), static_cast<size_t>(opts.limit));
-  std::cout << std::format("Found {} story/stories for chat ID {}:\n\n", count,
-                           target_chat_id);
+  if (options_.format == fmt::OutputFormat::Markdown) {
+    std::cout << "| Story ID | Date | Pinned | Content | Caption |\n";
+    std::cout << "| :--- | :--- | :--- | :--- | :--- |\n";
+    for (const auto &item : collected_stories) {
+      std::string date_str = fmt::format_iso8601(item.date);
+      std::string caption_esc = fmt::escape_markdown_table_cell(item.caption);
+      std::cout << std::format("| {} | {} | {} | {} | {} |\n", item.id,
+                               date_str, item.is_pinned ? "Yes" : "No",
+                               item.content_type, caption_esc);
+    }
+    return 0;
+  }
+
+  std::cout << std::format("Found {} story/stories for chat ID {}:\n\n",
+                           collected_stories.size(), target_chat_id);
   std::cout << std::format("{:<12} {:<20} {:<8} {:<14} {}\n", "STORY ID",
                            "DATE", "PINNED", "CONTENT", "CAPTION");
   std::cout << std::string(80, '-') << "\n";
 
-  for (size_t i = 0; i < count; ++i) {
-    const auto &item = collected_stories[i];
-    std::string caption_text = item.caption;
-    if (caption_text.size() > 35) {
-      caption_text = caption_text.substr(0, 32) + "...";
-    }
+  for (const auto &item : collected_stories) {
+    std::string clean_caption = sanitize_single_line_caption(item.caption);
+    std::string caption_text = truncate_utf8(clean_caption, 32);
 
     std::string date_str = std::to_string(item.date);
     if (item.date > 0) {

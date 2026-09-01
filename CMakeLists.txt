@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(grm VERSION 0.8.1 LANGUAGES CXX)
+project(grm VERSION 0.9.0 LANGUAGES CXX)
 
 
 set(CMAKE_CXX_STANDARD 23)

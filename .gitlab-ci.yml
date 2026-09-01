@@ -16,6 +16,8 @@ workflow:
   rules:
     - if: '$CI_COMMIT_MESSAGE =~ /\[skip ci\]/i'
       when: never
+    - if: '$CI_COMMIT_MESSAGE =~ /chore\(journal\)/i'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_TAG'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == null'
@@ -25,6 +27,7 @@ stages:
   - lint
   - build
   - test
+  - deploy
   - release
 
 build-ci-image:
@@ -82,10 +85,36 @@ test-suite:
   script:
     - ctest --test-dir build --output-on-failure
 
+test-asan:
+  stage: test
+  needs: []
+  script:
+    - make asan
+
+test-tsan:
+  stage: test
+  needs: []
+  script:
+    - make tsan
+
+pages:
+  stage: deploy
+  needs: ["lint-docs"]
+  script:
+    - make -C docs dirhtml
+    - mkdir -p public
+    - cp -r docs/build/dirhtml/* public/
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+
 release-tag:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
-  needs: ["build-release", "test-suite"]
+  needs: ["build-release", "test-suite", "test-asan", "test-tsan"]
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/'
   script:

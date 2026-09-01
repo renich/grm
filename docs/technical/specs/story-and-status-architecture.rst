@@ -27,8 +27,10 @@ Component Architecture
 ---------------------------------------------
 
 * **Story Posting & Overlays**: Dispatches ``postStory`` with ``inputStoryContentPhoto`` or ``inputStoryContentVideo``, ``storyPrivacySettings`` (``everyone``, ``contacts``, ``close_friends``), and interactive sticker areas via ``inputStoryAreas``:
+
   * Clickable link sticker: ``inputStoryAreaTypeLink`` with normalized ``storyAreaPosition`` coordinates.
   * Suggested reaction sticker: ``inputStoryAreaTypeSuggestedReaction`` with ``reactionTypeEmoji``.
+
 * **Story Listing**: Dispatches ``getChatActiveStories``, ``getChatPostedToChatPageStories``, and ``getChatArchivedStories``, fetching detailed story metadata via ``getStory`` with human-readable timestamps and pinned/posted indicators.
 * **Story Metadata Inspection**: Dispatches ``getStory`` and formats comprehensive metadata (published date, sender ID, media type, view count, forward count, reaction count, capabilities, status, and interactive stickers).
 * **Viewers & Analytics**: Dispatches ``getStoryInteractions`` with query filtering and pagination limits to list viewers, interaction types, and reaction emojis.

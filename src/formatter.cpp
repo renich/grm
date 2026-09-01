@@ -359,7 +359,7 @@ static std::vector<std::string_view> split_lines(std::string_view text) {
   return lines;
 }
 
-static std::string escape_markdown_table_cell(std::string_view text) {
+std::string escape_markdown_table_cell(std::string_view text) {
   std::string escaped;
   escaped.reserve(text.size() * 2);
   for (char c : text) {

@@ -12,6 +12,9 @@ grm Technical Architecture
    specs/search-architecture
    specs/search-refactoring-and-hardening
    specs/story-and-status-architecture
+   specs/coding-standards
+   specs/threat-model
+   specs/release-procedure
 
 Architectural Blueprint
 =======================
@@ -52,5 +55,7 @@ Technical Traceability Matrix
 | ``[TECH-008]``    | Search Hardening Engine    | ``[FUNC-014]``        |
 +-------------------+----------------------------+-----------------------+
 | ``[TECH-009]``    | Story & Status Engine      | ``[FUNC-015]``        |
++-------------------+----------------------------+-----------------------+
+| ``[TECH-010]``    | Release Procedure Playbook | ``[FUNC-001]``        |
 +-------------------+----------------------------+-----------------------+
 

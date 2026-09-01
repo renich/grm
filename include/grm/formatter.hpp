@@ -103,6 +103,7 @@ humanize_auth_code_type(std::string_view tdlib_type);
 [[nodiscard]] std::string humanize_relative_time(int64_t timestamp_sec,
                                                  int64_t now_sec = 0);
 [[nodiscard]] std::string format_iso8601(int64_t timestamp_sec);
+[[nodiscard]] std::string escape_markdown_table_cell(std::string_view text);
 
 [[nodiscard]] bool should_use_color(ColorMode mode);
 [[nodiscard]] OutputFormat resolve_format(OutputFormat requested_format,

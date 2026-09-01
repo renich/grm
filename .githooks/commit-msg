@@ -1,0 +1,29 @@
+#!/usr/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# Conventional Commits Validator Hook
+# Format: <type>(<scope>): <subject> OR <type>: <subject>
+
+commit_msg_file="${1}"
+commit_msg="$(head -n 1 "${commit_msg_file}")"
+
+# Regex pattern for Conventional Commits
+pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_\-\.\/]+\))?:\ [^A-Z].+$'
+
+# Allow merge commits or automated version tag messages
+if [[ "${commit_msg}" =~ ^Merge\  || "${commit_msg}" =~ ^Release\ v ]]; then
+  exit 0
+fi
+
+if [[ ! "${commit_msg}" =~ ${pattern} ]]; then
+  echo "Error: Invalid commit message format." >&2
+  echo "Message: '${commit_msg}'" >&2
+  echo "" >&2
+  echo "Commit messages must adhere to Conventional Commits:" >&2
+  echo "  <type>(<scope>): <lowercase subject>" >&2
+  echo "" >&2
+  echo "Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert" >&2
+  echo "Example: feat(service): add graceful fiber shutdown handler" >&2
+  exit 1
+fi

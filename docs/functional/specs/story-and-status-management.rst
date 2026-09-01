@@ -21,8 +21,10 @@ Functional Requirements
 * **Media Types**: Supports local photo images (``--photo <path>``) or videos (``--video <path>``).
 * **Captions**: Accepts optional caption text with native clickable URLs and Markdown entity parsing (``--caption "text"``).
 * **Interactive Stickers / Overlays**:
+
   * Clickable link sticker overlay (``-l``, ``--link <url>``).
   * Interactive suggested reaction button (``-r``, ``--reaction <emoji>``).
+
 * **Privacy Controls**: Supports privacy scope (``--privacy everyone|contacts|close_friends``; default: ``everyone``).
 * **Active Duration**: Configurable story expiration (``--period <6h|12h|24h|48h>``; default: ``24h`` / 86400s).
 * **Chat Target**: Supports publishing on behalf of personal user account or specified channel/supergroup (``-C``, ``--chat <id>``).

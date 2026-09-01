@@ -9,10 +9,14 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 [Unreleased]
 ============
 
+[0.9.0] — 2026-09-01
+====================
+
 .. rubric:: Added
 
 * Dedicated per-subcommand ``--help`` architecture and routing across all multi-command suites (``story``, ``chat``, ``msg``, ``topic``, ``file``, ``folder``, ``search``, ``status``, ``completion``), rendering isolated synopsis, usage, and option definitions.
-* Architecture Decision Record ``ADR-002`` (``docs/adrs/2026-08-24-static-aot-shell-completion.rst``) documenting the static Ahead-of-Time (AOT) shell autocompletion architecture and evaluating JIT runtime binary callbacks vs compile-time generation.
+* Architecture Decision Record ``ADR-002`` (``docs/adrs/2026-08-24-static-aot-shell-completion.rst``) documenting the static Ahead-of-Time (AOT) shell autocompletion architecture.
+* Integrated project scaffolding, directives, and quality standards: ``AGENTS.md``, Universal Code of Honor v2.0 (``CODE_OF_HONOR.rst``), GNU FDLv1.3 license (``LICENSE-DOCS``), developer and release scripts (``scripts/dev-setup.bash``, ``scripts/release.bash``), Git hooks (``commit-msg``, ``pre-commit``), ``.crstlint.yaml``, ``.editorconfig``, Sphinx documentation portal with business and technical architecture suites, RPM packaging spec (``packaging/grm.spec``), and rootless Podman container suite with systemd Quadlet (``containers/grm.container``).
 
 .. rubric:: Changed
 
@@ -21,6 +25,10 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 
 .. rubric:: Fixed
 
+* Fixed premature CLI exit in ``grm story post`` and ``grm story edit`` by introducing a synchronous TDLib update listener waiting for upload completion (``updateStorySendSucceeded``, ``updateStory``, ``updateStorySendFailed``), ensuring the confirmed permanent server-assigned Story ID is captured instead of the provisional local ID (``2000000000``).
+* Fixed multiline captions breaking table row boundaries in ``grm story ls`` by flattening newlines and whitespace into single spaces and applying UTF-8 safe code point truncation.
+* Fixed story listing order in ``grm story ls`` to guarantee strict descending chronological sorting across active, pinned, and archived sources.
+* Fixed ``--archived`` (``-a``) filter fallback in ``grm story ls`` to prevent mistakenly fetching pinned profile stories when archived stories are requested.
 * Added CLI argument support for ``--format=<fmt>``, ``--color=<mode>``, and ``--config=<file>`` syntax.
 * Fixed subcommand option forwarding in CLI runner to prevent swallowing flags.
 

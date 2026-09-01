@@ -1,6 +1,6 @@
-============================================================
+=================================================================
 [FUNC-014] Universal Cross-Domain Search Functional Specification
-============================================================
+=================================================================
 
 Overview
 ========
@@ -34,7 +34,7 @@ Requirements
 * `-v, --verbose`: Includes extended metadata (e.g., chat IDs, message IDs, user handles).
 
 Specification Status: In Progress / Unresolved
-=============================================
+==============================================
 
 .. note::
 
