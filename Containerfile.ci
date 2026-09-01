@@ -18,9 +18,9 @@ RUN microdnf -y --setopt=install_weak_deps=0 install \
     php-cli \
     && microdnf clean all
 
-# Clone and build TDLib release v1.8.66
+# Clone and build TDLib from upstream master
 WORKDIR /tmp/tdlib
-RUN git clone --depth 1 --branch v1.8.66 https://github.com/tdlib/td.git . \
+RUN git clone --depth 1 https://github.com/tdlib/td.git . \
     && mkdir build \
     && cd build \
     && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DTD_ENABLE_LTO=OFF -G Ninja .. \

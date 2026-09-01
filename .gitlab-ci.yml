@@ -53,6 +53,7 @@ build-ci-image:
 
 lint-docs:
   stage: lint
+  needs: []
   script:
     - make doc-check
 
@@ -76,6 +77,7 @@ docs-sphinx:
 
 build-debug:
   stage: build
+  needs: []
   script:
     - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
     - cmake --build build
@@ -87,6 +89,7 @@ build-debug:
 
 build-release:
   stage: build
+  needs: []
   script:
     - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
     - cmake --build build
