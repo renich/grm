@@ -46,14 +46,14 @@ all: build
 build: $(BUILD_DIR)/grm
 
 $(BUILD_DIR)/grm: $(SRC_FILES) CMakeLists.txt | $(BUILD_DIR)
-	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=OFF -DENABLE_TSAN=OFF -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=OFF -DENABLE_TSAN=OFF
 	$(CMAKE) --build $(BUILD_DIR)
 
 # Production release build (stripped)
 release: $(BUILD_DIR)/grm-release
 
 $(BUILD_DIR)/grm-release: $(SRC_FILES) CMakeLists.txt | $(BUILD_DIR)
-	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_ASAN=OFF -DENABLE_TSAN=OFF -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_ASAN=OFF -DENABLE_TSAN=OFF
 	$(CMAKE) --build $(BUILD_DIR)
 	$(STRIP) --strip-unneeded $(BUILD_DIR)/grm
 	@touch $@
@@ -68,14 +68,14 @@ static:
 rpm: $(SRC_FILES) packaging/grm.spec
 	@echo "==> Building RPM package locally..."
 	mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-	tar --exclude='./rpmbuild' --exclude='./build' --exclude='./.git' -czf rpmbuild/SOURCES/grm-0.8.1.tar.gz .
+	tar --exclude='./rpmbuild' --exclude='./build' --exclude='./.git' -czf rpmbuild/SOURCES/grm-0.9.0.tar.gz .
 	rpmbuild --define "_topdir $$(pwd)/rpmbuild" -ba packaging/grm.spec
 	@echo "==> RPM build complete in rpmbuild/RPMS/"
 
 srpm: $(SRC_FILES) packaging/grm.spec
 	@echo "==> Building SRPM package locally..."
 	mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-	tar --exclude='./rpmbuild' --exclude='./build' --exclude='./.git' -czf rpmbuild/SOURCES/grm-0.8.1.tar.gz .
+	tar --exclude='./rpmbuild' --exclude='./build' --exclude='./.git' -czf rpmbuild/SOURCES/grm-0.9.0.tar.gz .
 	rpmbuild --define "_topdir $$(pwd)/rpmbuild" -bs packaging/grm.spec
 	@echo "==> SRPM build complete in rpmbuild/SRPMS/"
 
@@ -87,18 +87,18 @@ test: check
 spec: check
 
 check:
-	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DENABLE_ASAN=OFF -DENABLE_TSAN=OFF
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_ASAN=OFF -DENABLE_TSAN=OFF
 	$(CMAKE) --build $(BUILD_DIR)
 	$(CTEST) --test-dir $(BUILD_DIR) --output-on-failure
 	$(MAKE) doc-check
 
 asan:
-	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DENABLE_ASAN=ON -DENABLE_TSAN=OFF
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON -DENABLE_TSAN=OFF
 	$(CMAKE) --build $(BUILD_DIR)
 	LSAN_OPTIONS="suppressions=$(abspath sanitizers/lsan.supp)" $(CTEST) --test-dir $(BUILD_DIR) --output-on-failure
 
 tsan:
-	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DENABLE_TSAN=ON -DENABLE_ASAN=OFF
+	$(CMAKE) -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug -DENABLE_TSAN=ON -DENABLE_ASAN=OFF
 	$(CMAKE) --build $(BUILD_DIR)
 	$(CTEST) --test-dir $(BUILD_DIR) --output-on-failure
 
