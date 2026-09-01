@@ -15,6 +15,8 @@ grm Project Roadmap
    roadmaps/phase-8-packaging
    roadmaps/phase-9-stories-and-status
    development-workflow
+   release-procedure
+   audits/index
 
 Executive Summary
 =================

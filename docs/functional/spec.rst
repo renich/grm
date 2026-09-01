@@ -7,12 +7,17 @@ grm Functional Specification
 
    specs/auth-and-chat-management
    specs/message-crud-and-export
+   specs/file-uploads
    specs/file-uploads-and-downloads
+   specs/forum-topics
    specs/forum-topics-crud
    specs/rich-text-emojis-and-branding
    specs/chat-folder-management
    specs/universal-cross-domain-search
    specs/story-and-status-management
+   specs/cli-options-and-output
+   specs/cli-subcommand-help-and-autocompletion
+   specs/output-formatting-and-llm-modes
 
 Overview
 ========

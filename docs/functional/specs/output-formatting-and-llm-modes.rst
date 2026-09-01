@@ -31,7 +31,7 @@ Key Features & Requirements
 
 3. **Multi-Line Message Alignment & Markdown Escaping**:
 
-   - **Interactive Terminal Indentation**: Embedded newlines (``\n``) in multi-line message texts are split and continuation lines are indented to match the width of the ``[MsgID <id>]: `` prefix.
+   - **Interactive Terminal Indentation**: Embedded newlines (``\n``) in multi-line message texts are split and continuation lines are indented to match the width of the ``[MsgID <id>]:`` prefix.
    - **Markdown Table Escaping**: Embedded newlines inside Markdown table cells are replaced with ``<br>`` tags to preserve Markdown table alignment and parser compatibility.
 
 4. **TTY Auto-Detection & Color Control**:

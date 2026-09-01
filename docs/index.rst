@@ -45,6 +45,7 @@ Documentation Architecture
    adrs/index
    project/roadmap
    user/grm
+   man/grm.1
 
 Indices and tables
 ==================

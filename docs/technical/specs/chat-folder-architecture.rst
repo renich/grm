@@ -18,61 +18,53 @@ TDLib Method Mappings
 2. **Get Detailed Chat Folder Settings (``getChatFolder``)**:
 
    * Payload: ``{"@type": "getChatFolder", "chat_folder_id": <id>}``
-   * Response: ``chatFolder`` object:
-
-     * ``title`` (string)
-     * ``icon`` (chatFolderIcon object)
-     * ``color_id`` (integer)
-     * ``pinned_chat_ids`` (array of int64)
-     * ``included_chat_ids`` (array of int64)
-     * ``excluded_chat_ids`` (array of int64)
-     * ``exclude_muted``, ``exclude_read``, ``exclude_archived`` (booleans)
-     * ``include_contacts``, ``include_non_contacts``, ``include_bots``, ``include_groups``, ``include_channels`` (booleans)
+   * Response: ``chatFolder`` object containing title, icon, colors, and chat filter criteria.
 
 3. **Create Chat Folder (``createChatFolder``)**:
 
-   * Payload:
-     .. code-block:: json
+   Payload:
 
-        {
-          "@type": "createChatFolder",
-          "folder": {
-            "@type": "chatFolder",
-            "title": "<title>",
-            "icon": {"@type": "chatFolderIcon", "name": "Custom"},
-            "color_id": -1,
-            "pinned_chat_ids": [],
-            "included_chat_ids": [],
-            "excluded_chat_ids": [],
-            "exclude_muted": false,
-            "exclude_read": false,
-            "exclude_archived": false,
-            "include_contacts": false,
-            "include_non_contacts": false,
-            "include_bots": false,
-            "include_groups": true,
-            "include_channels": true
-          }
+   .. code-block:: json
+
+      {
+        "@type": "createChatFolder",
+        "folder": {
+          "@type": "chatFolder",
+          "title": "<title>",
+          "icon": {"@type": "chatFolderIcon", "name": "Custom"},
+          "color_id": -1,
+          "pinned_chat_ids": [],
+          "included_chat_ids": [],
+          "excluded_chat_ids": [],
+          "exclude_muted": false,
+          "exclude_read": false,
+          "exclude_archived": false,
+          "include_contacts": false,
+          "include_non_contacts": false,
+          "include_bots": false,
+          "include_groups": true,
+          "include_channels": true
         }
+      }
 
-   * Response: ``chatFolderInfo`` object containing assigned integer ID.
+   Response: ``chatFolderInfo`` object containing assigned integer ID.
 
 4. **Edit Chat Folder (``editChatFolder``)**:
 
-   * Payload:
-     .. code-block:: json
+   Payload:
 
-        {
-          "@type": "editChatFolder",
-          "chat_folder_id": <id>,
-          "folder": {
-            "@type": "chatFolder",
-            "title": "<updated_title>",
-            ...
-          }
+   .. code-block:: json
+
+      {
+        "@type": "editChatFolder",
+        "chat_folder_id": 1,
+        "folder": {
+          "@type": "chatFolder",
+          "title": "<updated_title>"
         }
+      }
 
-   * Response: ``ok`` or ``chatFolderInfo``.
+   Response: ``ok`` or ``chatFolderInfo``.
 
 5. **Delete Chat Folder (``deleteChatFolder``)**:
 
@@ -81,14 +73,15 @@ TDLib Method Mappings
 
 6. **Filter Chat Listing by Folder (``getChats``)**:
 
-   * Payload:
-     .. code-block:: json
+   Payload:
 
-        {
-          "@type": "getChats",
-          "chat_list": {
-            "@type": "chatListFolder",
-            "chat_folder_id": <id>
-          },
-          "limit": <limit>
-        }
+   .. code-block:: json
+
+      {
+        "@type": "getChats",
+        "chat_list": {
+          "@type": "chatListFolder",
+          "chat_folder_id": 1
+        },
+        "limit": 50
+      }

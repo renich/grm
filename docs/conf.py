@@ -15,7 +15,12 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'build', 'Thumbs.db', '.DS_Store']
 
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+try:
+    import sphinx_rtd_theme
+    html_theme = 'sphinx_rtd_theme'
+except ImportError:
+    html_theme = 'alabaster'
+
+html_static_path = []
 html_title = 'grm Documentation'
 html_show_sourcelink = False

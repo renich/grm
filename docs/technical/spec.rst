@@ -12,6 +12,9 @@ grm Technical Architecture
    specs/search-architecture
    specs/search-refactoring-and-hardening
    specs/story-and-status-architecture
+   specs/autocompletion-architecture
+   specs/cli-options-architecture
+   specs/formatter-architecture
    specs/coding-standards
    specs/threat-model
    specs/release-procedure
