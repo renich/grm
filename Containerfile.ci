@@ -23,7 +23,7 @@ WORKDIR /tmp/tdlib
 RUN git clone --depth 1 https://github.com/tdlib/td.git . \
     && mkdir build \
     && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DTD_ENABLE_LTO=OFF -G Ninja .. \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_INSTALL_LIBDIR=lib -DTD_ENABLE_LTO=OFF -G Ninja .. \
     && cmake --build . --target install \
     && cd / \
     && rm -rf /tmp/tdlib
@@ -58,7 +58,7 @@ RUN microdnf -y --setopt=install_weak_deps=0 install \
 
 # Copy TDLib headers, libraries, and pkgconfig metadata from builder stage
 COPY --from=builder /usr/local/include/td /usr/local/include/td
-COPY --from=builder /usr/local/lib* /usr/local/
+COPY --from=builder /usr/local/lib/ /usr/local/lib/
 
 # Refresh dynamic linker cache
 RUN ldconfig
