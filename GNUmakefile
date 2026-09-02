@@ -15,6 +15,7 @@ MANDIR = $(DATAROOTDIR)/man
 MAN1DIR = $(MANDIR)/man1
 BASH_COMPLETION_DIR = $(DATAROOTDIR)/bash-completion/completions
 DESTDIR ?=
+VERSION ?= 0.9.1
 
 # Build Toolchain & Directories
 BUILD_DIR := build
@@ -68,14 +69,14 @@ static:
 rpm: $(SRC_FILES) packaging/grm.spec
 	@echo "==> Building RPM package locally..."
 	mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-	tar --exclude='./rpmbuild' --exclude='./build' --exclude='./.git' -czf rpmbuild/SOURCES/grm-0.9.0.tar.gz .
+	tar --exclude='./rpmbuild' --exclude='./build' --exclude='./.git' -czf rpmbuild/SOURCES/grm-$(VERSION).tar.gz .
 	rpmbuild --define "_topdir $$(pwd)/rpmbuild" -ba packaging/grm.spec
 	@echo "==> RPM build complete in rpmbuild/RPMS/"
 
 srpm: $(SRC_FILES) packaging/grm.spec
 	@echo "==> Building SRPM package locally..."
 	mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-	tar --exclude='./rpmbuild' --exclude='./build' --exclude='./.git' -czf rpmbuild/SOURCES/grm-0.9.0.tar.gz .
+	tar --exclude='./rpmbuild' --exclude='./build' --exclude='./.git' -czf rpmbuild/SOURCES/grm-$(VERSION).tar.gz .
 	rpmbuild --define "_topdir $$(pwd)/rpmbuild" -bs packaging/grm.spec
 	@echo "==> SRPM build complete in rpmbuild/SRPMS/"
 

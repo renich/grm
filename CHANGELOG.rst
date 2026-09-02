@@ -9,6 +9,21 @@ The format is based on `Keep a Changelog 1.1.0 <https://keepachangelog.com/en/1.
 [Unreleased]
 ============
 
+[0.9.1] — 2026-09-02
+====================
+
+.. rubric:: Added
+
+* Added ``-f``/``--file`` option to ``grm story post`` supporting generic media file paths with automatic MIME/extension detection for photos and videos (``.mp4``, ``.mov``, ``.avi``, ``.mkv``, ``.webm``, ``.m4v``, ``.3gp``).
+* Added README project banner and Liberapay funding badge.
+
+.. rubric:: Fixed
+
+* Fixed premature upload timeout in ``grm story post`` and ``grm story edit`` by listening for modern TDLib ``updateStoryPostSucceeded`` and ``updateStoryPostFailed`` events, correctly mapping ``old_story_id`` to provisional story ID (>= 2,000,000,000) and capturing the finalized server story ID.
+* Fixed story event chat matching by inspecting ``poster_chat_id`` with fallback to ``sender_chat_id``.
+* Eliminated upload confirmation race condition by caching early completion and failure updates arriving prior to synchronous ``postStory`` return.
+* Fixed CI pipeline issues: corrected upstream TDLib clone branch in ``Containerfile.ci`` and included required sanitizer runtime libraries (``libasan``, ``libubsan``, ``libtsan``) in CI test jobs.
+
 [0.9.0] — 2026-09-01
 ====================
 

@@ -4,7 +4,7 @@
 project = 'grm'
 copyright = '2026, Rénich Bon Ćirić (Copyleft)'
 author = 'Rénich Bon Ćirić'
-release = '0.9.0'
+release = '0.9.1'
 
 extensions = [
     'sphinx.ext.autodoc',
