@@ -278,8 +278,11 @@ grm topic delete <supergroup_id> <topic_id>
 Story Management (CRUD)
 ------------------------
 
-grm story post [--photo <path>|--video <path>] [--caption <caption>] [--privacy everyone|contacts|close_friends] [--period <time>] [--pinned] [--protect] [-l|--link <url>] [-r|--reaction <emoji>] [-C|--chat <id>]
+grm story post [-f|--file <path>|-p|--photo <path>|-v|--video <path>] [--caption <caption>] [--privacy everyone|contacts|close_friends] [--period <time>] [--pinned] [--protect] [-l|--link <url>] [-r|--reaction <emoji>] [-C|--chat <id>]
    Publish a new photo or video story with optional link and reaction sticker overlays.
+
+   -f, --file <path>
+      Path to local media file to publish as story (auto-detects photo or video by extension).
 
    -p, --photo <path>
       Path to local photo image file to publish as story.

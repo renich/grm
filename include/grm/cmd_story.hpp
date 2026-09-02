@@ -1,13 +1,34 @@
 #pragma once
 
 #include "grm/command_registry.hpp"
+#include "grm/json_utils.hpp"
+#include <condition_variable>
 #include <cstdint>
 #include <expected>
+#include <mutex>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace grm {
+
+struct StorySendState {
+  std::mutex mutex;
+  std::condition_variable cv;
+  bool completed{false};
+  bool failed{false};
+  int64_t final_story_id{0};
+  int64_t temp_story_id{0};
+  int64_t chat_id{0};
+  std::string error_message;
+  JsonValue final_story_json;
+  std::unordered_map<int64_t, std::pair<int64_t, JsonValue>> early_succeeded;
+  std::unordered_map<int64_t, std::string> early_failed;
+};
+
+bool process_story_send_update(StorySendState &state, const JsonValue &update);
 
 struct StoryPostOptions {
   std::string photo_path;

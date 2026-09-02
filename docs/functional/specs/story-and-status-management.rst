@@ -18,9 +18,9 @@ Functional Requirements
 1. Story Publishing (``grm story post``)
 ----------------------------------------
 
-* **Media Types**: Supports local photo images (``--photo <path>``) or videos (``--video <path>``).
+* **Media Types**: Supports local photo images (``--photo <path>``), videos (``--video <path>``), or generic media files with auto-detection (``-f``, ``--file <path>``).
 * **Captions**: Accepts optional caption text with native clickable URLs and Markdown entity parsing (``--caption "text"``).
-* **Interactive Stickers / Overlays**:
+* **Interactive Stickers/Overlays**:
 
   * Clickable link sticker overlay (``-l``, ``--link <url>``).
   * Interactive suggested reaction button (``-r``, ``--reaction <emoji>``).

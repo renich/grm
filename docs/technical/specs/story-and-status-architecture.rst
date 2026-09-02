@@ -30,6 +30,7 @@ Component Architecture
 
   * Clickable link sticker: ``inputStoryAreaTypeLink`` with normalized ``storyAreaPosition`` coordinates.
   * Suggested reaction sticker: ``inputStoryAreaTypeSuggestedReaction`` with ``reactionTypeEmoji``.
+  * Upload tracking: Listens for ``updateStoryPostSucceeded`` (and legacy ``updateStorySendSucceeded``) matching ``old_story_id`` against the provisional story ID (>= 2,000,000,000) to confirm upload and obtain the finalized server story ID.
 
 * **Story Listing**: Dispatches ``getChatActiveStories``, ``getChatPostedToChatPageStories``, and ``getChatArchivedStories``, fetching detailed story metadata via ``getStory`` with human-readable timestamps and pinned/posted indicators.
 * **Story Metadata Inspection**: Dispatches ``getStory`` and formats comprehensive metadata (published date, sender ID, media type, view count, forward count, reaction count, capabilities, status, and interactive stickers).

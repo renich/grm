@@ -282,8 +282,11 @@ grm file get [-A] [-o *OUTPUT*] [-t *TOPIC_ID*] [-n *LIMIT*] [--type photo|video
 story
 -----
 
-grm story post [--photo *PATH* | --video *PATH*] [-c *CAPTION*] [--privacy everyone|contacts|close_friends] [--period *TIME*] [--pinned] [--protect] [-C *CHAT_ID*]
+grm story post [-f *PATH* | -p *PATH* | -v *PATH*] [-c *CAPTION*] [--privacy everyone|contacts|close_friends] [--period *TIME*] [--pinned] [--protect] [-C *CHAT_ID*]
    Publish a photo or video story.
+
+   -f, --file *PATH*
+      Path to media file to publish as story (auto-detects photo or video by extension).
 
    -p, --photo *PATH*
       Path to image file to publish as story.

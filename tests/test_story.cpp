@@ -562,9 +562,217 @@ void test_caption_sanitization_and_truncation() {
   std::cout << "[PASS] test_caption_sanitization_and_truncation\n";
 }
 
+void test_story_post_file_arg_parsing() {
+  {
+    grm::StoryPostOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--file", "/tmp/image.png", "--caption",
+                                     "Hello",  "--period",       "24h"};
+    bool ok = grm::parse_story_post_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.photo_path == "/tmp/image.png");
+    TEST_ASSERT(opts.video_path.empty());
+    TEST_ASSERT(opts.caption == "Hello");
+    TEST_ASSERT(opts.active_period == 86400);
+  }
+
+  {
+    grm::StoryPostOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"-f", "/tmp/video.mp4", "--caption",
+                                     "Clip"};
+    bool ok = grm::parse_story_post_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.video_path == "/tmp/video.mp4");
+    TEST_ASSERT(opts.photo_path.empty());
+    TEST_ASSERT(opts.caption == "Clip");
+  }
+
+  {
+    grm::StoryPostOptions opts;
+    std::string err;
+    std::vector<std::string> args = {"--file=/tmp/animation.webm"};
+    bool ok = grm::parse_story_post_args(args, opts, err);
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opts.video_path == "/tmp/animation.webm");
+    TEST_ASSERT(opts.photo_path.empty());
+  }
+
+  std::cout << "[PASS] test_story_post_file_arg_parsing\n";
+}
+
+void test_process_story_send_update() {
+  // 1. Standard updateStoryPostSucceeded matching provisional ID
+  {
+    grm::StorySendState state;
+    state.temp_story_id = 2000000000;
+    state.chat_id = 1323540396;
+
+    std::string update_json = R"({
+      "@type": "updateStoryPostSucceeded",
+      "old_story_id": 2000000000,
+      "story": {
+        "@type": "story",
+        "id": 36,
+        "poster_chat_id": 1323540396,
+        "is_being_posted": false
+      }
+    })";
+
+    auto parsed = grm::JsonValue::parse(update_json);
+    TEST_ASSERT(parsed.has_value());
+    bool handled = grm::process_story_send_update(state, *parsed);
+    TEST_ASSERT(handled);
+    TEST_ASSERT(state.completed);
+    TEST_ASSERT(!state.failed);
+    TEST_ASSERT(state.final_story_id == 36);
+  }
+
+  // 2. Legacy updateStorySendSucceeded with sender_chat_id
+  {
+    grm::StorySendState state;
+    state.temp_story_id = 2000000000;
+    state.chat_id = 1323540396;
+
+    std::string update_json = R"({
+      "@type": "updateStorySendSucceeded",
+      "old_story_id": 2000000000,
+      "story": {
+        "@type": "story",
+        "id": 42,
+        "sender_chat_id": 1323540396,
+        "is_being_posted": false
+      }
+    })";
+
+    auto parsed = grm::JsonValue::parse(update_json);
+    TEST_ASSERT(parsed.has_value());
+    bool handled = grm::process_story_send_update(state, *parsed);
+    TEST_ASSERT(handled);
+    TEST_ASSERT(state.completed);
+    TEST_ASSERT(!state.failed);
+    TEST_ASSERT(state.final_story_id == 42);
+  }
+
+  // 3. Early arrival of updateStoryPostSucceeded before temp_story_id is set
+  {
+    grm::StorySendState state;
+    state.temp_story_id = 0;
+    state.chat_id = 1323540396;
+
+    std::string update_json = R"({
+      "@type": "updateStoryPostSucceeded",
+      "old_story_id": 2000000000,
+      "story": {
+        "@type": "story",
+        "id": 55,
+        "poster_chat_id": 1323540396,
+        "is_being_posted": false
+      }
+    })";
+
+    auto parsed = grm::JsonValue::parse(update_json);
+    TEST_ASSERT(parsed.has_value());
+    grm::process_story_send_update(state, *parsed);
+    // Should be cached in early_succeeded
+    TEST_ASSERT(!state.completed);
+    TEST_ASSERT(state.early_succeeded.contains(2000000000));
+    TEST_ASSERT(state.early_succeeded[2000000000].first == 55);
+
+    // Simulate postStory return and assignment
+    state.temp_story_id = 2000000000;
+    if (auto it = state.early_succeeded.find(state.temp_story_id);
+        it != state.early_succeeded.end()) {
+      state.final_story_id = it->second.first;
+      state.final_story_json = it->second.second;
+      state.completed = true;
+    }
+    TEST_ASSERT(state.completed);
+    TEST_ASSERT(state.final_story_id == 55);
+  }
+
+  // 4. updateStoryPostFailed handling
+  {
+    grm::StorySendState state;
+    state.temp_story_id = 2000000000;
+    state.chat_id = 1323540396;
+
+    std::string update_json = R"({
+      "@type": "updateStoryPostFailed",
+      "story": {
+        "@type": "story",
+        "id": 2000000000,
+        "poster_chat_id": 1323540396
+      },
+      "error": {
+        "@type": "error",
+        "code": 400,
+        "message": "PHOTO_INVALID"
+      }
+    })";
+
+    auto parsed = grm::JsonValue::parse(update_json);
+    TEST_ASSERT(parsed.has_value());
+    bool handled = grm::process_story_send_update(state, *parsed);
+    TEST_ASSERT(handled);
+    TEST_ASSERT(state.failed);
+    TEST_ASSERT(!state.completed);
+    TEST_ASSERT(state.error_message.contains("PHOTO_INVALID"));
+  }
+
+  // 5. updateStory transition from is_being_posted = true to false
+  {
+    grm::StorySendState state;
+    state.temp_story_id = 2000000000;
+    state.chat_id = 1323540396;
+
+    std::string update_json = R"({
+      "@type": "updateStory",
+      "story": {
+        "@type": "story",
+        "id": 2000000000,
+        "poster_chat_id": 1323540396,
+        "is_being_posted": false,
+        "is_being_edited": false
+      }
+    })";
+
+    auto parsed = grm::JsonValue::parse(update_json);
+    TEST_ASSERT(parsed.has_value());
+    bool handled = grm::process_story_send_update(state, *parsed);
+    TEST_ASSERT(handled);
+    TEST_ASSERT(state.completed);
+    TEST_ASSERT(state.final_story_id == 2000000000);
+  }
+
+  // 6. updateStoryDeleted
+  {
+    grm::StorySendState state;
+    state.temp_story_id = 2000000000;
+    state.chat_id = 1323540396;
+
+    std::string update_json = R"({
+      "@type": "updateStoryDeleted",
+      "story_poster_chat_id": 1323540396,
+      "story_id": 2000000000
+    })";
+
+    auto parsed = grm::JsonValue::parse(update_json);
+    TEST_ASSERT(parsed.has_value());
+    bool handled = grm::process_story_send_update(state, *parsed);
+    TEST_ASSERT(handled);
+    TEST_ASSERT(state.failed);
+    TEST_ASSERT(state.error_message.contains("canceled or deleted"));
+  }
+
+  std::cout << "[PASS] test_process_story_send_update\n";
+}
+
 int main() {
   test_period_parsing();
   test_story_post_arg_parsing();
+  test_story_post_file_arg_parsing();
+  test_process_story_send_update();
   test_story_ls_and_delete_args();
   test_story_json_builders();
   test_story_info_and_viewers_args();

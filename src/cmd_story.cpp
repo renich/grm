@@ -22,12 +22,18 @@ CommandSpec get_story_spec() {
       "Manage and publish Telegram Stories",
       {SubcommandSpec{
            "post",
-           "[--photo <path>|--video <path>] [--caption <caption>] [--privacy "
-           "everyone|contacts|close_friends] [--period <time>] [--pinned] "
-           "[--protect] [--link <url>] [--reaction <emoji>] [--chat <id>]",
+           "[-p|--photo <path>|-v|--video <path>|-f|--file <path>] [--caption "
+           "<caption>] [--privacy everyone|contacts|close_friends] [--period "
+           "<time>] [--pinned] [--protect] [--link <url>] [--reaction <emoji>] "
+           "[--chat <id>]",
            "Publish a new photo or video story with optional link/reaction "
            "stickers",
-           {OptionSpec{"-p",
+           {OptionSpec{"-f",
+                       "--file",
+                       "<path>",
+                       "Path to photo image or video file to publish as story",
+                       {}},
+            OptionSpec{"-p",
                        "--photo",
                        "<path>",
                        "Path to photo image file to publish as story",
@@ -385,6 +391,40 @@ bool parse_story_post_args(const std::vector<std::string> &args,
       opts.video_path = args[++i];
     } else if (arg.starts_with("--video=")) {
       opts.video_path = arg.substr(8);
+    } else if (arg == "-f" || arg == "--file") {
+      if (i + 1 >= args.size()) {
+        err = "Missing argument for " + arg;
+        return false;
+      }
+      std::string fpath = args[++i];
+      std::string ext;
+      if (auto dot = fpath.rfind('.'); dot != std::string::npos) {
+        ext = fpath.substr(dot);
+        std::ranges::transform(ext, ext.begin(), [](unsigned char c) {
+          return static_cast<char>(std::tolower(c));
+        });
+      }
+      if (ext == ".mp4" || ext == ".mov" || ext == ".avi" || ext == ".mkv" ||
+          ext == ".webm" || ext == ".m4v" || ext == ".3gp") {
+        opts.video_path = fpath;
+      } else {
+        opts.photo_path = fpath;
+      }
+    } else if (arg.starts_with("--file=")) {
+      std::string fpath = arg.substr(7);
+      std::string ext;
+      if (auto dot = fpath.rfind('.'); dot != std::string::npos) {
+        ext = fpath.substr(dot);
+        std::ranges::transform(ext, ext.begin(), [](unsigned char c) {
+          return static_cast<char>(std::tolower(c));
+        });
+      }
+      if (ext == ".mp4" || ext == ".mov" || ext == ".avi" || ext == ".mkv" ||
+          ext == ".webm" || ext == ".m4v" || ext == ".3gp") {
+        opts.video_path = fpath;
+      } else {
+        opts.photo_path = fpath;
+      }
     } else if (arg == "-c" || arg == "--caption") {
       if (i + 1 >= args.size()) {
         err = "Missing argument for " + arg;
@@ -466,7 +506,8 @@ bool parse_story_post_args(const std::vector<std::string> &args,
   }
 
   if (opts.photo_path.empty() && opts.video_path.empty()) {
-    err = "Either --photo <path> or --video <path> must be specified";
+    err = "Either --photo <path>, --video <path>, or --file <path> must be "
+          "specified";
     return false;
   }
   if (!opts.photo_path.empty() && !opts.video_path.empty()) {
@@ -1356,6 +1397,128 @@ App::cmd_story(const std::vector<std::string> &args) {
   return std::unexpected("Unknown story subcommand: " + sub);
 }
 
+bool process_story_send_update(StorySendState &state, const JsonValue &update) {
+  auto type_opt = update.get_type();
+  if (!type_opt) {
+    return false;
+  }
+  const std::string &type = *type_opt;
+
+  if (type == "updateStoryPostSucceeded" ||
+      type == "updateStorySendSucceeded") {
+    int64_t old_id = update.get_int("old_story_id").value_or(0);
+    int64_t new_id = 0;
+    int64_t poster_chat_id = 0;
+    JsonValue story_copy;
+    if (auto story_obj = update.get_object("story")) {
+      new_id = story_obj->get_int("id").value_or(0);
+      poster_chat_id =
+          story_obj->get_int("poster_chat_id")
+              .value_or(story_obj->get_int("sender_chat_id").value_or(0));
+      story_copy = *story_obj;
+    }
+
+    std::scoped_lock lock(state.mutex);
+    bool chat_matches = (state.chat_id == 0 || poster_chat_id == 0 ||
+                         state.chat_id == poster_chat_id);
+
+    if (state.temp_story_id != 0) {
+      if ((old_id == state.temp_story_id || new_id == state.temp_story_id) &&
+          chat_matches) {
+        state.final_story_id = new_id > 0 ? new_id : state.temp_story_id;
+        state.final_story_json = std::move(story_copy);
+        state.completed = true;
+        state.cv.notify_all();
+        return true;
+      }
+    } else {
+      if (old_id > 0 && chat_matches) {
+        state.early_succeeded[old_id] =
+            std::make_pair(new_id, std::move(story_copy));
+      }
+    }
+  } else if (type == "updateStoryPostFailed" ||
+             type == "updateStorySendFailed") {
+    int64_t sid = 0;
+    int64_t poster_chat_id = 0;
+    if (auto story_obj = update.get_object("story")) {
+      sid = story_obj->get_int("id").value_or(0);
+      poster_chat_id =
+          story_obj->get_int("poster_chat_id")
+              .value_or(story_obj->get_int("sender_chat_id").value_or(0));
+    }
+    int64_t old_id = update.get_int("old_story_id").value_or(sid);
+    std::string err_msg = "Story upload failed";
+    if (auto err_obj = update.get_object("error")) {
+      int64_t code = err_obj->get_int("code").value_or(0);
+      std::string msg =
+          err_obj->get_string("message").value_or("Story upload failed");
+      err_msg = std::format("TDLib Error [{}]: {}", code, msg);
+    }
+
+    std::scoped_lock lock(state.mutex);
+    bool chat_matches = (state.chat_id == 0 || poster_chat_id == 0 ||
+                         state.chat_id == poster_chat_id);
+
+    if (state.temp_story_id != 0) {
+      if ((old_id == state.temp_story_id || sid == state.temp_story_id) &&
+          chat_matches) {
+        state.failed = true;
+        state.error_message = err_msg;
+        state.cv.notify_all();
+        return true;
+      }
+    } else {
+      if (old_id > 0 && chat_matches) {
+        state.early_failed[old_id] = err_msg;
+      }
+    }
+  } else if (type == "updateStory") {
+    if (auto story_obj = update.get_object("story")) {
+      int64_t sid = story_obj->get_int("id").value_or(0);
+      int64_t poster_chat_id =
+          story_obj->get_int("poster_chat_id")
+              .value_or(story_obj->get_int("sender_chat_id").value_or(0));
+      bool is_being_posted =
+          story_obj->get_bool("is_being_posted").value_or(false);
+      bool is_being_edited =
+          story_obj->get_bool("is_being_edited").value_or(false);
+
+      std::scoped_lock lock(state.mutex);
+      bool chat_matches = (state.chat_id == 0 || poster_chat_id == 0 ||
+                           state.chat_id == poster_chat_id);
+
+      if (state.temp_story_id != 0 && chat_matches) {
+        if (sid == state.temp_story_id && !is_being_posted &&
+            !is_being_edited) {
+          state.final_story_id = sid;
+          state.final_story_json = *story_obj;
+          state.completed = true;
+          state.cv.notify_all();
+          return true;
+        }
+      }
+    }
+  } else if (type == "updateStoryDeleted") {
+    int64_t del_story_id = update.get_int("story_id").value_or(0);
+    int64_t poster_chat_id = update.get_int("story_poster_chat_id").value_or(0);
+    std::scoped_lock lock(state.mutex);
+    bool chat_matches = (state.chat_id == 0 || poster_chat_id == 0 ||
+                         state.chat_id == poster_chat_id);
+    if (state.temp_story_id != 0 && state.temp_story_id == del_story_id &&
+        chat_matches) {
+      if (!state.completed) {
+        state.failed = true;
+        state.error_message = "Story upload was canceled or deleted by server";
+        state.cv.notify_all();
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 std::expected<int, std::string>
 App::cmd_story_post(const std::vector<std::string> &args) {
   if (is_help_requested(args)) {
@@ -1407,94 +1570,11 @@ App::cmd_story_post(const std::vector<std::string> &args) {
     formatted_caption_json = parsed_caption->to_string();
   }
 
-  struct StorySendState {
-    std::mutex mutex;
-    std::condition_variable cv;
-    bool completed{false};
-    bool failed{false};
-    int64_t final_story_id{0};
-    int64_t temp_story_id{0};
-    int64_t chat_id{0};
-    std::string error_message;
-    JsonValue final_story_json;
-  };
-
   auto send_state = std::make_shared<StorySendState>();
   send_state->chat_id = target_chat_id;
 
   client_->on_update([send_state](const JsonValue &update) {
-    auto type_opt = update.get_type();
-    if (!type_opt)
-      return;
-    const std::string &type = *type_opt;
-
-    if (type == "updateStorySendSucceeded") {
-      int64_t old_id = update.get_int("old_story_id").value_or(0);
-      int64_t new_id = 0;
-      int64_t sender_chat_id = 0;
-      if (auto story_obj = update.get_object("story")) {
-        new_id = story_obj->get_int("id").value_or(0);
-        sender_chat_id = story_obj->get_int("sender_chat_id").value_or(0);
-      }
-      std::scoped_lock lock(send_state->mutex);
-      if ((send_state->temp_story_id == 0 ||
-           send_state->temp_story_id == old_id ||
-           send_state->temp_story_id == new_id) &&
-          (send_state->chat_id == 0 || send_state->chat_id == sender_chat_id)) {
-        send_state->final_story_id = new_id;
-        if (auto story_obj = update.get_object("story")) {
-          send_state->final_story_json = *story_obj;
-        }
-        send_state->completed = true;
-        send_state->cv.notify_all();
-      }
-    } else if (type == "updateStorySendFailed") {
-      int64_t sid = 0;
-      int64_t sender_chat_id = 0;
-      if (auto story_obj = update.get_object("story")) {
-        sid = story_obj->get_int("id").value_or(0);
-        sender_chat_id = story_obj->get_int("sender_chat_id").value_or(0);
-      }
-      std::scoped_lock lock(send_state->mutex);
-      if ((send_state->temp_story_id == 0 ||
-           send_state->temp_story_id == sid) &&
-          (send_state->chat_id == 0 || send_state->chat_id == sender_chat_id)) {
-        send_state->failed = true;
-        if (auto err_obj = update.get_object("error")) {
-          int64_t code = err_obj->get_int("code").value_or(0);
-          std::string msg =
-              err_obj->get_string("message").value_or("Story upload failed");
-          send_state->error_message =
-              std::format("TDLib Error [{}]: {}", code, msg);
-        } else {
-          send_state->error_message = "Story upload failed";
-        }
-        send_state->cv.notify_all();
-      }
-    } else if (type == "updateStory") {
-      if (auto story_obj = update.get_object("story")) {
-        int64_t sid = story_obj->get_int("id").value_or(0);
-        int64_t sender_chat_id =
-            story_obj->get_int("sender_chat_id").value_or(0);
-        bool is_being_posted =
-            story_obj->get_bool("is_being_posted").value_or(false);
-        bool is_being_edited =
-            story_obj->get_bool("is_being_edited").value_or(false);
-
-        std::scoped_lock lock(send_state->mutex);
-        if ((send_state->temp_story_id == sid ||
-             (send_state->temp_story_id != 0 && sid < 2000000000)) &&
-            (send_state->chat_id == 0 ||
-             send_state->chat_id == sender_chat_id)) {
-          if (!is_being_posted && !is_being_edited) {
-            send_state->final_story_id = sid;
-            send_state->final_story_json = *story_obj;
-            send_state->completed = true;
-            send_state->cv.notify_all();
-          }
-        }
-      }
-    }
+    process_story_send_update(*send_state, update);
   });
 
   std::string post_req =
@@ -1522,21 +1602,33 @@ App::cmd_story_post(const std::vector<std::string> &args) {
     {
       std::scoped_lock lock(send_state->mutex);
       send_state->temp_story_id = initial_story_id;
+      if (auto it = send_state->early_succeeded.find(initial_story_id);
+          it != send_state->early_succeeded.end()) {
+        send_state->final_story_id = it->second.first;
+        send_state->final_story_json = it->second.second;
+        send_state->completed = true;
+      } else if (auto it_fail = send_state->early_failed.find(initial_story_id);
+                 it_fail != send_state->early_failed.end()) {
+        send_state->failed = true;
+        send_state->error_message = it_fail->second;
+      }
     }
 
-    grm::log::debug(std::format(
-        "Waiting for story upload completion (provisional ID: {})...",
-        initial_story_id));
+    if (!send_state->completed && !send_state->failed) {
+      grm::log::debug(std::format(
+          "Waiting for story upload completion (provisional ID: {})...",
+          initial_story_id));
 
-    std::unique_lock<std::mutex> lock(send_state->mutex);
-    bool ok = send_state->cv.wait_for(lock, std::chrono::seconds(120), [&] {
-      return send_state->completed || send_state->failed;
-    });
+      std::unique_lock<std::mutex> lock(send_state->mutex);
+      bool ok = send_state->cv.wait_for(lock, std::chrono::seconds(120), [&] {
+        return send_state->completed || send_state->failed;
+      });
 
-    if (!ok) {
-      return std::unexpected(
-          std::format("Story upload timed out (provisional Story ID: {})",
-                      initial_story_id));
+      if (!ok) {
+        return std::unexpected(
+            std::format("Story upload timed out (provisional Story ID: {})",
+                        initial_story_id));
+      }
     }
 
     if (send_state->failed) {
@@ -1647,15 +1739,16 @@ App::cmd_story_edit(const std::vector<std::string> &args) {
     if (type == "updateStory") {
       if (auto story_obj = update.get_object("story")) {
         int64_t sid = story_obj->get_int("id").value_or(0);
-        int64_t sender_chat_id =
-            story_obj->get_int("sender_chat_id").value_or(0);
+        int64_t poster_chat_id =
+            story_obj->get_int("poster_chat_id")
+                .value_or(story_obj->get_int("sender_chat_id").value_or(0));
         bool is_being_edited =
             story_obj->get_bool("is_being_edited").value_or(false);
 
         std::scoped_lock lock(edit_state->mutex);
         if (edit_state->story_id == sid &&
-            (edit_state->chat_id == 0 ||
-             edit_state->chat_id == sender_chat_id)) {
+            (edit_state->chat_id == 0 || poster_chat_id == 0 ||
+             edit_state->chat_id == poster_chat_id)) {
           if (!is_being_edited) {
             edit_state->final_story_json = *story_obj;
             edit_state->completed = true;
@@ -1663,16 +1756,20 @@ App::cmd_story_edit(const std::vector<std::string> &args) {
           }
         }
       }
-    } else if (type == "updateStorySendFailed") {
+    } else if (type == "updateStoryPostFailed" ||
+               type == "updateStorySendFailed") {
       int64_t sid = 0;
-      int64_t sender_chat_id = 0;
+      int64_t poster_chat_id = 0;
       if (auto story_obj = update.get_object("story")) {
         sid = story_obj->get_int("id").value_or(0);
-        sender_chat_id = story_obj->get_int("sender_chat_id").value_or(0);
+        poster_chat_id =
+            story_obj->get_int("poster_chat_id")
+                .value_or(story_obj->get_int("sender_chat_id").value_or(0));
       }
       std::scoped_lock lock(edit_state->mutex);
       if (edit_state->story_id == sid &&
-          (edit_state->chat_id == 0 || edit_state->chat_id == sender_chat_id)) {
+          (edit_state->chat_id == 0 || poster_chat_id == 0 ||
+           edit_state->chat_id == poster_chat_id)) {
         edit_state->failed = true;
         if (auto err_obj = update.get_object("error")) {
           int64_t code = err_obj->get_int("code").value_or(0);
