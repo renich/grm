@@ -52,11 +52,11 @@ add_compile_options(
 )
 
 # Fallback search order: ~/.local first (for local upgraded TDLib build), then system directories
-list(PREPEND CMAKE_PREFIX_PATH "$ENV{HOME}/.local")
-if(DEFINED ENV{PKG_CONFIG_PATH})
-    set(ENV{PKG_CONFIG_PATH} "$ENV{HOME}/.local/lib64/pkgconfig:$ENV{HOME}/.local/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+list(PREPEND CMAKE_PREFIX_PATH "$ENV{HOME}/.local" "/usr/local")
+if(DEFINED ENV{PKG_CONFIG_PATH} AND NOT "$ENV{PKG_CONFIG_PATH}" STREQUAL "")
+    set(ENV{PKG_CONFIG_PATH} "$ENV{HOME}/.local/lib64/pkgconfig:$ENV{HOME}/.local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 else()
-    set(ENV{PKG_CONFIG_PATH} "$ENV{HOME}/.local/lib64/pkgconfig:$ENV{HOME}/.local/lib/pkgconfig:/usr/lib64/pkgconfig:/usr/share/pkgconfig")
+    set(ENV{PKG_CONFIG_PATH} "$ENV{HOME}/.local/lib64/pkgconfig:$ENV{HOME}/.local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib64/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig")
 endif()
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib64;\$ORIGIN/../lib;\$ORIGIN/../lib64;$ENV{HOME}/.local/lib;$ENV{HOME}/.local/lib64")

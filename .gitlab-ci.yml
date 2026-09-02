@@ -3,7 +3,9 @@
 default:
   image: registry.gitlab.com/renich/grm/ci-fedora:latest
   interruptible: true
-  before_script: []
+  before_script:
+    - export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:${PKG_CONFIG_PATH:-}"
+    - export LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH:-}"
 
 variables:
   PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig"
@@ -111,6 +113,8 @@ test-asan:
   stage: test
   needs: []
   before_script:
+    - export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:${PKG_CONFIG_PATH:-}"
+    - export LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH:-}"
     - (command -v microdnf >/dev/null 2>&1 && microdnf install -y --setopt=install_weak_deps=0 libasan libubsan || true)
   script:
     - make asan
@@ -119,6 +123,8 @@ test-tsan:
   stage: test
   needs: []
   before_script:
+    - export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:${PKG_CONFIG_PATH:-}"
+    - export LD_LIBRARY_PATH="/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH:-}"
     - (command -v microdnf >/dev/null 2>&1 && microdnf install -y --setopt=install_weak_deps=0 libtsan || true)
   script:
     - make tsan
