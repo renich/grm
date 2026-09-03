@@ -146,7 +146,7 @@ tdlib-bootstrap:
 	@echo "Bootstrapping latest TDLib into $(PREFIX_USER)..."
 	@rm -rf /tmp/tdlib-bootstrap
 	git clone --depth 1 https://github.com/tdlib/td.git /tmp/tdlib-bootstrap
-	$(CMAKE) -B /tmp/tdlib-bootstrap/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(PREFIX_USER) -DTD_ENABLE_LTO=ON /tmp/tdlib-bootstrap
+	$(CMAKE) -B /tmp/tdlib-bootstrap/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(PREFIX_USER) -DCMAKE_INSTALL_LIBDIR=lib -DTD_ENABLE_LTO=OFF /tmp/tdlib-bootstrap
 	$(CMAKE) --build /tmp/tdlib-bootstrap/build --target install
 	@rm -rf /tmp/tdlib-bootstrap
 	@echo "TDLib successfully installed to $(PREFIX_USER)"

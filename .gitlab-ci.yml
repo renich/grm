@@ -59,7 +59,6 @@ build-ci-image:
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Containerfile.ci"
       --destination "${CI_REGISTRY_IMAGE}/ci-fedora:latest"
-      --cache=true
 
 lint-docs:
   stage: lint
